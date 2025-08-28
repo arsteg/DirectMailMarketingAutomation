@@ -8,6 +8,7 @@ using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace MailMergeUI
@@ -19,6 +20,18 @@ namespace MailMergeUI
         private List<Lead> records = new();
         private MailMergeEngine.AddressRightMailMergeEngine arEngine = new();
         private RisoFtMailMergeEngine.RisoFtMailMergeEngine rfEngine = new();
+        private enum EngineType { AddressRight, RisoFt }
+
+        private EngineType SelectedEngine
+        {
+            get
+            {
+                if (cmbEngines.SelectedItem is ComboBoxItem item &&
+                    item.Content.ToString() == "Riso FT")
+                    return EngineType.RisoFt;
+                return EngineType.AddressRight;
+            }
+        }
 
         public MainWindow()
         {
@@ -39,7 +52,7 @@ namespace MailMergeUI
 
         private void btnLoadTemplate_Click(object sender, RoutedEventArgs e)
         {
-            var ofd = new OpenFileDialog() { Filter = "Image Files|*.png;*.jpg;*.bmp" };
+            var ofd = new OpenFileDialog(); //{ Filter = "Image Files|*.png;*.jpg;*.bmp" };
             if (ofd.ShowDialog() == true)
             {
                 templatePath = ofd.FileName;
@@ -53,7 +66,10 @@ namespace MailMergeUI
             if (ofd.ShowDialog() == true)
             {
                 csvPath = ofd.FileName;
-                records = arEngine.ReadCsv(csvPath);
+                if (SelectedEngine == EngineType.AddressRight)
+                    records = arEngine.ReadCsv(csvPath);
+                else
+                    records = rfEngine.ReadCsv(csvPath);
                 Log($"CSV loaded: {csvPath} ({records.Count} records)");
             }
         }
@@ -67,7 +83,10 @@ namespace MailMergeUI
             }
 
             string tmpFile = Path.Combine(Path.GetTempPath(), "preview.png");
-            arEngine.MergeToPng(templatePath, records.First(), tmpFile);
+            if (SelectedEngine == EngineType.AddressRight)
+                arEngine.MergeToPng(templatePath, records.First(), tmpFile);
+            else
+                rfEngine.MergePdfToPng(templatePath, records.First(), tmpFile);
             var bmp = new BitmapImage();
             bmp.BeginInit();
             bmp.UriSource = new Uri(tmpFile);
@@ -117,46 +136,6 @@ namespace MailMergeUI
             }
         }
 
-        private void btnPrintRiso_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string pdfPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    "MailMergeOutput",
-                    "merged_batch_sample.pdf");
-
-                if (!File.Exists(pdfPath))
-                {
-                    txtStatus.Text = "Error: No merged PDF found. Export first.\n";
-                    return;
-                }
-
-                if (cmbPrinters.SelectedItem == null)
-                {
-                    txtStatus.Text = "Error: No printer selected.\n";
-                    return;
-                }
-
-                string selectedPrinter = cmbPrinters.SelectedItem.ToString()!;
-
-                using (var pdfDoc = PdfDocument.Load(pdfPath))
-                using (var printDoc = pdfDoc.CreatePrintDocument())
-                {
-                    printDoc.DocumentName = "MailMerge Output";
-                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                    printDoc.Print();
-                }
-
-                txtStatus.Text = $"Print job sent to {selectedPrinter}\n";
-            }
-            catch (Exception ex)
-            {
-                txtStatus.Text = $"Printing failed: {ex.Message}\n";
-            }
-        }
-
-
         private void btnExport_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
@@ -172,11 +151,18 @@ namespace MailMergeUI
             foreach (var r in records)
             {
                 string outPath = Path.Combine(outDir, $"merged_{i:00}_{r.FirstName}.png");
-                arEngine.MergeToPng(templatePath, r, outPath);
+
+                if (SelectedEngine == EngineType.AddressRight)
+                    arEngine.MergeToPng(templatePath, r, outPath);
+                else
+                    rfEngine.MergePdfToPng(templatePath, r, outPath);
                 i++;
             }
             string pdfOut = Path.Combine(outDir, "merged_batch_sample.pdf");
-            arEngine.CombinePngsToPdf(outDir, pdfOut);
+            if (SelectedEngine == EngineType.AddressRight)
+                arEngine.CombinePngsToPdf(outDir, pdfOut);
+            else
+                rfEngine.CombinePngsToPdf(outDir, pdfOut);
 
             Log($"Export complete. Files in {outDir}");
         }

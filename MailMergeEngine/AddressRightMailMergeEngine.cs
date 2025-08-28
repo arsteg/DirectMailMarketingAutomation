@@ -243,10 +243,5 @@ namespace MailMergeEngine
             using var stream = File.Create(outPdfPath);
             doc.Save(stream, false); // Set 'closeStream' to false since we're managing it
         }
-
-        private static string Get(Dictionary<string,string> d, string key)
-        {
-            return d.TryGetValue(key, out var v) ? v : string.Empty;
-        }
     }
 }

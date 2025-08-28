@@ -2,3 +2,12 @@
 /.vs/MailMergeSolution/DesignTimeBuild
 /.vs/MailMergeSolution/FileContentIndex
 /.vs
+/DbContext/bin/Debug/net8.0
+/DbContext/obj/Debug/net8.0
+/DbContext/obj
+/MailMergeEngine/bin/Debug/net8.0
+/MailMergeEngine/obj
+/MailMergeUI/bin/Debug/net8.0-windows
+/MailMergeUI/obj
+/RisoFtMailMergeEngine/bin/Debug/net8.0
+/RisoFtMailMergeEngine/obj
