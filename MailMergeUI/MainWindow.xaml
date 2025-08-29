@@ -98,14 +98,6 @@
                                FontWeight="Bold" FontSize="16" 
                                Foreground="#3AADA1" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Type:" FontWeight="SemiBold" Foreground="#3AADA1" Margin="0,0,0,4"/>
-                    <ComboBox x:Name="cmbEngines" Width="150" Margin="0,0,0,10" Background="White" Foreground="#3AADA1" BorderBrush="#3AADA1" BorderThickness="1">
-                        <ComboBoxItem Content="AddressRight" IsSelected="True"/>
-                        <ComboBoxItem Content="Riso FT"/>
-                    </ComboBox>
-
-                    <Separator Margin="0,12"/>
-
                     <Button Content="📄 Load Template" Style="{StaticResource ToolbarButton}" Click="btnLoadTemplate_Click"/>
                     <Button Content="📑 Load CSV" Style="{StaticResource ToolbarButton}" Click="btnLoadCsv_Click"/>
                     <Button Content="👁 Preview" Style="{StaticResource ToolbarButton}" Click="btnPreview_Click"/>

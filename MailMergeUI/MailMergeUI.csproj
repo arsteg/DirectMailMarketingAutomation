@@ -12,7 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DbContext\MailMerge.Data.csproj" />
-    <ProjectReference Include="..\MailMergeEngine\AddressRightMailMergeEngine.csproj" />
-    <ProjectReference Include="..\RisoFtMailMergeEngine\RisoFtMailMergeEngine.csproj" />
+    <ProjectReference Include="..\MailMergeEngine\MailMergeEngine.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="gswin64c.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
