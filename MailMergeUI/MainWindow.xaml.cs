@@ -69,18 +69,24 @@ namespace MailMergeUI
             }
 
             string tmpFile = Path.Combine(Path.GetTempPath(), "preview.png");
-            
+
             engine.MergePdfToPng(templatePath, records.First(), tmpFile);
-           
+
             var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.UriSource = new Uri(tmpFile);
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.EndInit();
+            using (var fs = new FileStream(tmpFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad; // load fully into memory
+                bmp.StreamSource = fs;
+                bmp.EndInit();
+            }
+            bmp.Freeze(); // optional: makes it cross-thread safe
+
             imgPreview.Source = bmp;
 
             Log("Preview generated for first record.");
         }
+
 
         private void btnPrint_Click(object sender, RoutedEventArgs e)
         {
