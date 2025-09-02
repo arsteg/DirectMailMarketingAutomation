@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MailMerge.Data.Helpers;
+using MailMerge.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace MailMerge.Data
 {
@@ -13,25 +15,36 @@ namespace MailMerge.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Lead>()
-                .HasIndex(l => new { l.Address1, l.FirstName })
-                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+
+            // Precomputed hash for "admin123"
+            string hashedPassword = PasswordHelper.HashPassword("admin123");
+
+            // Seed admin user
+            modelBuilder.Entity<User>().HasData(new User
+            {
+                Id = 1,
+                Name = "Admin",
+                Email = "admin@arsteg.com",
+                Password = hashedPassword
+            });
+
+            modelBuilder.Entity<PropertyRecord>(e =>
+            {
+                e.ToTable("Properties");
+                e.Property(p => p.Id).ValueGeneratedOnAdd();
+
+                // Optional helpful indexes:
+                e.HasIndex(p => new { p.RadarId, p.Apn }).HasDatabaseName("IX_Properties_Radar_APN");
+                e.HasIndex(p => new { p.Address, p.City, p.State }).HasDatabaseName("IX_Properties_Address");
+            });
+
         }
 
-        public DbSet<Lead> Leads { get; set; }
-    }
+        public DbSet<User> Users { get; set; }
 
-    public class Lead
-    {
-        public int Id { get; set; }  // Primary key
-
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Address1 { get; set; }
-        public string Address2 { get; set; }
-        public string City { get; set; }
-        public string State { get; set; }
-        public string Zip { get; set; }
-        public string BarcodeData { get; set; }
+        public DbSet<PropertyRecord> Properties { get; set; }
     }
 }

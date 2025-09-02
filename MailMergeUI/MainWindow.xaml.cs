@@ -1,5 +1,4 @@
-using MailMerge.Data;
-using MailMergeEngine;
+using MailMerge.Data.Models;
 using Microsoft.Win32;
 using PdfiumViewer;
 using System;
@@ -8,7 +7,6 @@ using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace MailMergeUI
@@ -17,7 +15,7 @@ namespace MailMergeUI
     {
         private string templatePath = string.Empty;
         private string csvPath = string.Empty;
-        private List<Lead> records = new();
+        private List<PropertyRecord> records = new();
         private MailMergeEngine.MailMergeEngine engine = new();
 
         public MainWindow()
@@ -136,12 +134,16 @@ namespace MailMergeUI
             }
 
             string outDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "MailMergeOutput");
+            if (Directory.Exists(outDir))
+            {
+                Directory.Delete(outDir, true);
+            }
             Directory.CreateDirectory(outDir);
 
             int i = 1;
             foreach (var r in records)
             {
-                string outPath = Path.Combine(outDir, $"merged_{i:00}_{r.FirstName}.png");
+                string outPath = Path.Combine(outDir, $"merged_{i:00}_{r.PrimaryName}.png");
 
                 
                 engine.MergePdfToPng(templatePath, r, outPath);
@@ -160,6 +162,22 @@ namespace MailMergeUI
         {
             txtStatus.Text = msg + Environment.NewLine;
             
+        }
+
+        private void btnLogout_Click(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.Username = string.Empty;
+            Properties.Settings.Default.RememberMe = false;
+            Properties.Settings.Default.Save();
+
+            LoginWindow loginWindow = new LoginWindow();
+            loginWindow.Show();
+            this.Close();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }
