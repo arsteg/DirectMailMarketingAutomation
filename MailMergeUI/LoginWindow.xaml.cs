@@ -26,8 +26,8 @@ namespace MailMergeUI
             InitializeComponent();
             if (Properties.Settings.Default.RememberMe)
             {
-                MainWindow main = new MainWindow();
-                main.Show();
+                DashboardWindow dashboard = new DashboardWindow();
+                dashboard.Show();
                 this.Close();
             }
         }
@@ -49,8 +49,8 @@ namespace MailMergeUI
                     Properties.Settings.Default.Save();
                 }
 
-                MainWindow main = new MainWindow();
-                main.Show();
+                DashboardWindow dashboard = new DashboardWindow();
+                dashboard.Show();
                 this.Close();
             }
             else
@@ -58,11 +58,6 @@ namespace MailMergeUI
                 txtStatus.Text = "Invalid username or password!";
                 txtStatus.Foreground = Brushes.Red;
             }
-        }
-
-        private void ForgotPassword_Click(object sender, MouseButtonEventArgs e)
-        {
-
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

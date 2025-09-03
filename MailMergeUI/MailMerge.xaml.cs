@@ -1,4 +1,4 @@
-using MailMerge.Data.Models;
+﻿using MailMerge.Data.Models;
 using Microsoft.Win32;
 using PdfiumViewer;
 using System;
@@ -7,18 +7,20 @@ using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace MailMergeUI
 {
-    public partial class MainWindow : Window
+    public partial class MailMergeWindow : Window
     {
         private string templatePath = string.Empty;
         private string csvPath = string.Empty;
         private List<PropertyRecord> records = new();
         private MailMergeEngine.MailMergeEngine engine = new();
+        private bool isDarkMode = false;
 
-        public MainWindow()
+        public MailMergeWindow()
         {
             InitializeComponent();
             LoadPrinters();
@@ -164,19 +166,15 @@ namespace MailMergeUI
             
         }
 
-        private void btnLogout_Click(object sender, RoutedEventArgs e)
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.Username = string.Empty;
-            Properties.Settings.Default.RememberMe = false;
-            Properties.Settings.Default.Save();
-
-            LoginWindow loginWindow = new LoginWindow();
-            loginWindow.Show();
             this.Close();
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private void btnBack_Click(object sender, RoutedEventArgs e)
         {
+            DashboardWindow dashboardWindow = new DashboardWindow();
+            dashboardWindow.Show();
             this.Close();
         }
     }

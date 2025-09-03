@@ -1,7 +1,7 @@
 ﻿<Window x:Class="MailMergeUI.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Mail Merge Professional - Login" 
+        Title="MailMax- Login" 
         WindowStartupLocation="CenterScreen"
         Background="Transparent"
         FontFamily="Segoe UI"
@@ -10,14 +10,6 @@
         AllowsTransparency="True">
 
     <Window.Resources>
-        <!-- Reuse your existing brush definitions -->
-        <SolidColorBrush x:Key="PrimaryBlue" Color="#1976D2"/>
-        <SolidColorBrush x:Key="PrimaryBlueDark" Color="#1565C0"/>
-        <SolidColorBrush x:Key="PrimaryBlueLight" Color="#E3F2FD"/>
-        <SolidColorBrush x:Key="AccentBlue" Color="#2196F3"/>
-        <SolidColorBrush x:Key="TextDark" Color="#212121"/>
-        <SolidColorBrush x:Key="TextLight" Color="#757575"/>
-        <SolidColorBrush x:Key="DividerColor" Color="#E0E0E0"/>
 
         <!-- Gradient Brushes -->
         <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="0,1">
@@ -27,9 +19,9 @@
 
         <!-- TextBox Style -->
         <Style TargetType="TextBox" x:Key="ModernTextBox">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource DividerColor}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundLight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12"/>
             <Setter Property="Height" Value="45"/>
@@ -51,10 +43,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -64,9 +56,9 @@
 
         <!-- PasswordBox Style -->
         <Style TargetType="PasswordBox" x:Key="ModernPasswordBox">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource DividerColor}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundLight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12"/>
             <Setter Property="Height" Value="45"/>
@@ -89,10 +81,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -102,9 +94,9 @@
 
         <!-- Primary Button Style -->
         <Style TargetType="Button" x:Key="PrimaryButton">
-            <Setter Property="Background" Value="{StaticResource PrimaryGradient}"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryGradient}"/>
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlueDark}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="16,12"/>
@@ -124,12 +116,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{StaticResource AccentBlue}"/>
-                                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlueDark}"/>
+                                <Setter Property="Background" Value="{DynamicResource AccentBlue}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="{StaticResource PrimaryBlueDark}"/>
-                                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlueDark}"/>
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBlueDark}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -140,8 +132,8 @@
         <!-- Secondary Button Style -->
         <Style TargetType="Button" x:Key="SecondaryButton">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="16,12"/>
@@ -161,7 +153,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{StaticResource PrimaryBlueLight}"/>
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBlueLight}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="Background" Value="#BBDEFB"/>
@@ -174,7 +166,8 @@
 
         <!-- Modern CheckBox Style -->
         <Style TargetType="CheckBox" x:Key="ModernCheckBox">
-            <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundLight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -184,15 +177,15 @@
                             <!-- Custom Box -->
                             <Border x:Name="border"
                             Width="18" Height="18"
-                            BorderBrush="{StaticResource DividerColor}"
+                            BorderBrush="{DynamicResource DividerColor}"
                             BorderThickness="1.5"
                             CornerRadius="4"
-                            Background="White"
+                            Background="{DynamicResource BackgroundLight}"
                             Margin="0,0,8,0"
                             VerticalAlignment="Center">
                                 <Path x:Name="check"
                               Data="M 0 4 L 6 10 L 14 -2"
-                              Stroke="{StaticResource PrimaryBlue}"
+                              Stroke="{DynamicResource PrimaryBlue}"
                               StrokeThickness="2"
                               Visibility="Collapsed"
                               Stretch="Uniform"/>
@@ -202,12 +195,12 @@
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="check" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBlueLight}"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource PrimaryBlueLight}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -222,9 +215,9 @@
 
         <!-- Login Card -->
         <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center"
-        Background="White" 
+        Background="{DynamicResource CardBackgroundLight}" 
         CornerRadius="12"
-        BorderBrush="{StaticResource DividerColor}" 
+        BorderBrush="{DynamicResource DividerColor}" 
         BorderThickness="1"
         SnapsToDevicePixels="True">
             <Border.Effect>
@@ -247,51 +240,51 @@
 
                     <!-- App Logo/Title -->
                     <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,32">
-                        <TextBlock Text="📧" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                        <TextBlock Text="Mail Merge Professional" 
+                        <TextBlock Text="📧" Foreground="{DynamicResource TextLight}" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="MailMax" 
                            FontSize="20" 
                            FontWeight="Bold" 
-                           Foreground="{StaticResource PrimaryBlue}"
+                           Foreground="{DynamicResource PrimaryBlue}"
                            HorizontalAlignment="Center"/>
                         <TextBlock Text="Sign in to continue" 
                            FontSize="14" 
                            Name="txtStatus"
-                           Foreground="{StaticResource TextLight}"
+                           Foreground="{DynamicResource TextLight}"
                            HorizontalAlignment="Center"
                            Margin="0,8,0,0"/>
                     </StackPanel>
 
                     <!-- Username Field -->
                     <TextBlock Grid.Row="1" Text="Username" 
-                       Foreground="{StaticResource TextDark}" 
+                       Foreground="{DynamicResource TextDark}" 
                        FontWeight="SemiBold"
                        Margin="0,0,0,8"/>
                     <TextBox Grid.Row="2" 
-                     Style="{StaticResource ModernTextBox}"
+                     Style="{DynamicResource ModernTextBox}"
                      Name="txtUsername"
                      Margin="0,0,0,16"/>
 
                     <!-- Password Field -->
                     <TextBlock Grid.Row="3" Text="Password" 
-                       Foreground="{StaticResource TextDark}" 
+                       Foreground="{DynamicResource TextDark}" 
                        FontWeight="SemiBold"
                        Margin="0,0,0,8"/>
                     <PasswordBox Grid.Row="4" 
-                         Style="{StaticResource ModernPasswordBox}"
+                         Style="{DynamicResource ModernPasswordBox}"
                          Name="txtPassword"
                          Margin="0,0,0,24"/>
 
                     <!-- Remember Me Checkbox -->
                     <CheckBox Grid.Row="5"
                       Content="Remember Me"
-                      Style="{StaticResource ModernCheckBox}"
+                      Style="{DynamicResource ModernCheckBox}"
                       Name="chkRememberMe"
                       Margin="0,0,0,16"/>
 
                     <!-- Login Button -->
                     <Button Grid.Row="6" 
                     Content="Sign In" 
-                    Style="{StaticResource PrimaryButton}"
+                    Style="{DynamicResource PrimaryButton}"
                     Name="btnLogin"
                     Click="btnLogin_Click"
                     Margin="0,0,0,16"/>
@@ -301,7 +294,7 @@
                 <Button Content="✕" 
                 Width="30" Height="30" 
                 Background="Transparent"
-                Foreground="{StaticResource TextLight}"
+                Foreground="{DynamicResource TextLight}"
                 BorderThickness="0"
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Top"
@@ -311,7 +304,7 @@
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="border" 
-                            Background="{TemplateBinding Background}"
+                            Background="{DynamicResource Background}"
                             CornerRadius="15"
                             Width="30" Height="30">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -319,7 +312,7 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Background" Value="#10000000"/>
-                                    <Setter Property="Foreground" Value="{StaticResource TextDark}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

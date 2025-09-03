@@ -3,5 +3,276 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="LoginWindow.xaml">
     <Application.Resources>
+        <!-- Light Mode Brushes -->
+        <SolidColorBrush x:Key="PrimaryBlue_Light" Color="#1976D2"/>
+        <SolidColorBrush x:Key="PrimaryBlueDark_Light" Color="#1565C0"/>
+        <SolidColorBrush x:Key="PrimaryBlueLight_Light" Color="#E3F2FD"/>
+        <SolidColorBrush x:Key="AccentBlue_Light" Color="#2196F3"/>
+        <SolidColorBrush x:Key="TextDark_Light" Color="#212121"/>
+        <SolidColorBrush x:Key="TextLight_Light" Color="#757575"/>
+        <SolidColorBrush x:Key="DividerColor_Light" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="BackgroundLight_Light" Color="#F5F9FF"/>
+        <SolidColorBrush x:Key="CardBackgroundLight_Light" Color="White"/>
+        <SolidColorBrush x:Key="HeaderBackgroundLight_Light" Color="White"/>
+
+        <!-- Dark Theme Brushes -->
+        <SolidColorBrush x:Key="PrimaryBlue_Dark" Color="White"/>
+        <SolidColorBrush x:Key="PrimaryBlueDark_Dark" Color="#42A5F5"/>
+        <SolidColorBrush x:Key="PrimaryBlueLight_Dark" Color="#1E293B"/>
+        <SolidColorBrush x:Key="AccentBlue_Dark" Color="#90CAF9"/>
+        <SolidColorBrush x:Key="TextDark_Dark" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="TextLight_Dark" Color="#9CA3AF"/>
+        <SolidColorBrush x:Key="DividerColor_Dark" Color="#374151"/>
+        <SolidColorBrush x:Key="Background_Dark" Color="#111827"/>
+        <SolidColorBrush x:Key="CardBackground_Dark" Color="#1F2937"/>
+        <SolidColorBrush x:Key="HeaderBackground_Dark" Color="#1F2937"/>
+
+        <!-- Dynamic Theme Keys (these get reassigned in ThemeManager) -->
+        <SolidColorBrush x:Key="PrimaryBlue" Color="#1976D2"/>
+        <SolidColorBrush x:Key="PrimaryBlueDark" Color="#1565C0"/>
+        <SolidColorBrush x:Key="PrimaryBlueLight" Color="#E3F2FD"/>
+        <SolidColorBrush x:Key="AccentBlue" Color="#2196F3"/>
+        <SolidColorBrush x:Key="TextDark" Color="#212121"/>
+        <SolidColorBrush x:Key="TextLight" Color="#757575"/>
+        <SolidColorBrush x:Key="DividerColor" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="BackgroundLight" Color="#F5F9FF"/>
+        <SolidColorBrush x:Key="CardBackgroundLight" Color="White"/>
+        <SolidColorBrush x:Key="HeaderBackgroundLight" Color="White"/>
+
+        <!-- Gradient Brushes -->
+        <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#1976D2" Offset="0"/>
+            <GradientStop Color="#1565C0" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="PrimaryGradientDarkMode" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#374151" Offset="0"/>
+            <GradientStop Color="#1F2937" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Toolbar Button -->
+        <Style TargetType="Button" x:Key="ToolbarButton">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundLight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBlueLight}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#BBDEFB"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Primary Blue Button -->
+        <Style TargetType="Button" x:Key="PrimaryButton" BasedOn="{StaticResource ToolbarButton}">
+            <Setter Property="Background" Value="{DynamicResource PrimaryGradient}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource AccentBlue}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBlueDark}"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Logout Button Style -->
+        <Style TargetType="Button" x:Key="LogoutButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="4"
+                            Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBlueLight}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#BBDEFB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style TargetType="ComboBox" x:Key="ModernComboBox">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundLight}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="36"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <ContentPresenter Grid.Column="0"
+                                          x:Name="ContentSite"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="Left"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+
+                                    <ToggleButton Grid.Column="1"
+                                      x:Name="ToggleButton"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Focusable="False"
+                                      ClickMode="Press"
+                                      Background="Transparent"
+                                      BorderBrush="{x:Null}">
+                                        <Path Data="M0,0 L4,4 8,0z"
+                                  Width="10" Height="6"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Fill="{DynamicResource TextLight}"/>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+
+                            <Popup x:Name="PART_Popup"
+                       Placement="Bottom"
+                       AllowsTransparency="True"
+                       Focusable="False"
+                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                       PopupAnimation="Slide"
+                       PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border Background="{DynamicResource CardBackgroundLight}"
+                            BorderBrush="{DynamicResource DividerColor}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Margin="0,4,0,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="240">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBlue}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{DynamicResource TextLight}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NavButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <!-- Dark Mode Toggle Button Style -->
+        <!-- Dark Mode Toggle Button Style -->
+        <Style x:Key="DarkModeToggleButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" 
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="4"
+                    Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource PrimaryBlueLight}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#BBDEFB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
+
 </Application>
