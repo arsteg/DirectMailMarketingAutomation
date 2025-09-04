@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using PdfiumViewer;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
@@ -39,7 +40,7 @@ namespace MailMergeUI
 
         private void btnLoadTemplate_Click(object sender, RoutedEventArgs e)
         {
-            var ofd = new OpenFileDialog(); //{ Filter = "Image Files|*.png;*.jpg;*.bmp" };
+            var ofd = new OpenFileDialog() { Filter = "PDF Files|*.pdf" };
             if (ofd.ShowDialog() == true)
             {
                 templatePath = ofd.FileName;
@@ -50,43 +51,28 @@ namespace MailMergeUI
         private void btnLoadCsv_Click(object sender, RoutedEventArgs e)
         {
             var ofd = new OpenFileDialog() { Filter = "CSV Files|*.csv" };
-            if (ofd.ShowDialog() == true)
+
+            try
             {
-                csvPath = ofd.FileName;
-                
-                records = engine.ReadCsv(csvPath);
-                
-                Log($"CSV loaded: {csvPath} ({records.Count} records)");
+                if (ofd.ShowDialog() == true)
+                {
+                    ShowLoader();
+                    csvPath = ofd.FileName;
+
+                    records = engine.ReadCsv(csvPath);
+
+                    Log($"CSV loaded: {csvPath} ({records.Count} records)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"ERROR: {ex.Message}");
+            }
+            finally
+            {
+                HideLoader();
             }
         }
-
-        private void btnPreview_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
-            {
-                Log("Please load template and CSV first.");
-                return;
-            }
-
-            string tmpFile = Path.Combine(Path.GetTempPath(), "preview.png");
-
-            engine.MergePdfToPng(templatePath, records.First(), tmpFile);
-
-            var bmp = new BitmapImage();
-            using (var fs = new FileStream(tmpFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                bmp.BeginInit();
-                bmp.CacheOption = BitmapCacheOption.OnLoad; // load fully into memory
-                bmp.StreamSource = fs;
-                bmp.EndInit();
-            }
-            bmp.Freeze(); // optional: makes it cross-thread safe
-
-            imgPreview.Source = bmp;
-
-            Log("Preview generated for first record.");
-        }
-
 
         private void btnPrint_Click(object sender, RoutedEventArgs e)
         {
@@ -111,7 +97,7 @@ namespace MailMergeUI
 
                 string selectedPrinter = cmbPrinters.SelectedItem.ToString()!;
 
-                using (var pdfDoc = PdfDocument.Load(pdfPath))
+                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
                 using (var printDoc = pdfDoc.CreatePrintDocument())
                 {
                     printDoc.DocumentName = "MailMerge Output";
@@ -127,43 +113,9 @@ namespace MailMergeUI
             }
         }
 
-        private void btnExport_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
-            {
-                Log("Please load template and CSV first.");
-                return;
-            }
-
-            string outDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "MailMergeOutput");
-            if (Directory.Exists(outDir))
-            {
-                Directory.Delete(outDir, true);
-            }
-            Directory.CreateDirectory(outDir);
-
-            int i = 1;
-            foreach (var r in records)
-            {
-                string outPath = Path.Combine(outDir, $"merged_{i:00}_{r.PrimaryName}.png");
-
-                
-                engine.MergePdfToPng(templatePath, r, outPath);
-                
-                i++;
-            }
-            string pdfOut = Path.Combine(outDir, "merged_batch_sample.pdf");
-            
-            engine.CombinePngsToPdf(outDir, pdfOut);
-           
-
-            Log($"Export complete. Files in {outDir}");
-        }
-
         private void Log(string msg)
         {
-            txtStatus.Text = msg + Environment.NewLine;
-            
+            txtStatus.Text = txtStatus.Text + Environment.NewLine + Environment.NewLine + msg;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -177,5 +129,109 @@ namespace MailMergeUI
             dashboardWindow.Show();
             this.Close();
         }
+
+        private void btnPreview_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
+            {
+                Log("Please load template and CSV first.");
+                return;
+            }
+            try
+            {
+                ShowLoader();
+
+                var pdfBytes = engine.FillTemplate(templatePath, records.First());
+                using (var bmp = RenderPdfPreview(pdfBytes))
+                using (var msImg = new MemoryStream())
+                {
+                    bmp.Save(msImg, System.Drawing.Imaging.ImageFormat.Png);
+                    msImg.Position = 0;
+
+                    var img = new BitmapImage();
+                    img.BeginInit();
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.StreamSource = msImg;
+                    img.EndInit();
+                    img.Freeze();
+
+                    imgPreview.Source = img;
+                }
+
+                Log("Preview generated for first record.");
+            }
+            catch (Exception ex)
+            {
+                Log($"ERROR: {ex.Message}");
+            }
+            finally
+            {
+                HideLoader();
+            }
+        }
+
+        private void btnExport_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
+            {
+                Log("Please load template and CSV first.");
+                return;
+            }
+            try
+            {
+                ShowLoader();
+
+                string outDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "MailMergeOutput");
+                if (Directory.Exists(outDir))
+                {
+                    Directory.Delete(outDir, true);
+                }
+                Directory.CreateDirectory(outDir);
+
+                string pdfOut = Path.Combine(outDir, "merged_batch_sample.pdf");
+                engine.ExportBatch(templatePath, records, pdfOut);
+
+                Log($"Export complete. Files in {outDir}");
+            }
+            catch (Exception ex)
+            {
+                Log($"ERROR: {ex.Message}");
+            }
+            finally
+            {
+                HideLoader();
+            }
+        }
+
+        public Bitmap RenderPdfPreview(byte[] pdfBytes, int dpi = 300)
+        {
+            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(new MemoryStream(pdfBytes)))
+            {
+                var size = pdfDoc.PageSizes[0];
+                int widthPx = (int)(size.Width / 72f * dpi);
+                int heightPx = (int)(size.Height / 72f * dpi);
+
+                return (Bitmap)pdfDoc.Render(0, widthPx, heightPx, dpi, dpi, forPrinting: true);
+            }
+        }
+
+        private void ShowLoader()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                LoaderOverlay.Visibility = Visibility.Visible;
+                MainGrid.IsEnabled = false; // Disable interaction with other controls
+            });
+        }
+
+        private void HideLoader()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                LoaderOverlay.Visibility = Visibility.Collapsed;
+                MainGrid.IsEnabled = true; // Re-enable interaction
+            });
+        }
+
     }
 }

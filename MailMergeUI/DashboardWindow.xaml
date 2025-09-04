@@ -10,9 +10,6 @@
         WindowStyle="None">
 
     <Grid>
-        
-        
-        
         <!-- Define layout: Sidebar (250px) + MainContent (*) -->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
@@ -35,66 +32,155 @@
                         BorderBrush="Transparent" HorizontalContentAlignment="Left"
                         FontSize="16" Cursor="Hand"
                         Click="OpenMainWindow_Click"/>
-                
+
                 <Button Content="Settings" Height="40"
                         Foreground="White" Background="Transparent"
                         BorderBrush="Transparent" HorizontalContentAlignment="Left"
                         FontSize="16" Cursor="Hand" Click="OpenSettings_Click"/>
             </StackPanel>
             <StackPanel VerticalAlignment="Bottom" Margin="20">
-
                 <Button Content="🚪 Logout" Name="btnLogout" Height="40"
-            Foreground="White" Background="Transparent"
-            BorderBrush="Transparent" HorizontalContentAlignment="Left"
-            FontSize="16" Cursor="Hand" Click="btnLogout_Click"/>
+                        Foreground="White" Background="Transparent"
+                        BorderBrush="Transparent" HorizontalContentAlignment="Left"
+                        FontSize="16" Cursor="Hand" Click="btnLogout_Click"/>
             </StackPanel>
         </Grid>
 
         <!-- Main Content -->
         <Grid Grid.Column="1" Background="{StaticResource BackgroundLight}">
 
-            <Border Background="{StaticResource CardBackgroundLight}" 
-                    CornerRadius="12" 
-                    Margin="30" 
-                    Padding="20"
-                    BorderBrush="{StaticResource DividerColor}" 
-                    BorderThickness="1">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="15" 
-                                      ShadowDepth="4" 
-                                      Opacity="0.25" 
-                                      Direction="270"/>
-                </Border.Effect>
+            <StackPanel Margin="30">
+                <!-- Welcome Section -->
+                <Border Background="{StaticResource CardBackgroundLight}" 
+                        CornerRadius="12" 
+                        Padding="20"
+                        BorderBrush="{StaticResource DividerColor}" 
+                        BorderThickness="1"
+                        Margin="0,0,0,20">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="15" 
+                                          ShadowDepth="4" 
+                                          Opacity="0.25" 
+                                          Direction="270"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <TextBlock Text="Welcome to Dashboard"
+                                   FontSize="28"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextDark}"
+                                   Margin="0,0,0,20"/>
+                        <TextBlock Text="Select an option from the left menu to continue."
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextLight}"/>
+                    </StackPanel>
+                </Border>
 
-                <StackPanel>
-                    <TextBlock Text="Welcome to Dashboard"
-                               FontSize="28"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextDark}"
-                               Margin="0,0,0,20"/>
-                    <TextBlock Text="Select an option from the left menu to continue."
-                               FontSize="16"
-                               Foreground="{StaticResource TextLight}"/>
-                </StackPanel>
-            </Border>
+                <!-- Stats Section -->
+                <UniformGrid Columns="2" Rows="2" Margin="0,0,0,20" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+
+                    <!-- Letters due tomorrow -->
+                    <Border Background="{StaticResource CardBackgroundLight}" 
+                            CornerRadius="12" 
+                            Padding="20"
+                            Margin="10"
+                            BorderBrush="{StaticResource DividerColor}" 
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Letters Due Tomorrow" 
+                                       FontSize="18" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextDark}"
+                                       Margin="0,0,0,10"/>
+                            <TextBlock Text="25" 
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource PrimaryBlue}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Letters due/printed today -->
+                    <Border Background="{StaticResource CardBackgroundLight}" 
+                            CornerRadius="12" 
+                            Padding="20"
+                            Margin="10"
+                            BorderBrush="{StaticResource DividerColor}" 
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Letters Printed Today" 
+                                       FontSize="18" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextDark}"
+                                       Margin="0,0,0,10"/>
+                            <TextBlock Text="40" 
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource PrimaryBlue}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Letters printed this month -->
+                    <Border Background="{StaticResource CardBackgroundLight}" 
+                            CornerRadius="12" 
+                            Padding="20"
+                            Margin="10"
+                            BorderBrush="{StaticResource DividerColor}" 
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Letters This Month" 
+                                       FontSize="18" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextDark}"
+                                       Margin="0,0,0,10"/>
+                            <TextBlock Text="320" 
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource PrimaryBlue}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Past months option -->
+                    <Border Background="{StaticResource CardBackgroundLight}" 
+                            CornerRadius="12" 
+                            Padding="20"
+                            Margin="10"
+                            BorderBrush="{StaticResource DividerColor}" 
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Past Months Data" 
+                                       FontSize="18" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextDark}"
+                                       Margin="0,0,0,10"/>
+                            <Button Content="View Reports" 
+                                    Height="35"
+                                    Width="120"
+                                    HorizontalAlignment="Left"
+                                    Background="{StaticResource PrimaryGradient}"
+                                    Foreground="White"
+                                    BorderBrush="Transparent"
+                                    Cursor="Hand"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+            </StackPanel>
 
             <!-- Close Button -->
             <Button Content="✕" 
-        Width="30" Height="30" 
-        Background="Transparent"
-        Foreground="{DynamicResource TextLight}"
-        BorderThickness="0"
-        HorizontalAlignment="Right" 
-        VerticalAlignment="Top"
-        Margin="-2"
-        FontSize="12"
-        Click="CloseButton_Click">
+                    Width="30" Height="30" 
+                    Background="Transparent"
+                    Foreground="{DynamicResource TextLight}"
+                    BorderThickness="0"
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Top"
+                    Margin="-2"
+                    FontSize="12"
+                    Click="CloseButton_Click">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="border" 
-                    Background="{TemplateBinding Background}"
-                    CornerRadius="15"
-                    Width="30" Height="30">
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="15"
+                                Width="30" Height="30">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
