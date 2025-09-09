@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using PdfiumViewer;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.IO;
@@ -20,6 +21,7 @@ namespace MailMergeUI
         private List<PropertyRecord> records = new();
         private MailMergeEngine.MailMergeEngine engine = new();
         private bool isDarkMode = false;
+        private string lastTempPdfPath = null; // store last preview temp file to clean up later
 
         public MailMergeWindow()
         {
@@ -130,35 +132,54 @@ namespace MailMergeUI
             this.Close();
         }
 
-        private void btnPreview_Click(object sender, RoutedEventArgs e)
+        private async void btnPreview_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
             {
                 Log("Please load template and CSV first.");
                 return;
             }
+
             try
             {
                 ShowLoader();
 
-                var pdfBytes = engine.FillTemplate(templatePath, records.First());
-                using (var bmp = RenderPdfPreview(pdfBytes))
-                using (var msImg = new MemoryStream())
+                // write to a unique temp file`
+                string tempFile = Path.Combine(Path.GetTempPath(), $"mailmerge_preview_{Guid.NewGuid()}.pdf");
+
+                engine.ExportBatch(templatePath, records, tempFile);
+                
+
+                // Keep track so we can optionally delete later
+                lastTempPdfPath = tempFile;
+
+                // Ensure WebView2 is initialized
+                try
                 {
-                    bmp.Save(msImg, System.Drawing.Imaging.ImageFormat.Png);
-                    msImg.Position = 0;
-
-                    var img = new BitmapImage();
-                    img.BeginInit();
-                    img.CacheOption = BitmapCacheOption.OnLoad;
-                    img.StreamSource = msImg;
-                    img.EndInit();
-                    img.Freeze();
-
-                    imgPreview.Source = img;
+                    // this asynchronously ensures the CoreWebView2 is ready
+                    await PdfWebView.EnsureCoreWebView2Async();
+                    // navigate to the temp file
+                    PdfWebView.CoreWebView2.Navigate(new Uri(tempFile).AbsoluteUri);
+                    Log("Preview generated.");
                 }
-
-                Log("Preview generated for first record.");
+                catch (Exception webviewEx)
+                {
+                    // If WebView2 failed to initialize (runtime missing), fallback to launching external viewer
+                    Log($"WebView2 initialization failed: {webviewEx.Message}. Opening external PDF viewer as fallback.");
+                    try
+                    {
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = tempFile,
+                            UseShellExecute = true
+                        };
+                        Process.Start(psi);
+                    }
+                    catch (Exception ex2)
+                    {
+                        Log($"Failed to open PDF externally: {ex2.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {

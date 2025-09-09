@@ -8,7 +8,8 @@
         ResizeMode="NoResize"
         WindowStyle="None"
         FontFamily="Segoe UI"
-        AllowsTransparency="True">
+        AllowsTransparency="True"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
 
     <Grid Name="MainGrid">
 
@@ -141,9 +142,7 @@
                             <TextBlock Text="Document Preview" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}"/>
                         </Border>
 
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <Image Name="imgPreview" Stretch="Uniform" Margin="16"/>
-                        </ScrollViewer>
+                        <wv2:WebView2 x:Name="PdfWebView" Grid.Row="1" Margin="8"/>
                     </Grid>
                 </Border>
             </Grid>
