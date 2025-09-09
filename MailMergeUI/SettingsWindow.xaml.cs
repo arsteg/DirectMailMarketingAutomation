@@ -19,7 +19,7 @@ namespace MailMergeUI
         {
             ThemeManager.ToggleTheme();
 
-            if (!Properties.Settings.Default.IsDarkMode)
+            if (Properties.Settings.Default.IsDarkMode)
             {
                 btnDarkModeToggle.Content = "☀ Light Mode";
             }

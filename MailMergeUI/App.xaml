@@ -50,6 +50,42 @@
             <GradientStop Color="#1F2937" Offset="1"/>
         </LinearGradientBrush>
 
+        <!-- My Button style -->
+        <Style x:Key="MailMergeButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+
+            <Style.Triggers>
+                <!-- Change Foreground on Hover -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- My Button style -->
+        <Style x:Key="MailButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+
+            <Style.Triggers>
+                <!-- Change Foreground on Hover -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryBlue}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Toolbar Button -->
         <Style TargetType="Button" x:Key="ToolbarButton">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundLight}"/>
@@ -108,6 +144,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
                                 <Setter Property="Background" Value="{DynamicResource AccentBlue}"/>
                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBlueDark}"/>
                             </Trigger>

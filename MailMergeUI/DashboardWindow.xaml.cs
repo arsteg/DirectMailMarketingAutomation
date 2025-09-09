@@ -38,5 +38,12 @@ namespace MailMergeUI
             loginWindow.Show();
             this.Close();
         }
+
+        private void btnTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            TemplateWindow template = new TemplateWindow();
+            template.Show();
+            this.Close();
+        }
     }
 }

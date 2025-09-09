@@ -77,16 +77,16 @@
                             <StackPanel>
 
                                 <StackPanel Background="{DynamicResource CardBackgroundLight}">
-                                    <Button Content="📄 Load Template" Style="{StaticResource ToolbarButton}" Click="btnLoadTemplate_Click"/>
-                                    <Button Content="📑 Load CSV" Style="{StaticResource ToolbarButton}" Click="btnLoadCsv_Click"/>
-                                    <Button Content="👁 Preview" Style="{StaticResource ToolbarButton}" Click="btnPreview_Click"/>
-                                    <Button Content="💾 Export" Style="{StaticResource ToolbarButton}" Click="btnExport_Click"/>
+                                    <Button Content=" 📄 Load Template" Style="{DynamicResource MailButtonStyle}" Click="btnLoadTemplate_Click"/>
+                                    <Button Content=" 📑 Load CSV" Style="{DynamicResource MailButtonStyle}" Click="btnLoadCsv_Click"/>
+                                    <Button Content=" 👁 Preview" Style="{DynamicResource MailButtonStyle}" Click="btnPreview_Click"/>
+                                    <Button Content=" 💾 Export" Style="{DynamicResource MailButtonStyle}" Click="btnExport_Click"/>
 
                                     <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,16"/>
 
                                     <TextBlock Text="Printer" FontWeight="SemiBold" Foreground="{DynamicResource TextDark}" Margin="0,0,0,8"/>
-                                    <ComboBox Name="cmbPrinters" Style="{StaticResource ModernComboBox}" Margin="0,0,0,12"/>
-                                    <Button Content="🖨 Print" Style="{StaticResource PrimaryButton}" Click="btnPrint_Click"/>
+                                    <ComboBox Name="cmbPrinters" Style="{DynamicResource ModernComboBox}" Margin="0,0,0,12"/>
+                                    <Button Content="🖨 Print" Style="{DynamicResource PrimaryButton}" Click="btnPrint_Click"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -100,8 +100,8 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- Header -->
-                                <Border Grid.Row="0" Background="{DynamicResource PrimaryGradient}" CornerRadius="8,8,0,0" Padding="16,12">
-                                    <TextBlock Text="Activity Log" Foreground="White" FontWeight="SemiBold"/>
+                                <Border Grid.Row="0" BorderThickness="1" BorderBrush="{DynamicResource PrimaryBlueDark}" Background="{DynamicResource PrimaryBlueLight}" CornerRadius="8,8,0,0" Padding="16,12">
+                                    <TextBlock Text="Activity Log" Foreground="{DynamicResource PrimaryBlue}" FontWeight="SemiBold"/>
                                 </Border>
 
                                 <!-- Content -->
@@ -137,7 +137,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <Border Background="{DynamicResource PrimaryBlueLight}" CornerRadius="8,8,0,0" Padding="16,12">
+                        <Border BorderThickness="1" BorderBrush="{DynamicResource PrimaryBlueDark}" Background="{DynamicResource PrimaryBlueLight}" CornerRadius="8,8,0,0" Padding="16,12">
                             <TextBlock Text="Document Preview" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBlue}"/>
                         </Border>
 

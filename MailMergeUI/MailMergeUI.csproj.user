@@ -8,7 +8,13 @@
     <Compile Update="LoginWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="PdfTemplateCreator.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="SettingsWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="TemplateWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

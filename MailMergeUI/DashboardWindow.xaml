@@ -26,23 +26,13 @@
                            Margin="0,0,0,30"/>
 
                 <!-- Button to open MainWindow -->
-                <Button Content="Mail Merge" 
-                       Height="40" Margin="0,0,0,10"
-                        Foreground="White" Background="Transparent"
-                        BorderBrush="Transparent" HorizontalContentAlignment="Left"
-                        FontSize="16" Cursor="Hand"
-                        Click="OpenMainWindow_Click"/>
-
-                <Button Content="Settings" Height="40"
-                        Foreground="White" Background="Transparent"
-                        BorderBrush="Transparent" HorizontalContentAlignment="Left"
-                        FontSize="16" Cursor="Hand" Click="OpenSettings_Click"/>
+                <Button Content=" Mail Merge" Style="{DynamicResource MailMergeButtonStyle}" Click="OpenMainWindow_Click"/>
+                <Button Content=" Template Creator" Style="{DynamicResource MailMergeButtonStyle}" Click="btnTemplate_Click"/>
+                <Button Content=" Settings" Style="{DynamicResource MailMergeButtonStyle}" Click="OpenSettings_Click"/>
+                
             </StackPanel>
             <StackPanel VerticalAlignment="Bottom" Margin="20">
-                <Button Content="🚪 Logout" Name="btnLogout" Height="40"
-                        Foreground="White" Background="Transparent"
-                        BorderBrush="Transparent" HorizontalContentAlignment="Left"
-                        FontSize="16" Cursor="Hand" Click="btnLogout_Click"/>
+                <Button Content="🚪 Logout" Name="btnLogout" Style="{DynamicResource MailMergeButtonStyle}" Click="btnLogout_Click"/>
             </StackPanel>
         </Grid>
 
@@ -64,7 +54,7 @@
                                           Direction="270"/>
                     </Border.Effect>
                     <StackPanel>
-                        <TextBlock Text="Welcome to Dashboard"
+                        <TextBlock Text="Welcome to MailMax"
                                    FontSize="28"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource TextDark}"

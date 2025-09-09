@@ -177,21 +177,34 @@ namespace MailMergeUI
                 Log("Please load template and CSV first.");
                 return;
             }
+
             try
             {
                 ShowLoader();
 
-                string outDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "MailMergeOutput");
-                if (Directory.Exists(outDir))
+                // Let user choose where to save the PDF
+                var saveDialog = new SaveFileDialog
                 {
-                    Directory.Delete(outDir, true);
-                }
-                Directory.CreateDirectory(outDir);
+                    Title = "Save PDF File",
+                    Filter = "PDF Document (*.pdf)|*.pdf",
+                    FileName = "merged_batch_sample.pdf", // default name
+                    DefaultExt = ".pdf"
+                };
 
-                string pdfOut = Path.Combine(outDir, "merged_batch_sample.pdf");
+                bool? result = saveDialog.ShowDialog();
+
+                if (result != true)
+                {
+                    Log("Export cancelled by user.");
+                    return;
+                }
+
+                string pdfOut = saveDialog.FileName;
+
+                // Export the PDF
                 engine.ExportBatch(templatePath, records, pdfOut);
 
-                Log($"Export complete. Files in {outDir}");
+                Log($"Export complete. File saved at {pdfOut}");
             }
             catch (Exception ex)
             {

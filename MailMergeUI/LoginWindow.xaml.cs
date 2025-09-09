@@ -34,28 +34,36 @@ namespace MailMergeUI
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
-            var userName = txtUsername.Text;
-            var password = PasswordHelper.HashPassword(txtPassword.Password);
-
-            var db = new MailMergeDbContext();
-
-            var record = db.Users.Where(x=>userName==x.Email &&  password==x.Password).FirstOrDefault();
-            if (record != null)
+            try
             {
-                if(chkRememberMe.IsChecked == true)
+                var userName = txtUsername.Text;
+                var password = PasswordHelper.HashPassword(txtPassword.Password);
+
+                var db = new MailMergeDbContext();
+
+                var record = db.Users.Where(x => userName == x.Email && password == x.Password).FirstOrDefault();
+                if (record != null)
                 {
-                    Properties.Settings.Default.Username = txtUsername.Text;
-                    Properties.Settings.Default.RememberMe = chkRememberMe.IsChecked == true;
-                    Properties.Settings.Default.Save();
-                }
+                    if (chkRememberMe.IsChecked == true)
+                    {
+                        Properties.Settings.Default.Username = txtUsername.Text;
+                        Properties.Settings.Default.RememberMe = chkRememberMe.IsChecked == true;
+                        Properties.Settings.Default.Save();
+                    }
 
-                DashboardWindow dashboard = new DashboardWindow();
-                dashboard.Show();
-                this.Close();
+                    DashboardWindow dashboard = new DashboardWindow();
+                    dashboard.Show();
+                    this.Close();
+                }
+                else
+                {
+                    txtStatus.Text = "Invalid username or password!";
+                    txtStatus.Foreground = Brushes.Red;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                txtStatus.Text = "Invalid username or password!";
+                txtStatus.Text = $"Error Occured ! {ex.Message}";
                 txtStatus.Foreground = Brushes.Red;
             }
         }
@@ -63,6 +71,18 @@ namespace MailMergeUI
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void txtPassword_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // Option 1: Call the click handler directly
+                btnLogin_Click(sender, e);
+
+                // Option 2: Programmatically "click" the button
+                // btnLogin.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }
         }
     }
 }

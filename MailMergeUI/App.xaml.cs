@@ -1,6 +1,7 @@
 using MailMerge.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PdfSharp.Fonts;
 using System;
 using System.Windows;
 
@@ -14,6 +15,7 @@ namespace MailMergeUI
 
             // Load last saved theme
             ThemeManager.InitializeTheme();
+            GlobalFontSettings.UseWindowsFontsUnderWindows = true;
         }
     }
 }

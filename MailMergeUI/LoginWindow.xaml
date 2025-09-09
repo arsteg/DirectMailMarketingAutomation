@@ -272,7 +272,8 @@
                     <PasswordBox Grid.Row="4" 
                          Style="{DynamicResource ModernPasswordBox}"
                          Name="txtPassword"
-                         Margin="0,0,0,24"/>
+                         Margin="0,0,0,24"
+                         KeyDown="txtPassword_KeyDown"        />
 
                     <!-- Remember Me Checkbox -->
                     <CheckBox Grid.Row="5"
