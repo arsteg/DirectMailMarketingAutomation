@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMergeUI", "MailMergeUI\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMerge.Data", "DbContext\MailMerge.Data.csproj", "{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MailMerge.Installer", "MailMerge.Installer\MailMerge.Installer.vdproj", "{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,8 @@ Global
 		{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}.Debug|Any CPU.ActiveCfg = Debug
+		{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

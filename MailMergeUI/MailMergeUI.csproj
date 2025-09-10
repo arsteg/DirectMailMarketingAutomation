@@ -9,6 +9,7 @@
     <PackageReference Include="itext" Version="9.3.0" />
     <PackageReference Include="itext.bouncy-castle-adapter" Version="9.3.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3485.44" />
     <PackageReference Include="PdfiumViewer" Version="2.13.0" />
     <PackageReference Include="PdfiumViewer.Native.x86_64.v8-xfa" Version="2018.4.8.256" />
@@ -27,6 +28,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

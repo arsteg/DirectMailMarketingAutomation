@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MailMerge.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,8 +20,11 @@ namespace MailMergeUI
     /// </summary>
     public partial class TemplateWindow : Window
     {
-        public TemplateWindow()
+        private readonly MailMergeDbContext _dbContext;
+
+        public TemplateWindow(MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
             InitializeComponent();
         }
 
@@ -32,7 +36,7 @@ namespace MailMergeUI
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
             // If you want to return to MainWindow
-            DashboardWindow dashboard = new DashboardWindow();
+            DashboardWindow dashboard = new DashboardWindow(_dbContext);
             dashboard.Show();
             this.Close();
         }

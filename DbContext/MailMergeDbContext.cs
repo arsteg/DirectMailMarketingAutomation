@@ -6,12 +6,16 @@ namespace MailMerge.Data
 {
     public class MailMergeDbContext : DbContext
     {
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public MailMergeDbContext(DbContextOptions<MailMergeDbContext> options) : base(options)
         {
-            // Replace with your actual SQL Server connection string
-            optionsBuilder.UseSqlServer(
-                "Server=localhost;Database=MailMergeDb;Trusted_Connection=True;TrustServerCertificate=True;");
         }
+
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    // Replace with your actual SQL Server connection string
+        //    optionsBuilder.UseSqlServer(
+        //        "Server=localhost;Database=MailMergeDb;Trusted_Connection=True;TrustServerCertificate=True;");
+        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

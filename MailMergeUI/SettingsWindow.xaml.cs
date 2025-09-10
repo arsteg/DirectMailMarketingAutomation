@@ -1,12 +1,16 @@
-﻿using MailMergeUI.Properties;
+﻿using MailMerge.Data;
+using MailMergeUI.Properties;
 using System.Windows;
 
 namespace MailMergeUI
 {
     public partial class SettingsWindow : Window
     {
-        public SettingsWindow()
+        private readonly MailMergeDbContext _dbContext;
+
+        public SettingsWindow(MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
             InitializeComponent();
         }
 
@@ -33,7 +37,7 @@ namespace MailMergeUI
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
             // If you want to return to MainWindow
-            DashboardWindow dashboard = new DashboardWindow();
+            DashboardWindow dashboard = new DashboardWindow(_dbContext);
             dashboard.Show();
             this.Close();
         }

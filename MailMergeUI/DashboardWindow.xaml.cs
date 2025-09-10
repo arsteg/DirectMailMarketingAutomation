@@ -1,24 +1,28 @@
-﻿using System.Windows;
+﻿using MailMerge.Data;
+using System.Windows;
 
 namespace MailMergeUI
 {
     public partial class DashboardWindow : Window
     {
-        public DashboardWindow()
+        private readonly MailMergeDbContext _dbContext;
+
+        public DashboardWindow(MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
             InitializeComponent();
         }
 
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
         {
-            MailMergeWindow main = new MailMergeWindow();
+            MailMergeWindow main = new MailMergeWindow(_dbContext);
             main.Show();
             this.Close();
         }
 
         private void OpenSettings_Click(object sender, RoutedEventArgs e)
         {
-            SettingsWindow settings = new SettingsWindow();
+            SettingsWindow settings = new SettingsWindow(_dbContext);
             settings.Show();
             this.Close();
         }
@@ -34,14 +38,14 @@ namespace MailMergeUI
             Properties.Settings.Default.RememberMe = false;
             Properties.Settings.Default.Save();
 
-            LoginWindow loginWindow = new LoginWindow();
+            LoginWindow loginWindow = new LoginWindow(_dbContext);
             loginWindow.Show();
             this.Close();
         }
 
         private void btnTemplate_Click(object sender, RoutedEventArgs e)
         {
-            TemplateWindow template = new TemplateWindow();
+            TemplateWindow template = new TemplateWindow(_dbContext);
             template.Show();
             this.Close();
         }

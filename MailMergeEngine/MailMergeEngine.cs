@@ -2,6 +2,7 @@
 using iText.Forms;
 using iText.Kernel.Pdf;
 using MailMerge.Data;
+using MailMerge.Data.Helpers;
 using MailMerge.Data.Models;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,6 +13,14 @@ namespace MailMergeEngine
 {
     public class MailMergeEngine
     {
+        private readonly MailMergeDbContext _db;
+
+        public MailMergeEngine(MailMergeDbContext db)
+        {
+            _db = db;
+            _db.Database.EnsureCreated();
+        }
+
         public List<PropertyRecord> ReadCsv(string csvPath)
         {
             using var reader = new StreamReader(csvPath);
@@ -54,11 +63,8 @@ namespace MailMergeEngine
                 leads.Add(lead);
             }
 
-            using var db = new MailMergeDbContext();
-            db.Database.EnsureCreated();
-
             // ✅ Load all existing keys in memory once
-            var existingKeys = db.Properties
+            var existingKeys = _db.Properties
                 .Select(l => new { l.PrimaryName, l.Address })
                 .ToHashSet();
 
@@ -69,13 +75,12 @@ namespace MailMergeEngine
 
             if (newLeads.Any())
             {
-                db.Properties.AddRange(newLeads);  // Bulk add
-                db.SaveChanges();
+                _db.Properties.AddRange(newLeads);  // Bulk add
+                _db.SaveChanges();
             }
 
-            return db.Properties.ToList();
+            return _db.Properties.ToList();
         }
-
 
         public byte[] FillTemplate(string templatePath, PropertyRecord record)
         {
@@ -140,6 +145,13 @@ namespace MailMergeEngine
                     }
                 }
             }
+        }
+
+        public bool ValidateUser(string user,string password)
+        {
+            var hashedPassword = PasswordHelper.HashPassword(password);
+            var record = _db.Users.Where(x => user == x.Email && hashedPassword == x.Password).FirstOrDefault();
+            return record != null;
         }
 
     }

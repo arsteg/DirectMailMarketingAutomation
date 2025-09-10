@@ -1,4 +1,5 @@
-﻿using MailMerge.Data.Models;
+﻿using MailMerge.Data;
+using MailMerge.Data.Models;
 using Microsoft.Win32;
 using PdfiumViewer;
 using System;
@@ -19,12 +20,15 @@ namespace MailMergeUI
         private string templatePath = string.Empty;
         private string csvPath = string.Empty;
         private List<PropertyRecord> records = new();
-        private MailMergeEngine.MailMergeEngine engine = new();
+        private MailMergeEngine.MailMergeEngine engine;
         private bool isDarkMode = false;
         private string lastTempPdfPath = null; // store last preview temp file to clean up later
+        private readonly MailMergeDbContext _dbContext;
 
-        public MailMergeWindow()
+        public MailMergeWindow(MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
+            engine = new MailMergeEngine.MailMergeEngine(dbContext);
             InitializeComponent();
             LoadPrinters();
         }
@@ -127,7 +131,7 @@ namespace MailMergeUI
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
-            DashboardWindow dashboardWindow = new DashboardWindow();
+            DashboardWindow dashboardWindow = new DashboardWindow(_dbContext);
             dashboardWindow.Show();
             this.Close();
         }

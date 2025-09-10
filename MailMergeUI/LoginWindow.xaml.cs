@@ -21,12 +21,18 @@ namespace MailMergeUI
     /// </summary>
     public partial class LoginWindow : Window
     {
-        public LoginWindow()
+        private readonly MailMergeDbContext _dbContext;
+        private readonly MailMergeEngine.MailMergeEngine _engine;
+
+        public LoginWindow(MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
+            _engine = new MailMergeEngine.MailMergeEngine(dbContext);
+
             InitializeComponent();
             if (Properties.Settings.Default.RememberMe)
             {
-                DashboardWindow dashboard = new DashboardWindow();
+                DashboardWindow dashboard = new DashboardWindow(_dbContext);
                 dashboard.Show();
                 this.Close();
             }
@@ -37,12 +43,11 @@ namespace MailMergeUI
             try
             {
                 var userName = txtUsername.Text;
-                var password = PasswordHelper.HashPassword(txtPassword.Password);
+                var password = txtPassword.Password;
 
-                var db = new MailMergeDbContext();
+                var isValidated = _engine.ValidateUser(userName,password);
 
-                var record = db.Users.Where(x => userName == x.Email && password == x.Password).FirstOrDefault();
-                if (record != null)
+                if (isValidated)
                 {
                     if (chkRememberMe.IsChecked == true)
                     {
@@ -51,7 +56,7 @@ namespace MailMergeUI
                         Properties.Settings.Default.Save();
                     }
 
-                    DashboardWindow dashboard = new DashboardWindow();
+                    DashboardWindow dashboard = new DashboardWindow(_dbContext);
                     dashboard.Show();
                     this.Close();
                 }

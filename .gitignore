@@ -11,3 +11,7 @@
 /MailMergeUI/obj
 /RisoFtMailMergeEngine/bin/Debug/net8.0
 /RisoFtMailMergeEngine/obj
+/DbContext/bin/Release/net8.0
+/MailMergeEngine/bin/Release/net8.0
+/MailMergeUI/bin/Release/net8.0-windows
+/MailMerge.Installer/Release
