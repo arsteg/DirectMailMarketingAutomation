@@ -51,6 +51,10 @@ namespace MailMergeUI
             // Populate the font size ComboBox
             FontSizeComboBox.ItemsSource = new[] { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 36, 48, 72 };
             FontSizeComboBox.SelectedItem = 12;
+
+            // 👇 NEW: Populate the FormFieldComboBox
+            FormFieldComboBox.ItemsSource = new[] { "Select Field...", "Radar ID", "Apn", "Type", "Address", "City", "ZIP", "Owner", "Owner Type", "Owner Occ?", "Primary Name", "Primary First", "Mail Address", "Mail City", "Mail State", "Mail ZIP", "Foreclosure", "FCL Stage", "FCL Doc Type", "FCL Rec Date", "Trustee", "Trustee Phone", "TS Number" };
+            FormFieldComboBox.SelectedIndex = 0;
         }
 
         /// <summary>
@@ -202,7 +206,8 @@ namespace MailMergeUI
                 Background = Brushes.Transparent,
                 AcceptsReturn = true,
                 TextWrapping = TextWrapping.Wrap,
-                MinWidth = 100
+                MinWidth = 100,
+                IsReadOnly = true
             };
 
             CreateAndAddDraggableItem(newText, 20, 20);
@@ -224,7 +229,8 @@ namespace MailMergeUI
                 BorderBrush = (Brush)FindResource("DividerColor"),
                 BorderThickness = new Thickness(1),
                 Background = Brushes.White,
-                MinWidth = 150
+                MinWidth = 150,
+                IsReadOnly = true
             };
 
             CreateAndAddDraggableItem(newField, 20, 60);
@@ -242,6 +248,15 @@ namespace MailMergeUI
 
             // Attach mouse events for selection and dragging
             container.PreviewMouseLeftButtonDown += DraggableItem_PreviewMouseLeftButtonDown;
+
+            if (content is TextBox textBox)
+            {
+                // 👇 ADD THIS LINE to handle the double-click on the TextBox
+                textBox.PreviewMouseDoubleClick += TextBox_PreviewMouseDoubleClick;
+
+                // This line is from the original solution and is still correct
+                textBox.LostFocus += TextBox_LostFocus;
+            }
 
             // Set initial position on the canvas
             Canvas.SetLeft(container, x);
@@ -431,6 +446,54 @@ namespace MailMergeUI
                 {
                     MessageBox.Show($"Error loading image: {ex.Message}");
                 }
+            }
+        }
+
+        private void TextBox_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                textBox.IsReadOnly = false;
+                textBox.Focus();
+                textBox.SelectAll();
+
+                // This is VERY IMPORTANT. It stops the click event from bubbling up to the
+                // parent Border, which would incorrectly start a drag operation.
+                e.Handled = true;
+            }
+        }
+
+        private void FormFieldComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FormFieldComboBox.SelectedItem is string selectedField && selectedField != "Select Field...")
+            {
+                var newField = new TextBox
+                {
+                    Text = "{" + selectedField + "}", // Use the selected field name
+                    Tag = "FormField",
+                    FontFamily = new FontFamily(FontComboBox.SelectedItem.ToString()),
+                    FontSize = (int)FontSizeComboBox.SelectedItem,
+                    Foreground = (Brush)FindResource("TextDark"),
+                    Padding = new Thickness(2),
+                    BorderBrush = (Brush)FindResource("DividerColor"),
+                    BorderThickness = new Thickness(1),
+                    Background = Brushes.White,
+                    MinWidth = 150,
+                    IsReadOnly = true
+                };
+
+                CreateAndAddDraggableItem(newField, 20, 60);
+
+                // Reset the ComboBox to the default "Select Field..." option
+                FormFieldComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                textBox.IsReadOnly = true;
             }
         }
     }

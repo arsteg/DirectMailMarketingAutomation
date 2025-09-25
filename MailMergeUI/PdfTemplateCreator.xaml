@@ -161,8 +161,10 @@
                 <!-- Main actions -->
                 <Button Content="Add Text" Style="{StaticResource ToolBarButtonStyle}" 
                 Click="AddTextBlock_Click"/>
-                <Button Content="Add Form Field" Style="{StaticResource ToolBarButtonStyle}" 
-                Click="AddFormField_Click"/>
+                <ComboBox x:Name="FormFieldComboBox" Width="150"
+                  Style="{StaticResource ToolBarComboBoxStyle}" 
+                  SelectionChanged="FormFieldComboBox_SelectionChanged">
+                </ComboBox>
                 <Button Content="Add Image" Style="{StaticResource ToolBarButtonStyle}" 
                 Click="AddImage_Click"/>
 
