@@ -12,7 +12,11 @@ public class ApplicationDbContext : DbContext
     {
         // Use an SQLite connection string. 
         // The file 'appdata.db' will be created in the application directory.
-        optionsBuilder.UseSqlite("Data Source=appdata.db");
+        string dbPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "MailMax",
+                        "mailmerge.db");
+        optionsBuilder.UseSqlite($"Data Source={dbPath}");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
