@@ -11,7 +11,7 @@
         AllowsTransparency="True"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
 
-    <Grid Name="MainGrid">
+    <Grid Name="MainGrid" MouseDown="MainGrid_MouseDown">
 
         <!-- Close Button overlay -->
         <Button Content="✕" 
@@ -80,7 +80,6 @@
                                 <StackPanel Background="{DynamicResource CardBackgroundLight}">
                                     <Button Content=" 📄 Load Template" Style="{DynamicResource MailButtonStyle}" Click="btnLoadTemplate_Click"/>
                                     <Button Content=" 📑 Load CSV" Style="{DynamicResource MailButtonStyle}" Click="btnLoadCsv_Click"/>
-                                    <Button Content=" 👁 Preview" Style="{DynamicResource MailButtonStyle}" Click="btnPreview_Click"/>
                                     <Button Content=" 💾 Export" Style="{DynamicResource MailButtonStyle}" Click="btnExport_Click"/>
 
                                     <Border Height="1" Background="{DynamicResource DividerColor}" Margin="0,16"/>

@@ -1,5 +1,6 @@
 ﻿using MailMerge.Data;
 using System.Windows;
+using System.Windows.Input;
 
 namespace MailMergeUI
 {
@@ -48,6 +49,12 @@ namespace MailMergeUI
             TemplateWindow template = new TemplateWindow(_dbContext);
             template.Show();
             this.Close();
+        }
+
+        private void Grid_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MailMerge.Data;
 using MailMergeUI.Properties;
 using System.Windows;
+using System.Windows.Input;
 
 namespace MailMergeUI
 {
@@ -40,6 +41,12 @@ namespace MailMergeUI
             DashboardWindow dashboard = new DashboardWindow(_dbContext);
             dashboard.Show();
             this.Close();
+        }
+
+        private void SettingsGrid_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
         }
     }
 }

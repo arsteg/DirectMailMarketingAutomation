@@ -5,11 +5,14 @@ using iText.IO.Image;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using MailMerge.Data.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using Org.BouncyCastle.Asn1.Pkcs;
 using PdfSharp.Drawing;
@@ -17,7 +20,10 @@ using PdfSharp.Pdf;
 using PdfSharp.Pdf.AcroForms;
 using PdfSharp.Pdf.Annotations;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -40,10 +46,23 @@ namespace MailMergeUI
         private UIElement? _selectedElement;
         private Point _startPoint;
         private bool _isDragging;
+        // 👇 NEW STATE MANAGEMENT VARIABLES
+        private string? _loadedPdfPath;
+        private int _pageCount;
+        private int _currentPage;
+        // This dictionary is key: it stores the UI elements for each page number.
+        private readonly Dictionary<int, List<UIElement>> _pageElements = new Dictionary<int, List<UIElement>>();
+
+        // Constants for PDF page dimensions and coordinate conversion
+        private const float WpfToPdfScale = 72f / 96f;
+        private const double FontSizeScale = 1.15;
+        private readonly MailMergeEngine.MailMergeEngine _mailMergeEngine;
 
         public PdfTemplateCreator()
         {
+
             InitializeComponent();
+
             // Populate the font selection ComboBox
             FontComboBox.ItemsSource = new[] { "Arial", "Calibri", "Times New Roman", "Verdana", "Courier New" };
             FontComboBox.SelectedIndex = 0;
@@ -52,141 +71,187 @@ namespace MailMergeUI
             FontSizeComboBox.ItemsSource = new[] { 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 36, 48, 72 };
             FontSizeComboBox.SelectedItem = 12;
 
-            // 👇 NEW: Populate the FormFieldComboBox
+            // Populate the FormFieldComboBox
             FormFieldComboBox.ItemsSource = new[] { "Select Field...", "Radar ID", "Apn", "Type", "Address", "City", "ZIP", "Owner", "Owner Type", "Owner Occ?", "Primary Name", "Primary First", "Mail Address", "Mail City", "Mail State", "Mail ZIP", "Foreclosure", "FCL Stage", "FCL Doc Type", "FCL Rec Date", "Trustee", "Trustee Phone", "TS Number" };
             FormFieldComboBox.SelectedIndex = 0;
+
+            if (!DesignerProperties.GetIsInDesignMode(this))
+            {
+                _mailMergeEngine = App.Services!.GetRequiredService<MailMergeEngine.MailMergeEngine>();
+            }
+
+            // NEW: Initialize for a single, blank page
+            _currentPage = 1;
+            _pageCount = 1;
+            _pageElements[_currentPage] = new List<UIElement>();
+            UpdateNavigationUI();
         }
 
         /// <summary>
         /// Handles the click event for the "Export to PDF" button.
         /// </summary>
+        //private void ExportPdf_Click(object sender, RoutedEventArgs e)
+        //{
+        //    // Ensure the current page's elements are saved before exporting
+        //    SaveCurrentPageState();
+
+        //    var saveFileDialog = new SaveFileDialog
+        //    {
+        //        Filter = "PDF Document (*.pdf)|*.pdf",
+        //        Title = "Save PDF Template",
+        //        FileName = "Template.pdf"
+        //    };
+
+        //    if (saveFileDialog.ShowDialog() != true)
+        //        return;
+
+        //    string filename = saveFileDialog.FileName;
+        //    float pdfPageWidth = PageSize.A4.GetWidth();
+        //    float pdfPageHeight = PageSize.A4.GetHeight();
+        //    const float WpfToPdfScale = 72f / 96f;
+
+        //    using (var writer = new PdfWriter(filename))
+        //    using (var pdf = new iText.Kernel.Pdf.PdfDocument(writer))
+        //    using (var doc = new Document(pdf, new PageSize(pdfPageWidth, pdfPageHeight)))
+        //    {
+        //        doc.SetMargins(0, 0, 0, 0);
+
+        //        // Loop through each page in the dictionary
+        //        foreach (var page in _pageElements)
+        //        {
+        //            int pageNumber = page.Key;
+        //            var elementsOnPage = page.Value;
+
+        //            // If it's not the first page, add a new page to the document
+        //            if (pageNumber > 1)
+        //            {
+        //                doc.Add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+        //            }
+
+        //            // Re-render the PDF background for the current page
+        //            if (!string.IsNullOrEmpty(_loadedPdfPath))
+        //            {
+        //                try
+        //                {
+        //                    using (var pdfiumDoc = PdfiumViewer.PdfDocument.Load(_loadedPdfPath))
+        //                    {
+        //                        var drawingImage = pdfiumDoc.Render(pageNumber - 1, 96, 96, false);
+        //                        using (var ms = new MemoryStream())
+        //                        {
+        //                            drawingImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+        //                            var imageData = ms.ToArray();
+        //                            var itextBgImage = new iText.Layout.Element.Image(ImageDataFactory.Create(imageData));
+        //                            itextBgImage.SetWidth(pdfPageWidth).SetHeight(pdfPageHeight);
+        //                            itextBgImage.SetFixedPosition(pageNumber, 0, 0);
+        //                            doc.Add(itextBgImage);
+        //                        }
+        //                    }
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    System.Diagnostics.Debug.WriteLine($"Error rendering PDF background for page {pageNumber}: {ex.Message}");
+        //                }
+        //            }
+
+        //            // Loop through all UI elements for this specific page
+        //            foreach (UIElement element in elementsOnPage)
+        //            {
+        //                if (element is Border border)
+        //                {
+        //                    double leftD = Canvas.GetLeft(border);
+        //                    double topD = Canvas.GetTop(border);
+
+        //                    if (border.Child is TextBox textBox)
+        //                    {
+        //                        float x = (float)(leftD * WpfToPdfScale);
+        //                        float w = (float)(textBox.ActualWidth * WpfToPdfScale);
+        //                        float h = (float)(textBox.ActualHeight * WpfToPdfScale);
+        //                        float y = (float)((TemplateCanvas.Height - topD - textBox.ActualHeight) * WpfToPdfScale);
+
+        //                        if ((textBox.Tag as string)?.Equals("FormField", StringComparison.OrdinalIgnoreCase) == true)
+        //                        {
+        //                            string fieldName = textBox.Text?.Trim() ?? "field";
+        //                            if (fieldName.StartsWith("{") && fieldName.EndsWith("}"))
+        //                                fieldName = fieldName.Substring(1, fieldName.Length - 2);
+
+        //                            var ta = new iText.Forms.Form.Element.TextArea(fieldName);
+        //                            ta.SetInteractive(true);
+        //                            ta.SetValue(textBox.Text ?? string.Empty);
+        //                            ta.SetWidth(w);
+        //                            ta.SetHeight(h);
+        //                            ta.SetFixedPosition(pageNumber, x, y, w);
+        //                            ta.SetProperty(iText.Layout.Properties.Property.FONT_SIZE, iText.Layout.Properties.UnitValue.CreatePointValue((float)textBox.FontSize * WpfToPdfScale));
+        //                            doc.Add(ta);
+        //                        }
+        //                        else
+        //                        {
+        //                            var para = new iText.Layout.Element.Paragraph(textBox.Text ?? string.Empty)
+        //                                .SetFontSize((float)textBox.FontSize * WpfToPdfScale)
+        //                                .SetFixedPosition(pageNumber, x, y + (float)(h - textBox.FontSize * 1.15 * WpfToPdfScale), w);
+
+        //                            if (textBox.Foreground is SolidColorBrush fgBrush)
+        //                            {
+        //                                var c = fgBrush.Color;
+        //                                para.SetFontColor(new iText.Kernel.Colors.DeviceRgb(c.R, c.G, c.B));
+        //                            }
+        //                            doc.Add(para);
+        //                        }
+        //                    }
+        //                    else if (border.Child is System.Windows.Controls.Image image)
+        //                    {
+        //                        if (image.Tag is byte[] imageData)
+        //                        {
+        //                            float x = (float)(leftD * WpfToPdfScale);
+        //                            float w = (float)(image.ActualWidth * WpfToPdfScale);
+        //                            float h = (float)(image.ActualHeight * WpfToPdfScale);
+        //                            float y = (float)((TemplateCanvas.Height - topD - image.ActualHeight) * WpfToPdfScale);
+
+        //                            var itextImage = new iText.Layout.Element.Image(ImageDataFactory.Create(imageData));
+        //                            itextImage.SetWidth(w);
+        //                            itextImage.SetHeight(h);
+        //                            itextImage.SetFixedPosition(pageNumber, x, y);
+        //                            doc.Add(itextImage);
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //        doc.Close();
+        //    }
+
+        //    Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+        //}
+
         private void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
-            var saveFileDialog = new SaveFileDialog
+            // Ensure the current page's elements are saved before exporting
+            SaveCurrentPageState();
+
+            var saveDialog = new SaveFileDialog
             {
                 Filter = "PDF Document (*.pdf)|*.pdf",
                 Title = "Save PDF Template",
                 FileName = "Template.pdf"
             };
 
-            if (saveFileDialog.ShowDialog() != true)
-                return;
-
-            string filename = saveFileDialog.FileName;
-            float pageWidth = (float)TemplateCanvas.Width;
-            float pageHeight = (float)TemplateCanvas.Height;
-
-            using (var writer = new PdfWriter(filename))
-            using (var pdf = new iText.Kernel.Pdf.PdfDocument(writer))
-            using (var doc = new Document(pdf, new PageSize(pageWidth, pageHeight)))
+            if (saveDialog.ShowDialog() != true)
             {
-                doc.SetMargins(0, 0, 0, 0);
-                int pageNumber = 1;
-
-                foreach (UIElement element in TemplateCanvas.Children)
-                {
-                    if(element is Border border)
-                    {
-                        double leftD = Canvas.GetLeft(border);
-                        double topD = Canvas.GetTop(border);
-
-                        if (border.Child is TextBox textBox)
-                        {
-                            if (double.IsNaN(leftD)) leftD = 0;
-                            if (double.IsNaN(topD)) topD = 0;
-
-                            double widthD = textBox.ActualWidth;
-                            double heightD = textBox.ActualHeight;
-
-                            float x = (float)leftD;
-                            float y = (float)(pageHeight - topD - heightD); // convert top-left -> bottom-left
-                            float w = (float)widthD;
-                            float h = (float)heightD;
-
-                            if ((textBox.Tag as string)?.Equals("FormField", StringComparison.OrdinalIgnoreCase) == true)
-                            {
-                                string fieldName = textBox.Text?.Trim() ?? "field";
-                                if (fieldName.StartsWith("{") && fieldName.EndsWith("}"))
-                                    fieldName = fieldName.Substring(1, fieldName.Length - 2);
-
-                                var ta = new iText.Forms.Form.Element.TextArea(fieldName);
-
-                                // Make interactive so layout creates an AcroForm field
-                                ta.SetInteractive(true);
-
-                                // Set the field's default value
-                                ta.SetValue(textBox.Text ?? string.Empty);
-
-                                // IMPORTANT: set width/height using helpers (avoid passing raw floats into SetProperty)
-                                ta.SetWidth(w);     // sets width in points
-                                ta.SetHeight(h);    // sets height in points   <-- fixes the cast error
-
-                                // Fix position (x,y,width). Note SetFixedPosition(x,y,width) is OK; height is set by SetHeight.
-                                ta.SetFixedPosition(pageNumber, x, y, w);
-
-                                // Font size: use UnitValue to set FONT_SIZE property
-                                ta.SetProperty(iText.Layout.Properties.Property.FONT_SIZE, iText.Layout.Properties.UnitValue.CreatePointValue((float)textBox.FontSize));
-
-                                // Border / appearance using layout helpers
-                                //ta.SetProperty(iText.Layout.Properties.Property.BORDER, new iText.Layout.Borders.SolidBorder(1f));
-
-                                doc.Add(ta);
-                            }
-                            else
-                            {
-                                var para = new iText.Layout.Element.Paragraph(textBox.Text ?? string.Empty)
-                                    .SetFontSize((float)textBox.FontSize)
-                                    .SetFixedPosition(pageNumber, x, y + (float)(h - textBox.FontSize * 1.15), w);
-
-                                if (textBox.Foreground is SolidColorBrush fgBrush)
-                                {
-                                    var c = fgBrush.Color;
-                                    para.SetFontColor(new iText.Kernel.Colors.DeviceRgb(c.R, c.G, c.B));
-                                }
-
-                                doc.Add(para);
-                            }
-                        }
-                        else if (border.Child is System.Windows.Controls.Image image)
-                        {
-                            if (image.Tag is byte[] imageData)
-                            {
-                                // Get position and size
-                                
-                                if (double.IsNaN(leftD)) leftD = 0;
-                                if (double.IsNaN(topD)) topD = 0;
-
-                                double widthD = image.ActualWidth;
-                                double heightD = image.ActualHeight;
-
-                                // Convert WPF's top-left coordinates to iText's bottom-left coordinates
-                                float x = (float)leftD;
-                                float y = (float)(pageHeight - topD - heightD);
-                                float w = (float)widthD;
-                                float h = (float)heightD;
-
-                                // Create an iText Image object from the byte array stored in the Tag
-                                var itextImage = new iText.Layout.Element.Image(ImageDataFactory.Create(imageData));
-
-                                // Set the size and absolute position of the image on the page
-                                itextImage.SetWidth(w);
-                                itextImage.SetHeight(h);
-                                itextImage.SetFixedPosition(1, x, y); // Using page number 1 for now
-
-                                // Add the image to the document
-                                doc.Add(itextImage);
-                            }
-                        }
-                    }
-
-                   
-                    
-                }
-
-                doc.Close();
+                return;
             }
 
-            Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+            try
+            {
+                ExportToPdf(saveDialog.FileName);
+                // Open the generated PDF file using the default system viewer
+                Process.Start(new ProcessStartInfo(saveDialog.FileName) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                // Provide a user-friendly error message
+                MessageBox.Show($"An error occurred while exporting the PDF: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine(ex.ToString());
+            }
         }
 
         /// <summary>
@@ -235,7 +300,7 @@ namespace MailMergeUI
 
             CreateAndAddDraggableItem(newField, 20, 60);
         }
-        // ... rest of the existing code ...
+
         private void CreateAndAddDraggableItem(UIElement content, double x, double y)
         {
             var container = new Border
@@ -495,6 +560,348 @@ namespace MailMergeUI
             {
                 textBox.IsReadOnly = true;
             }
+        }
+
+        private void LoadPdf_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "PDF Documents (*.pdf)|*.pdf",
+                Title = "Load PDF Template"
+            };
+
+            if (openFileDialog.ShowDialog() != true) return;
+
+            try
+            {
+                _loadedPdfPath = openFileDialog.FileName;
+
+                // Use iText to quickly get page count
+                using (var pdfDoc = new iText.Kernel.Pdf.PdfDocument(new PdfReader(_loadedPdfPath)))
+                {
+                    _pageCount = pdfDoc.GetNumberOfPages();
+                }
+
+                // Reset state
+                _pageElements.Clear();
+                TemplateCanvas.Children.Clear(); // Clear any existing elements
+                for (int i = 1; i <= _pageCount; i++)
+                {
+                    _pageElements[i] = new List<UIElement>(); // Initialize list for each page
+                }
+
+                LoadPage(1); // Load the first page
+
+                // Enable UI controls
+                ExportButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading PDF: {ex.Message}");
+                _loadedPdfPath = null;
+            }
+        }
+
+        private void PrevPage_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentPage > 1)
+            {
+                LoadPage(_currentPage - 1);
+            }
+        }
+
+        private void NextPage_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentPage < _pageCount)
+            {
+                LoadPage(_currentPage + 1);
+            }
+        }
+
+        private void LoadPage(int pageNumber)
+        {
+            if (_loadedPdfPath == null || pageNumber < 1 || pageNumber > _pageCount)
+                return;
+
+            // 1. Save elements on the current page before switching
+            if (_currentPage > 0)
+            {
+                SaveCurrentPageState();
+            }
+
+            // Clear canvas for the new page
+            TemplateCanvas.Children.Clear();
+
+            // 2. Render the new page as the background
+            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(_loadedPdfPath))
+            {
+                // Render to a System.Drawing.Image
+                var drawingImage = pdfDoc.Render(pageNumber - 1, 96, 96, false);
+
+                // Convert to a WPF BitmapImage
+                using (var ms = new MemoryStream())
+                {
+                    drawingImage.Save(ms, ImageFormat.Png);
+                    ms.Position = 0;
+                    var bitmapImage = new BitmapImage();
+                    bitmapImage.BeginInit();
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.StreamSource = ms;
+                    bitmapImage.EndInit();
+
+                    PdfBackgroundBrush.ImageSource = bitmapImage;
+                }
+            }
+
+            _currentPage = pageNumber;
+
+            // 3. Restore the elements for the new page
+            RestorePageState(_currentPage);
+
+            // 4. Update UI
+            UpdateNavigationUI();
+        }
+
+        private void SaveCurrentPageState()
+        {
+            if (_pageElements.ContainsKey(_currentPage))
+            {
+                _pageElements[_currentPage] = TemplateCanvas.Children.Cast<UIElement>().ToList();
+            }
+        }
+
+        private void RestorePageState(int pageNumber)
+        {
+            TemplateCanvas.Children.Clear();
+            if (_pageElements.ContainsKey(pageNumber))
+            {
+                foreach (var element in _pageElements[pageNumber])
+                {
+                    TemplateCanvas.Children.Add(element);
+                }
+            }
+        }
+
+        private void UpdateNavigationUI()
+        {
+            PageNumberText.Text = $"Page {_currentPage} of {_pageCount}";
+            PrevPage.IsEnabled = _currentPage > 1;
+            NextPage.IsEnabled = _currentPage < _pageCount;
+        }
+
+        private async void LoadCSV_Click(object sender, RoutedEventArgs e)
+        {
+            var ofd = new OpenFileDialog() { Filter = "CSV Files|*.csv" };
+            string csvPath = "";
+            List<PropertyRecord> records = new();
+            try
+            {
+                if (ofd.ShowDialog() == true)
+                {
+                    
+                    csvPath = ofd.FileName;
+
+                }
+
+                SaveCurrentPageState();
+
+                //Export the template to temp pdf file
+                string tempTemplateFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"temp_template_preview_{Guid.NewGuid()}.pdf");
+                ExportToPdf(tempTemplateFile);
+
+                //Load csv
+                records = _mailMergeEngine.ReadCsv(csvPath);
+                
+
+                //create and show preview
+                string tempPreviewFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"temp_CSV_preview_{Guid.NewGuid()}.pdf");
+                _mailMergeEngine.ExportBatch(tempTemplateFile, records, tempPreviewFile);
+
+                CanvasBorder.Visibility = Visibility.Collapsed;
+                // this asynchronously ensures the CoreWebView2 is ready
+                await PdfWebView.EnsureCoreWebView2Async();
+                // navigate to the temp file
+                PdfWebView.CoreWebView2.Navigate(new Uri(tempPreviewFile).AbsoluteUri);
+
+
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+
+        private void ExportToPdf(string filename)
+        {
+            // Define PDF page dimensions
+            var pdfPageWidth = PageSize.A4.GetWidth();
+            var pdfPageHeight = PageSize.A4.GetHeight();
+            var pageSize = new PageSize(pdfPageWidth, pdfPageHeight);
+
+            using (var writer = new PdfWriter(filename))
+            using (var pdf = new iText.Kernel.Pdf.PdfDocument(writer))
+            using (var doc = new Document(pdf, pageSize))
+            {
+                doc.SetMargins(0, 0, 0, 0);
+
+                // Iterate through each page's elements
+                foreach (var pageEntry in _pageElements.OrderBy(p => p.Key))
+                {
+                    int pageNumber = pageEntry.Key;
+                    var elementsOnPage = pageEntry.Value;
+
+                    // Add a new page for all pages after the first
+                    if (pageNumber > 1)
+                    {
+                        doc.Add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+                    }
+
+                    // Render the background image if a source PDF was loaded
+                    RenderPageBackground(doc, _loadedPdfPath, pageNumber, pdfPageWidth, pdfPageHeight);
+
+                    // Add each UI element to the current page
+                    foreach (UIElement element in elementsOnPage)
+                    {
+                        AddUIElementToPdf(doc, element, pageNumber);
+                    }
+                }
+            }
+        }
+
+        private void RenderPageBackground(Document doc, string pdfPath, int pageNumber, float pageWidth, float pageHeight)
+        {
+            if (string.IsNullOrEmpty(pdfPath)) return;
+
+            try
+            {
+                using (var pdfiumDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
+                {
+                    // Render the page as a bitmap image at 96 DPI
+                    var drawingImage = pdfiumDoc.Render(pageNumber - 1, 96, 96, false);
+                    using (var ms = new MemoryStream())
+                    {
+                        drawingImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        var imageData = ms.ToArray();
+                        var itextBgImage = new iText.Layout.Element.Image(ImageDataFactory.Create(imageData));
+                        itextBgImage.SetWidth(pageWidth).SetHeight(pageHeight);
+                        // Fixed position is relative to the current page
+                        itextBgImage.SetFixedPosition(pageNumber, 0, 0);
+                        doc.Add(itextBgImage);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error rendering PDF background for page {pageNumber}: {ex.Message}");
+                // Log the exception but allow the rest of the export to continue
+            }
+        }
+
+        private void AddUIElementToPdf(Document doc, UIElement element, int pageNumber)
+        {
+            if (element is Border border)
+            {
+                var child = border.Child;
+                if (child is TextBox textBox)
+                {
+                    HandleTextBox(doc, textBox, pageNumber, border);
+                }
+                else if (child is System.Windows.Controls.Image image)
+                {
+                    HandleImage(doc, image, pageNumber, border);
+                }
+                // Add other element types here as needed
+            }
+        }
+
+        private void HandleTextBox(Document doc, TextBox textBox, int pageNumber, Border border)
+        {
+            // Get scaled coordinates
+            var (x, y, w, h) = ConvertWpfToPdfPosition(
+                Canvas.GetLeft(border),
+                Canvas.GetTop(border),
+                textBox.ActualWidth,
+                textBox.ActualHeight,
+                TemplateCanvas.Height,
+                WpfToPdfScale);
+
+            if ((textBox.Tag as string)?.Equals("FormField", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                string fieldName = GetFormFieldName(textBox.Text);
+                var ta = new iText.Forms.Form.Element.TextArea(fieldName);
+                ta.SetInteractive(true);
+                ta.SetValue(textBox.Text ?? string.Empty);
+                ta.SetWidth(w).SetHeight(h);
+                ta.SetFixedPosition(pageNumber, x, y, w);
+                ta.SetProperty(Property.FONT_SIZE, UnitValue.CreatePointValue((float)textBox.FontSize * WpfToPdfScale));
+                doc.Add(ta);
+            }
+            else
+            {
+                var para = new Paragraph(textBox.Text ?? string.Empty)
+                    .SetFontSize((float)textBox.FontSize * WpfToPdfScale);
+                // Adjust the y-position to account for font size difference
+                para.SetFixedPosition(pageNumber, x, y, w);
+
+                if (textBox.Foreground is SolidColorBrush fgBrush)
+                {
+                    var c = fgBrush.Color;
+                    para.SetFontColor(new DeviceRgb(c.R, c.G, c.B));
+                }
+                doc.Add(para);
+            }
+        }
+
+        private void HandleImage(Document doc, System.Windows.Controls.Image image, int pageNumber, Border border)
+        {
+            if (image.Tag is byte[] imageData)
+            {
+                var (x, y, w, h) = ConvertWpfToPdfPosition(
+                    Canvas.GetLeft(border),
+                    Canvas.GetTop(border),
+                    image.ActualWidth,
+                    image.ActualHeight,
+                    TemplateCanvas.Height,
+                    WpfToPdfScale);
+
+                var itextImage = new iText.Layout.Element.Image(ImageDataFactory.Create(imageData));
+                itextImage.SetWidth(w).SetHeight(h);
+                itextImage.SetFixedPosition(pageNumber, x, y);
+                doc.Add(itextImage);
+            }
+        }
+
+        private (float x, float y, float w, float h) ConvertWpfToPdfPosition(
+        double wpfLeft, double wpfTop, double wpfWidth, double wpfHeight, double canvasHeight, float scaleFactor)
+        {
+            float x = (float)(wpfLeft * scaleFactor);
+            float w = (float)(wpfWidth * scaleFactor);
+            float h = (float)(wpfHeight * scaleFactor);
+            // PDF coordinates start from the bottom-left, WPF from top-left.
+            // Calculate the y-coordinate of the top edge in the PDF coordinate system
+            float yTop = (float)((canvasHeight - wpfTop) * scaleFactor);
+            // Calculate the y-coordinate of the bottom edge in the PDF coordinate system
+            float y = yTop - h; // h is the scaled height
+            return (x, y, w, h);
+        }
+
+        private string GetFormFieldName(string text)
+        {
+            string fieldName = text?.Trim() ?? "field";
+            if (fieldName.StartsWith("{") && fieldName.EndsWith("}"))
+            {
+                fieldName = fieldName.Substring(1, fieldName.Length - 2);
+            }
+            return fieldName;
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            PdfWebView.Visibility = Visibility.Collapsed;
+            CanvasBorder.Visibility = Visibility.Visible;
+
         }
     }
 }

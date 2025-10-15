@@ -9,7 +9,7 @@
         ResizeMode="NoResize"
         WindowStyle="None">
 
-    <Grid>
+    <Grid MouseDown="Grid_MouseDown">
         <!-- Define layout: Sidebar (250px) + MainContent (*) -->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>

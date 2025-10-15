@@ -11,7 +11,7 @@
         AllowsTransparency="True"
         xmlns:local="clr-namespace:MailMergeUI">
 
-    <Grid Name="TemplateGrid">
+    <Grid Name="TemplateGrid" MouseDown="TemplateGrid_MouseDown">
 
         <!-- Close Button -->
         <Button Content="✕" 

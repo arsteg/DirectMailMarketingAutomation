@@ -9,7 +9,11 @@ using System.Drawing;
 using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -44,17 +48,22 @@ namespace MailMergeUI
                 cmbPrinters.SelectedIndex = 0;
         }
 
-        private void btnLoadTemplate_Click(object sender, RoutedEventArgs e)
+        private async void btnLoadTemplate_Click(object sender, RoutedEventArgs e)
         {
             var ofd = new OpenFileDialog() { Filter = "PDF Files|*.pdf" };
             if (ofd.ShowDialog() == true)
             {
                 templatePath = ofd.FileName;
+
+                // this asynchronously ensures the CoreWebView2 is ready
+                await PdfWebView.EnsureCoreWebView2Async();
+                // navigate to the temp file
+                PdfWebView.CoreWebView2.Navigate(new Uri(templatePath).AbsoluteUri);
                 Log($"Template loaded: {templatePath}");
             }
         }
 
-        private void btnLoadCsv_Click(object sender, RoutedEventArgs e)
+        private async void btnLoadCsv_Click(object sender, RoutedEventArgs e)
         {
             var ofd = new OpenFileDialog() { Filter = "CSV Files|*.csv" };
 
@@ -66,6 +75,8 @@ namespace MailMergeUI
                     csvPath = ofd.FileName;
 
                     records = engine.ReadCsv(csvPath);
+
+                    ShowPreview();
 
                     Log($"CSV loaded: {csvPath} ({records.Count} records)");
                 }
@@ -136,7 +147,7 @@ namespace MailMergeUI
             this.Close();
         }
 
-        private async void btnPreview_Click(object sender, RoutedEventArgs e)
+        private async void ShowPreview()
         {
             if (string.IsNullOrEmpty(templatePath) || records.Count == 0)
             {
@@ -271,5 +282,10 @@ namespace MailMergeUI
             });
         }
 
+        private void MainGrid_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
+        }
     }
 }

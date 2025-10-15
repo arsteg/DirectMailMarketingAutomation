@@ -15,7 +15,7 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_4765BB32ED8F4640BAFDC7956F1E47A4"
+        "MsmKey" = "8:_05E2FD93B6DE4E2FB258CD3FA884B2A5"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -37,6 +37,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -53,6 +69,32 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.NetCore.DesktopRuntime.8.0.x64"
+                    {
+                    "Name" = "8:.NET Desktop Runtime 8.0.19 (x64)"
+                    "ProductCode" = "8:Microsoft.NetCore.DesktopRuntime.8.0.x64"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.NetCore.DesktopRuntime.8.0.x86"
+                    {
+                    "Name" = "8:.NET Desktop Runtime 8.0.19 (x86)"
+                    "ProductCode" = "8:Microsoft.NetCore.DesktopRuntime.8.0.x86"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -141,7 +183,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:MailMax"
         "ProductCode" = "8:{94903D31-4475-451F-A7C1-B3AF7DC84CDA}"
-        "PackageCode" = "8:{9D52E1D5-3EB0-41D2-983F-ACE5A90BAF25}"
+        "PackageCode" = "8:{7A5C9239-20C5-405F-81EB-71E5F0954FFB}"
         "UpgradeCode" = "8:{78764D2B-364D-4FF6-A05C-3CB987FED3CE}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -261,7 +303,7 @@
         }
         "Shortcut"
         {
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_34B1CC83C8DA4350BD3007984556CC04"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_51C4664142D344B292A5E6EAF687AF38"
             {
             "Name" = "8:MailMax"
             "Arguments" = "8:"
@@ -269,7 +311,7 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_4765BB32ED8F4640BAFDC7956F1E47A4"
+            "Target" = "8:_05E2FD93B6DE4E2FB258CD3FA884B2A5"
             "Folder" = "8:_FEB4A41CC8224DBA930A9A9A9391E3D9"
             "WorkingFolder" = "8:_7069CC0056BE4F109D4D7DAD117EB73A"
             "Icon" = "8:"
@@ -674,7 +716,7 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4765BB32ED8F4640BAFDC7956F1E47A4"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_05E2FD93B6DE4E2FB258CD3FA884B2A5"
             {
             "SourcePath" = "8:..\\MailMergeUI\\obj\\Release\\net8.0-windows\\apphost.exe"
             "TargetName" = "8:"

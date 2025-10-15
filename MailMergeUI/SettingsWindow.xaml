@@ -10,7 +10,7 @@
         FontFamily="Segoe UI"
         AllowsTransparency="True">
 
-    <Grid Name="SettingsGrid">
+    <Grid Name="SettingsGrid" MouseDown="SettingsGrid_MouseDown">
 
         <!-- Close Button -->
         <Button Content="✕" 

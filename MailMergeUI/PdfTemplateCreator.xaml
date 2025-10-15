@@ -6,7 +6,8 @@
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="1000"
              FontFamily="Segoe UI"
-             SnapsToDevicePixels="True">
+             SnapsToDevicePixels="True"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
 
     <UserControl.Resources>
         <!-- Theme Colors -->
@@ -156,56 +157,80 @@
         BorderThickness="0,0,0,1"
         Padding="12,8">
 
-            <!-- Horizontal toolbar layout without ToolBar -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10">
-                <!-- Main actions -->
-                <Button Content="Add Text" Style="{StaticResource ToolBarButtonStyle}" 
-                Click="AddTextBlock_Click"/>
-                <ComboBox x:Name="FormFieldComboBox" Width="150"
-                  Style="{StaticResource ToolBarComboBoxStyle}" 
-                  SelectionChanged="FormFieldComboBox_SelectionChanged">
-                </ComboBox>
-                <Button Content="Add Image" Style="{StaticResource ToolBarButtonStyle}" 
-                Click="AddImage_Click"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <!-- Divider -->
-                <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+                <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="10">
 
-                <!-- Font selector -->
-                <TextBlock Text="Font:" VerticalAlignment="Center" 
-                   Foreground="{StaticResource TextLight}" Margin="0,0,5,0"/>
-                <ComboBox x:Name="FontComboBox" Width="140"
-                  Style="{StaticResource ToolBarComboBoxStyle}" 
-                  IsEnabled="False"
-                  SelectionChanged="FontComboBox_SelectionChanged"/>
+                    <!-- Main actions -->
+                    <Button Content="Add Text" Style="{StaticResource ToolBarButtonStyle}" Click="AddTextBlock_Click"/>
 
-                <!-- Divider -->
-                <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+                    <Button Content="Add Image" Style="{StaticResource ToolBarButtonStyle}" Click="AddImage_Click"/>
 
-                <!-- Font selector -->
-                <TextBlock Text="Font Size:" VerticalAlignment="Center" 
-                Foreground="{StaticResource TextLight}" Margin="0,0,5,0"/>
-                <ComboBox x:Name="FontSizeComboBox" Width="50"
-                   Style="{StaticResource ToolBarComboBoxStyle}" 
-                   IsEnabled="False"
-                   SelectionChanged="FontSizeComboBox_SelectionChanged"/>         
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
 
-                <!-- Divider -->
-                <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+                    <TextBlock Text="Add Form Field:" VerticalAlignment="Center" Foreground="{StaticResource TextLight}" Margin="10,0,5,0"/>
 
-                <!-- Secondary actions -->
-                <Button x:Name="DeleteButton" Content="Delete"
-                Style="{StaticResource ToolBarButtonStyle}" Background="Red"
-                IsEnabled="False" Click="Delete_Click"/>
-                <Button Content="Export to PDF" Style="{StaticResource ToolBarButtonStyle}"
-                Click="ExportPdf_Click"/>
-            </StackPanel>
+                    <ComboBox x:Name="FormFieldComboBox" Width="150" Style="{StaticResource ToolBarComboBoxStyle}"  SelectionChanged="FormFieldComboBox_SelectionChanged"/>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+
+                    <TextBlock Text="Font:" VerticalAlignment="Center" Foreground="{StaticResource TextLight}" Margin="0,0,5,0"/>
+
+                    <ComboBox x:Name="FontComboBox" Width="140" Style="{StaticResource ToolBarComboBoxStyle}" IsEnabled="False" SelectionChanged="FontComboBox_SelectionChanged"/>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+
+                    <TextBlock Text="Font Size:" VerticalAlignment="Center" Foreground="{StaticResource TextLight}" Margin="10,0,5,0"/>
+
+                    <ComboBox x:Name="FontSizeComboBox" Width="50" Style="{StaticResource ToolBarComboBoxStyle}"  IsEnabled="False" SelectionChanged="FontSizeComboBox_SelectionChanged"/>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+
+                    <Button x:Name="DeleteButton" Content="Delete" Style="{StaticResource ToolBarButtonStyle}" Background="Red" IsEnabled="False" Click="Delete_Click"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
+
+                    <Button Name="ExportButton" Content="Export to PDF" Style="{StaticResource ToolBarButtonStyle}" Click="ExportPdf_Click"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10">
+
+                    <Button Name="LoadPdf" Content="Load PDF" Style="{StaticResource ToolBarButtonStyle}" Click="LoadPdf_Click"/>
+
+                    <Button Name="LoadCSV" Content="Load CSV" Style="{StaticResource ToolBarButtonStyle}" Click="LoadCSV_Click"/>
+
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
+
+                    <Button x:Name="PrevPage" Content="&lt;" Style="{StaticResource ToolBarButtonStyle}" IsEnabled="False" Click="PrevPage_Click"/>
+
+                    <TextBlock x:Name="PageNumberText" Text="Page 0 of 0" VerticalAlignment="Center" Foreground="{StaticResource TextLight}" Margin="10,0"/>
+
+                    <Button x:Name="NextPage" Content="&gt;" Style="{StaticResource ToolBarButtonStyle}" IsEnabled="False" Click="NextPage_Click"/>
+
+                    <Button x:Name="BackButton" Content="Back" Style="{StaticResource ToolBarButtonStyle}" Background="Red" Click="BackButton_Click"/>
+
+                </StackPanel>
+
+            </Grid>
         </Border>
 
 
 
         <!-- Design Surface -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" 
+        <ScrollViewer x:Name="CanvasBorder" Grid.Row="1" HorizontalScrollBarVisibility="Auto" 
                       VerticalScrollBarVisibility="Auto" Padding="20">
             <Border HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20"
                     Background="{StaticResource CardBackgroundLight}" CornerRadius="8"
@@ -217,11 +242,20 @@
 
                 <!-- A4 Canvas -->
                 <Canvas x:Name="TemplateCanvas"
-                        Width="794" Height="1123" Background="Transparent"
+                        Width="794" Height="1123"
+                        MinWidth="794" MinHeight="1123"
+                        MaxWidth="794" MaxHeight="1123"
                         PreviewMouseMove="TemplateCanvas_PreviewMouseMove"
                         PreviewMouseLeftButtonUp="TemplateCanvas_PreviewMouseLeftButtonUp"
-                        MouseLeftButtonDown="TemplateCanvas_MouseLeftButtonDown"/>
+                        MouseLeftButtonDown="TemplateCanvas_MouseLeftButtonDown">
+                    <Canvas.Background>
+                        <ImageBrush x:Name="PdfBackgroundBrush" Stretch="Uniform" />
+                    </Canvas.Background>
+                </Canvas>
             </Border>
+            
+            
         </ScrollViewer>
+        <wv2:WebView2 x:Name="PdfWebView" Grid.Row="1" Margin="8"/>
     </Grid>
 </UserControl>

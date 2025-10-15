@@ -28,8 +28,12 @@ namespace MailMergeUI
         {
             _dbContext = dbContext;
             _engine = new MailMergeEngine.MailMergeEngine(dbContext);
-
             InitializeComponent();
+            this.Loaded += LoginWindow_Loaded;   
+        }
+
+        private void LoginWindow_Loaded(object sender, RoutedEventArgs e)
+        {
             if (Properties.Settings.Default.RememberMe)
             {
                 DashboardWindow dashboard = new DashboardWindow(_dbContext);
@@ -88,6 +92,12 @@ namespace MailMergeUI
                 // Option 2: Programmatically "click" the button
                 // btnLogin.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
+        }
+
+        private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
         }
     }
 }

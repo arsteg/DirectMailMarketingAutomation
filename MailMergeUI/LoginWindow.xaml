@@ -211,7 +211,7 @@
     </Window.Resources>
 
     <!-- Main Grid -->
-    <Grid>
+    <Grid MouseDown="Grid_MouseDown">
 
         <!-- Login Card -->
         <Border Width="400" VerticalAlignment="Center" HorizontalAlignment="Center"

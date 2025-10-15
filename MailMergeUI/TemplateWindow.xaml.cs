@@ -40,5 +40,16 @@ namespace MailMergeUI
             dashboard.Show();
             this.Close();
         }
+
+        private void TemplateGrid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
+        }
+
+        private void btnLoadTemplate_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
