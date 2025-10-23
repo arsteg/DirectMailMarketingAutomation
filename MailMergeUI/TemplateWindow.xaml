@@ -5,16 +5,16 @@
         Height="800" Width="1200"
         WindowStartupLocation="CenterScreen"
         Background="#F5F9FF"
-        ResizeMode="NoResize"
-        WindowStyle="None"
+        ResizeMode="CanResize"
+        WindowStyle="SingleBorderWindow"
         FontFamily="Segoe UI"
-        AllowsTransparency="True"
+        AllowsTransparency="False"
         xmlns:local="clr-namespace:MailMergeUI">
 
     <Grid Name="TemplateGrid" MouseDown="TemplateGrid_MouseDown">
 
         <!-- Close Button -->
-        <Button Content="✕" 
+        <!--<Button Content="✕" 
                 Width="30" Height="30" 
                 Background="Transparent"
                 Foreground="{DynamicResource TextLight}"
@@ -40,7 +40,7 @@
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Button.Template>
-        </Button>
+        </Button>-->
 
         <!-- Main Layout -->
         <Grid Margin="0,25,0,0">

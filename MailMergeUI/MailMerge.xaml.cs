@@ -1,5 +1,6 @@
 ﻿using MailMerge.Data;
 using MailMerge.Data.Models;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
 using PdfiumViewer;
 using System;
@@ -23,6 +24,7 @@ namespace MailMergeUI
     {
         private string templatePath = string.Empty;
         private string csvPath = string.Empty;
+        private string exportPath = string.Empty;
         private List<PropertyRecord> records = new();
         private MailMergeEngine.MailMergeEngine engine;
         private bool isDarkMode = false;
@@ -55,8 +57,17 @@ namespace MailMergeUI
             {
                 templatePath = ofd.FileName;
 
+                // Choose a folder you have access to, e.g., in AppData
+                string userDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "MailMax"
+                );
+
                 // this asynchronously ensures the CoreWebView2 is ready
-                await PdfWebView.EnsureCoreWebView2Async();
+                //await PdfWebView.EnsureCoreWebView2Async();
+                var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+                await PdfWebView.EnsureCoreWebView2Async(env);
+
                 // navigate to the temp file
                 PdfWebView.CoreWebView2.Navigate(new Uri(templatePath).AbsoluteUri);
                 Log($"Template loaded: {templatePath}");
@@ -95,12 +106,8 @@ namespace MailMergeUI
         {
             try
             {
-                string pdfPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    "MailMergeOutput",
-                    "merged_batch_sample.pdf");
 
-                if (!File.Exists(pdfPath))
+                if (!File.Exists(exportPath))
                 {
                     txtStatus.Text = "Error: No merged PDF found. Export first.\n";
                     return;
@@ -114,7 +121,7 @@ namespace MailMergeUI
 
                 string selectedPrinter = cmbPrinters.SelectedItem.ToString()!;
 
-                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
+                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(exportPath))
                 using (var printDoc = pdfDoc.CreatePrintDocument())
                 {
                     printDoc.DocumentName = "MailMerge Output";
@@ -143,6 +150,7 @@ namespace MailMergeUI
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
             DashboardWindow dashboardWindow = new DashboardWindow(_dbContext);
+            dashboardWindow.WindowState = this.WindowState;
             dashboardWindow.Show();
             this.Close();
         }
@@ -235,12 +243,12 @@ namespace MailMergeUI
                     return;
                 }
 
-                string pdfOut = saveDialog.FileName;
+                exportPath = saveDialog.FileName;
 
                 // Export the PDF
-                engine.ExportBatch(templatePath, records, pdfOut);
+                engine.ExportBatch(templatePath, records, exportPath);
 
-                Log($"Export complete. File saved at {pdfOut}");
+                Log($"Export complete. File saved at {exportPath}");
             }
             catch (Exception ex)
             {

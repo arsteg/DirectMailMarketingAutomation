@@ -17,6 +17,7 @@ namespace MailMergeUI
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
         {
             MailMergeWindow main = new MailMergeWindow(_dbContext);
+            main.WindowState = this.WindowState;
             main.Show();
             this.Close();
         }
@@ -24,6 +25,7 @@ namespace MailMergeUI
         private void OpenSettings_Click(object sender, RoutedEventArgs e)
         {
             SettingsWindow settings = new SettingsWindow(_dbContext);
+            settings.WindowState = this.WindowState;
             settings.Show();
             this.Close();
         }
@@ -47,6 +49,7 @@ namespace MailMergeUI
         private void btnTemplate_Click(object sender, RoutedEventArgs e)
         {
             TemplateWindow template = new TemplateWindow(_dbContext);
+            template.WindowState = this.WindowState;
             template.Show();
             this.Close();
         }

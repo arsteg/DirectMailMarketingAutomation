@@ -6,8 +6,9 @@
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundLight}"
         FontFamily="Segoe UI"
-        ResizeMode="NoResize"
-        WindowStyle="None">
+        ResizeMode="CanResize"
+        AllowsTransparency="False"
+        WindowStyle="SingleBorderWindow">
 
     <Grid MouseDown="Grid_MouseDown">
         <!-- Define layout: Sidebar (250px) + MainContent (*) -->
@@ -155,7 +156,7 @@
             </StackPanel>
 
             <!-- Close Button -->
-            <Button Content="✕" 
+            <!--<Button Content="✕" 
                     Width="30" Height="30" 
                     Background="Transparent"
                     Foreground="{DynamicResource TextLight}"
@@ -181,7 +182,7 @@
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Button.Template>
-            </Button>
+            </Button>-->
         </Grid>
     </Grid>
 </Window>

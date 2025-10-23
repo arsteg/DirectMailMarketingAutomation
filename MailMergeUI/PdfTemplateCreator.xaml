@@ -210,6 +210,12 @@
 
                     <Button Name="LoadCSV" Content="Load CSV" Style="{StaticResource ToolBarButtonStyle}" Click="LoadCSV_Click"/>
 
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource DividerColor}" Margin="10,0"/>
+
+                    <TextBlock Text="Add Date Field:" VerticalAlignment="Center" Foreground="{StaticResource TextLight}" Margin="10,0,5,0"/>
+
+                    <ComboBox x:Name="DateFieldComboBox" Width="150" Style="{StaticResource ToolBarComboBoxStyle}"  SelectionChanged="DateFieldComboBox_SelectionChanged"/>
+
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
@@ -249,7 +255,8 @@
                         PreviewMouseLeftButtonUp="TemplateCanvas_PreviewMouseLeftButtonUp"
                         MouseLeftButtonDown="TemplateCanvas_MouseLeftButtonDown">
                     <Canvas.Background>
-                        <ImageBrush x:Name="PdfBackgroundBrush" Stretch="Uniform" />
+                        <ImageBrush x:Name="PdfBackgroundBrush" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+                    RenderOptions.EdgeMode="Aliased" />
                     </Canvas.Background>
                 </Canvas>
             </Border>

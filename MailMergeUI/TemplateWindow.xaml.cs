@@ -37,6 +37,7 @@ namespace MailMergeUI
         {
             // If you want to return to MainWindow
             DashboardWindow dashboard = new DashboardWindow(_dbContext);
+            dashboard.WindowState = this.WindowState;
             dashboard.Show();
             this.Close();
         }

@@ -18,11 +18,18 @@ public class Program
 
         string? city = ConfigurationManager.AppSettings["City"];
 
+        string? state = ConfigurationManager.AppSettings["State"];
+
         // JSON Request Body (Criteria structure)
         var searchCriteriaBody = new
         {
             Criteria = new[]
             {
+                new
+                {
+                    name = "State",
+                    value = new[] { state?? "CA" }
+                },
                 new
                 {
                     name = "City",

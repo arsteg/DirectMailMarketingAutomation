@@ -1,4 +1,6 @@
 ﻿using Azure;
+using Ghostscript.NET;
+using Ghostscript.NET.Rasterizer;
 using iText.Forms.Form;
 using iText.Forms.Form.Element;
 using iText.IO.Image;
@@ -74,6 +76,9 @@ namespace MailMergeUI
             // Populate the FormFieldComboBox
             FormFieldComboBox.ItemsSource = new[] { "Select Field...", "Radar ID", "Apn", "Type", "Address", "City", "ZIP", "Owner", "Owner Type", "Owner Occ?", "Primary Name", "Primary First", "Mail Address", "Mail City", "Mail State", "Mail ZIP", "Foreclosure", "FCL Stage", "FCL Doc Type", "FCL Rec Date", "Trustee", "Trustee Phone", "TS Number" };
             FormFieldComboBox.SelectedIndex = 0;
+
+            DateFieldComboBox.ItemsSource = new[] { "Select Field...", "Current Day", "Current Month", "Current Year" };
+            DateFieldComboBox.SelectedIndex = 0;
 
             if (!DesignerProperties.GetIsInDesignMode(this))
             {
@@ -271,35 +276,14 @@ namespace MailMergeUI
                 Background = Brushes.Transparent,
                 AcceptsReturn = true,
                 TextWrapping = TextWrapping.Wrap,
-                MinWidth = 100,
+                MinWidth = 20,
                 IsReadOnly = true
             };
 
             CreateAndAddDraggableItem(newText, 20, 20);
         }
 
-        /// <summary>
-        /// Handles the click event for the "Add Form Field" button.
-        /// </summary>
-        private void AddFormField_Click(object sender, RoutedEventArgs e)
-        {
-            var newField = new TextBox
-            {
-                Text = "{FormFieldName}",
-                Tag = "FormField", // Identify this as an interactive form field
-                FontFamily = new FontFamily(FontComboBox.SelectedItem.ToString()),
-                FontSize = (int)FontSizeComboBox.SelectedItem,
-                Foreground = (Brush)FindResource("TextDark"), // Set default text color
-                Padding = new Thickness(2),
-                BorderBrush = (Brush)FindResource("DividerColor"),
-                BorderThickness = new Thickness(1),
-                Background = Brushes.White,
-                MinWidth = 150,
-                IsReadOnly = true
-            };
-
-            CreateAndAddDraggableItem(newField, 20, 60);
-        }
+        
 
         private void CreateAndAddDraggableItem(UIElement content, double x, double y)
         {
@@ -543,7 +527,7 @@ namespace MailMergeUI
                     BorderBrush = (Brush)FindResource("DividerColor"),
                     BorderThickness = new Thickness(1),
                     Background = Brushes.White,
-                    MinWidth = 150,
+                    MinWidth = 20,
                     IsReadOnly = true
                 };
 
@@ -632,33 +616,46 @@ namespace MailMergeUI
             // Clear canvas for the new page
             TemplateCanvas.Children.Clear();
 
-            // 2. Render the new page as the background
-            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(_loadedPdfPath))
+            // 2. Use Ghostscript to render the page
+            using (var rasterizer = new GhostscriptRasterizer())
             {
-                // Render to a System.Drawing.Image
-                var drawingImage = pdfDoc.Render(pageNumber - 1, 96, 96, false);
+                // Optional: specify Ghostscript version if needed
+                var version = GhostscriptVersionInfo.GetLastInstalledVersion(
+                    GhostscriptLicense.GPL | GhostscriptLicense.AFPL,
+                    GhostscriptLicense.GPL
+                );
 
-                // Convert to a WPF BitmapImage
-                using (var ms = new MemoryStream())
+                rasterizer.Open(_loadedPdfPath, version, false);
+
+                // ✅ Increase DPI for higher quality
+                int dpi = 600; // Try 300 or 600 for ultra sharpness
+                using (var img = rasterizer.GetPage(dpi, pageNumber))
                 {
-                    drawingImage.Save(ms, ImageFormat.Png);
-                    ms.Position = 0;
-                    var bitmapImage = new BitmapImage();
-                    bitmapImage.BeginInit();
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.StreamSource = ms;
-                    bitmapImage.EndInit();
+                    // Convert System.Drawing.Image → BitmapImage (for WPF)
+                    using (var ms = new MemoryStream())
+                    {
+                        img.Save(ms, ImageFormat.Png);
+                        ms.Position = 0;
 
-                    PdfBackgroundBrush.ImageSource = bitmapImage;
+                        var bitmapImage = new BitmapImage();
+                        bitmapImage.BeginInit();
+                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmapImage.StreamSource = ms;
+                        bitmapImage.EndInit();
+
+                        PdfBackgroundBrush.ImageSource = bitmapImage;
+                        bitmapImage.Freeze(); // optional for perf
+
+                        TemplateCanvas.Width = bitmapImage.PixelWidth;
+                        TemplateCanvas.Height = bitmapImage.PixelHeight;
+                    }
                 }
             }
 
             _currentPage = pageNumber;
 
-            // 3. Restore the elements for the new page
+            // 3. Restore page state and update UI
             RestorePageState(_currentPage);
-
-            // 4. Update UI
             UpdateNavigationUI();
         }
 
@@ -902,6 +899,42 @@ namespace MailMergeUI
             PdfWebView.Visibility = Visibility.Collapsed;
             CanvasBorder.Visibility = Visibility.Visible;
 
+        }
+
+        private void DateFieldComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DateFieldComboBox.SelectedIndex != 0)
+            {
+                var newText = new TextBox
+                {
+                    Tag = "TextBlock", // Identify this as a simple text block
+                    FontFamily = new FontFamily(FontComboBox.SelectedItem.ToString()),
+                    FontSize = (int)FontSizeComboBox.SelectedItem,
+                    Foreground = (Brush)FindResource("TextDark"), // Set default text color
+                    Padding = new Thickness(2),
+                    BorderThickness = new Thickness(0),
+                    Background = Brushes.Transparent,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    MinWidth = 20,
+                    IsReadOnly = true
+                };
+
+                if (DateFieldComboBox.SelectedIndex == 1)
+                {
+                    newText.Text = DateTime.Now.Day.ToString();
+                }
+                else if (DateFieldComboBox.SelectedIndex == 2)
+                {
+                    newText.Text = DateTime.Now.ToString("MMM", CultureInfo.InvariantCulture);
+                }
+                else if (DateFieldComboBox.SelectedIndex == 3)
+                {
+                    newText.Text = DateTime.Now.Year.ToString();
+                }
+
+                CreateAndAddDraggableItem(newText, 20, 20);
+            }
         }
     }
 }
