@@ -619,11 +619,9 @@ namespace MailMergeUI
             // 2. Use Ghostscript to render the page
             using (var rasterizer = new GhostscriptRasterizer())
             {
+                string dllPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"gsdll64.dll");
                 // Optional: specify Ghostscript version if needed
-                var version = GhostscriptVersionInfo.GetLastInstalledVersion(
-                    GhostscriptLicense.GPL | GhostscriptLicense.AFPL,
-                    GhostscriptLicense.GPL
-                );
+                var version = new GhostscriptVersionInfo(dllPath);
 
                 rasterizer.Open(_loadedPdfPath, version, false);
 
