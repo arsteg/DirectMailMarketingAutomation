@@ -1,4 +1,6 @@
 ﻿using MailMerge.Data;
+using MailMergeUI.ViewModels;
+using MailMergeUI.Views;
 using System.Windows;
 using System.Windows.Input;
 
@@ -12,6 +14,12 @@ namespace MailMergeUI
         {
             _dbContext = dbContext;
             InitializeComponent();
+            this.Loaded += DashboardWindow_Loaded;
+        }
+
+        private void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            DataContext = new MainWindowViewModel();
         }
 
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
@@ -58,6 +66,24 @@ namespace MailMergeUI
         {
             if (e.ChangedButton == MouseButton.Left)
                 this.DragMove();
+        }
+
+
+
+        private void btnShowBlacklisted_Click(object sender, RoutedEventArgs e)
+        {
+            BlacklistView blacklistView = new BlacklistView();
+            blacklistView.WindowState = this.WindowState;
+            blacklistView.Show();
+            this.Close();
+        }
+
+        private void btnCampaign_Click(object sender, RoutedEventArgs e)
+        {
+            CampaignListView campaignListView = new CampaignListView(this._dbContext);
+            campaignListView.WindowState = this.WindowState;
+            campaignListView.Show();
+            this.Close();
         }
     }
 }
