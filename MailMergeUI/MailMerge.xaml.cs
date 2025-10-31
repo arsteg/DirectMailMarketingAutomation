@@ -42,7 +42,7 @@ namespace MailMergeUI
         private void LoadPrinters()
         {
             cmbPrinters.Items.Clear();
-            foreach (string printer in PrinterSettings.InstalledPrinters)
+            foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
             {
                 cmbPrinters.Items.Add(printer);
             }

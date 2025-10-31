@@ -1,4 +1,5 @@
 using MailMerge.Data;
+using MailMergeUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@ namespace MailMergeUI
 
                     // Register services and windows
                     services.AddScoped<MailMergeEngine.MailMergeEngine>();
+                    services.AddScoped<CampaignService>();
                     services.AddTransient<LoginWindow>();
                     services.AddTransient<DashboardWindow>();
                     services.AddTransient<SettingsWindow>();

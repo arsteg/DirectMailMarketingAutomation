@@ -19,7 +19,7 @@ namespace MailMergeUI
 
         private void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            DataContext = new MainWindowViewModel();
+            this.DataContext = new MainWindowViewModel();
         }
 
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)

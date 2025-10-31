@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MailMergeUI.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,9 +21,10 @@ namespace MailMergeUI.Views
     /// </summary>
     public partial class CampaignEditWindow : Window
     {
-        public CampaignEditWindow()
+        public CampaignEditWindow(CampaignEditViewModel viewModel)
         {
             InitializeComponent();
+            this.DataContext = viewModel;
         }
     }
 }

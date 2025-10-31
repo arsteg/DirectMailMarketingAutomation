@@ -1,4 +1,6 @@
-﻿using MailMergeUI.Helpers;
+﻿using MailMerge.Data;
+using MailMerge.Data.Models;
+using MailMergeUI.Helpers;
 using MailMergeUI.Models;
 using MailMergeUI.Services;
 using MailMergeUI.Views;
@@ -21,10 +23,12 @@ namespace MailMergeUI.ViewModels
         public ICommand NewCommand { get; }
         public ICommand EditCommand { get; }
         public ICommand DeleteCommand { get; }
+        private readonly MailMergeDbContext _dbContext;
 
-        public CampaignListViewModel()
+        public CampaignListViewModel(MailMergeDbContext dbContext)
         {
-           // _service = App.ServiceProvider.GetRequiredService<CampaignService>();
+            _dbContext = dbContext;
+            _service = new CampaignService(_dbContext);
             RefreshCampaigns();
 
             NewCommand = new RelayCommand(_ => OpenEdit(null));
@@ -44,7 +48,7 @@ namespace MailMergeUI.ViewModels
         {
             var vm = new CampaignEditViewModel(campaign, _service);
             vm.OnSaved += (_) => RefreshCampaigns();
-            var window = new CampaignEditWindow();
+            var window = new CampaignEditWindow(vm);
             window.ShowDialog();
         }
 

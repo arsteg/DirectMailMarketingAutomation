@@ -1,4 +1,5 @@
-﻿using MailMergeUI.Helpers;
+﻿using MailMerge.Data.Models;
+using MailMergeUI.Helpers;
 using MailMergeUI.Models;
 using MailMergeUI.Services;
 using System;
@@ -72,7 +73,7 @@ namespace MailMergeUI.ViewModels
 
             AddStageCommand = new RelayCommand(_ => AddStage());
             RemoveStageCommand = new RelayCommand(s => RemoveStage((FollowUpStage)s!));
-            SaveCommand = new RelayCommand(_ => Save(), _ => CanSave());
+            SaveCommand = new RelayCommand(_ => Save());
             CancelCommand = new RelayCommand(_ => CloseWindow());
         }
 
@@ -103,12 +104,12 @@ namespace MailMergeUI.ViewModels
             }
         }
 
-        private bool CanSave()
-        {
-            return !string.IsNullOrWhiteSpace(Campaign.Name)
-                && Uri.TryCreate(Campaign.LeadSource.ApiUrl, UriKind.Absolute, out _)
-                && Stages.All(s => !string.IsNullOrWhiteSpace(s.TemplateId));
-        }
+        //private bool CanSave()
+        //{
+        //    return !string.IsNullOrWhiteSpace(Campaign.Name)
+        //        && Uri.TryCreate(Campaign.LeadSource.ApiUrl, UriKind.Absolute, out _)
+        //        && Stages.All(s => !string.IsNullOrWhiteSpace(s.TemplateId));
+        //}
 
         private void Save()
         {

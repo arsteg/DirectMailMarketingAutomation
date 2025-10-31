@@ -1,4 +1,5 @@
-﻿using MailMergeUI.Helpers;
+﻿using MailMerge.Data.Models;
+using MailMergeUI.Helpers;
 using MailMergeUI.Models;
 using MailMergeUI.Services;
 using System;
@@ -74,7 +75,6 @@ namespace MailMergeUI.ViewModels
            
             BlacklistVM = new BlacklistViewModel();
             LogVM = new SystemLogViewModel();
-
             //ShowDashboardCommand = new RelayCommand(_ => CurrentView = DashboardVM);
             
             ShowBlacklistCommand = new RelayCommand(_ => CurrentView = BlacklistVM);

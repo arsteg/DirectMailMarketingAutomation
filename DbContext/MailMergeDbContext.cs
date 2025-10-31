@@ -23,6 +23,15 @@ namespace MailMerge.Data
             modelBuilder.Entity<User>()
                 .HasKey(u => u.Id);
 
+            modelBuilder.Entity<FollowUpStage>()
+                 .HasKey(u => u.Id);
+
+            modelBuilder.Entity<PrinterSettings>()
+                .HasKey(u => u.Id);
+
+            modelBuilder.Entity<LeadSource>()
+                .HasKey(u => u.Id);
+
             // Precomputed hash for "admin123"
             string hashedPassword = PasswordHelper.HashPassword("admin123");
 
@@ -50,5 +59,7 @@ namespace MailMerge.Data
         public DbSet<User> Users { get; set; }
 
         public DbSet<PropertyRecord> Properties { get; set; }
+
+        public DbSet<Campaign> Campaigns { get; set; }
     }
 }

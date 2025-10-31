@@ -31,7 +31,7 @@ namespace MailMergeUI.Views
 
         private void CampaignListView_Loaded(object sender, RoutedEventArgs e)
         {
-            this.DataContext =  new ViewModels.CampaignListViewModel();
+            this.DataContext =  new ViewModels.CampaignListViewModel(_dbContext);
         }
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
