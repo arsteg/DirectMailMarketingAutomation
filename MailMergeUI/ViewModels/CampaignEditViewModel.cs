@@ -2,6 +2,7 @@
 using MailMergeUI.Helpers;
 using MailMergeUI.Models;
 using MailMergeUI.Services;
+using MailMergeUI.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -126,7 +127,7 @@ namespace MailMergeUI.ViewModels
 
         private void CloseWindow()
         {
-            //Application.Current.Windows.OfType<CampaignEditWindow>().FirstOrDefault()?.Close();
+            Application.Current.Windows.OfType<CampaignEditWindow>().FirstOrDefault()?.Close();
         }
     }
 }
