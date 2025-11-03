@@ -19,4 +19,63 @@ namespace MailMergeUI.Helpers
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
+
+    public class TimeSpanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is TimeSpan ts)
+                return DateTime.Today.Add(ts).ToString("hh:mm tt");
+            return null!;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string s && DateTime.TryParse(s, out var dt))
+                return dt.TimeOfDay;
+            return TimeSpan.Zero;
+        }
+    }
+
+    public class DayOfWeekInListConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is List<DayOfWeek> list && parameter is DayOfWeek day)
+                return list.Contains(day);
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isChecked && parameter is DayOfWeek day)
+                return new Tuple<DayOfWeek, bool>(day, isChecked);
+            return null;
+        }
+    }
+    public class TimeSpanToStringConverter : IValueConverter
+    {
+        // Converts TimeSpan → string (e.g., "12:50 AM")
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is TimeSpan timeSpan)
+            {
+                // Convert TimeSpan to a formatted time string
+                return DateTime.Today.Add(timeSpan).ToString("hh:mm tt", CultureInfo.InvariantCulture);
+            }
+
+            return string.Empty;
+        }
+
+        // Converts string → TimeSpan (e.g., "12:50 AM" → TimeSpan(0,50,0))
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string str && DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime))
+            {
+                return dateTime.TimeOfDay;
+            }
+
+            return Binding.DoNothing;
+        }
+    }
 }

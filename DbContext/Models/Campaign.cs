@@ -35,7 +35,17 @@ namespace MailMerge.Data.Models
         public string ApiKey { get; set; } = "";
         public string FiltersJson { get; set; } = "{}"; // e.g., {"min_price": 100000, "city": "Austin"}
         public TimeSpan RunAt { get; set; } = new TimeSpan(6, 0, 0); // 6:00 AM
+        public ScheduleType Type { get; set; }
+        public List<DayOfWeek> DaysOfWeek { get; set; } = new();
     }
+
+    public enum ScheduleType
+    {
+        Daily,
+        Weekly,
+        Monthly
+    }
+
 
     public class PrinterSettings
     {

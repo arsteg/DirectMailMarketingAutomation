@@ -103,7 +103,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                         <DataGridTextColumn Header="Stages" Binding="{Binding Stages.Count}" Width="80"/>
-                        <DataGridTextColumn Header="Run At" Binding="{Binding LeadSource.RunAt, StringFormat=HH:mm}" Width="100"/>
+                        <DataGridTextColumn Header="Run At" Binding="{Binding LeadSource.RunAt}" Width="120"/>
 
                         <DataGridTemplateColumn Header="Actions" Width="160">
                             <DataGridTemplateColumn.CellTemplate>

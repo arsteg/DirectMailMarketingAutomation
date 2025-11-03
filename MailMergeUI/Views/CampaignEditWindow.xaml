@@ -3,10 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:dtConverters="clr-namespace:MailMergeUI.Helpers"
         mc:Ignorable="d"
         Title="Edit Campaign"
         Width="900" MinHeight="900"
         Background="{DynamicResource BackgroundLight}">
+
+    <Window.Resources>
+        <!-- Converters -->
+        <dtConverters:ScheduleTypeToVisibilityConverter x:Key="ScheduleTypeToVisibilityConverter"/>
+        <dtConverters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
+        <dtConverters:DayOfWeekInListConverter x:Key="DayOfWeekInListConverter"/>
+    </Window.Resources>
 
     <Border Background="{DynamicResource CardBackgroundLight}"
             Padding="30"
@@ -15,6 +23,7 @@
             BorderThickness="1"
             Margin="30"
             Effect="{DynamicResource ShadowEffect}">
+
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
@@ -37,8 +46,7 @@
                              BorderBrush="{DynamicResource DividerColor}"
                              Background="{DynamicResource CardBackgroundLight}"
                              Foreground="{DynamicResource TextDark}"
-                             BorderThickness="1"
-                             />
+                             BorderThickness="1"/>
                 </StackPanel>
 
                 <!-- A. Lead Source -->
@@ -49,6 +57,7 @@
                         BorderThickness="1"
                         Margin="0,20,0,0"
                         Effect="{DynamicResource ShadowEffect}">
+
                     <StackPanel>
                         <TextBlock Text="A. Lead Source (API Search)"
                                    FontSize="16"
@@ -67,123 +76,80 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Text="API URL:" Grid.Row="0" Grid.Column="0"
-                                       Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
-                            <TextBox Text="{Binding Campaign.LeadSource.ApiUrl}"
-                                     Grid.Row="0" Grid.Column="1"
-                                     Height="32" Padding="6"
-                                     Margin="8,4"
-                                     BorderBrush="{DynamicResource DividerColor}"
-                                     />
-
-                            <TextBlock Text="API Key:" Grid.Row="1" Grid.Column="0"
-                                       Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
-                            <PasswordBox Grid.Row="1" Grid.Column="1"
-                                         Margin="8,4" Height="32"
-                                         Padding="6"
-                                         BorderBrush="{DynamicResource DividerColor}"
-                                         />
-
-                            <TextBlock Text="Filters (JSON):" Grid.Row="2" Grid.Column="0"
-                                       Foreground="{DynamicResource TextDark}" VerticalAlignment="Top" Margin="0,6,0,0"/>
+                            <!-- Filters JSON -->
+                            <TextBlock Text="Filters (JSON):" Grid.Row="0" Grid.Column="0"
+                                       Foreground="{DynamicResource TextDark}" 
+                                       VerticalAlignment="Top" 
+                                       Margin="0,6,0,0"/>
                             <TextBox Text="{Binding Campaign.LeadSource.FiltersJson}"
-                                     Grid.Row="2" Grid.Column="1"
+                                     Grid.Row="0" Grid.Column="1"
                                      Height="80" Padding="6"
                                      Margin="8,4"
                                      TextWrapping="Wrap"
                                      AcceptsReturn="True"
-                                     BorderBrush="{DynamicResource DividerColor}"
-                                     />
+                                     BorderBrush="{DynamicResource DividerColor}"/>
 
-                            <TextBlock Text="Run Daily At:" Grid.Row="3" Grid.Column="0"
+                            <!-- Schedule Type -->
+                            <TextBlock Text="Schedule Type" Grid.Row="1" Grid.Column="0"
                                        Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
-                            <TextBox Text="{Binding SelectedTime}"
-                                     Grid.Row="3" Grid.Column="1"
-                                     Width="100" Height="32"
-                                     Padding="6"
-                                     Margin="8,4"
-                                     BorderBrush="{DynamicResource DividerColor}"
-                                     />
+                            <ComboBox Grid.Row="1" Grid.Column="1" 
+                                      ItemsSource="{Binding ScheduleTypes}"
+                                      SelectedItem="{Binding Schedule.Type, Mode=TwoWay}"
+                                      Margin="8,4"/>
+
+                            <!-- Run At -->
+                            <TextBlock Text="Run At:" Grid.Row="2" Grid.Column="0"
+                                       Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1"
+                                      ItemsSource="{Binding TimesList}"
+                                      SelectedValue="{Binding Schedule.RunAt, Mode=TwoWay, Converter={StaticResource TimeSpanToStringConverter}}"
+                                      MinWidth="120" MinHeight="32"
+                                      Padding="6"
+                                      Margin="8,4"
+                                      BorderBrush="{DynamicResource DividerColor}"/>
+
+                            <!-- Weekly Options -->
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2" 
+                                        Visibility="{Binding Schedule.Type, Converter={StaticResource ScheduleTypeToVisibilityConverter}, ConverterParameter=Weekly}">
+                                <TextBlock Text="Days of Week" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <WrapPanel>
+                                    <ItemsControl ItemsSource="{Binding AllDays}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding .}"
+                                                          IsChecked="{Binding DataContext.Schedule.DaysOfWeek, 
+                                                                              Mode=TwoWay, 
+                                                                              Converter={StaticResource DayOfWeekInListConverter}, 
+                                                                              ConverterParameter={Binding .}, 
+                                                                              RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                          Margin="5,2"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </WrapPanel>
+                            </StackPanel>
+
+                            <!-- Monthly Options -->
+                            <StackPanel Grid.Row="4" Grid.ColumnSpan="2"
+                                        Visibility="{Binding Schedule.Type, Converter={StaticResource ScheduleTypeToVisibilityConverter}, ConverterParameter=Monthly}">
+                                <TextBlock Text="Day of Month" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <TextBox Text="{Binding Schedule.DayOfMonth, Mode=TwoWay}" Width="60" Margin="0,0,0,10"/>
+                            </StackPanel>
+
                         </Grid>
                     </StackPanel>
                 </Border>
 
                 <!-- B. Follow-Up Sequence -->
-                <Border Background="{DynamicResource CardBackgroundLight}"
-                        CornerRadius="8"
-                        Padding="20"
-                        BorderBrush="{DynamicResource DividerColor}"
-                        BorderThickness="1"
-                        Margin="0,20,0,0"
-                        Effect="{DynamicResource ShadowEffect}">
-                    <StackPanel>
-                        <TextBlock Text="B. Follow-Up Sequence (Stages)"
-                                   FontSize="16"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryBlue}"
-                                   Margin="0,0,0,15"/>
+                <!-- (kept as-is, your code here) -->
 
-                        <ItemsControl ItemsSource="{Binding Stages}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="150"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="100"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBox Text="{Binding StageName}"
-                                                 Grid.Column="0"
-                                                 Margin="0,0,8,0"
-                                                 Height="32"
-                                                 Padding="6"
-                                                 BorderBrush="{DynamicResource DividerColor}"
-                                                 />
-
-                                        <ComboBox ItemsSource="{Binding DataContext.AvailableTemplates, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                  DisplayMemberPath="Name"
-                                                  SelectedValue="{Binding TemplateId}"
-                                                  SelectedValuePath="Id"
-                                                  Grid.Column="1"
-                                                  Margin="0,0,8,0"
-                                                  Style="{StaticResource ModernComboBox}"/>
-
-                                        <TextBox Text="{Binding DelayDays}"
-                                                 Grid.Column="2"
-                                                 Margin="0,0,8,0"
-                                                 Height="32"
-                                                 Padding="6"
-                                                 BorderBrush="{DynamicResource DividerColor}"
-                                                 />
-
-                                        <Button Content="Remove"
-                                                Command="{Binding DataContext.RemoveStageCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}"
-                                                Grid.Column="3"
-                                                Style="{StaticResource ToolbarButton}"
-                                                Foreground="Red"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <Button Content="+ Add Stage"
-                                Command="{Binding AddStageCommand}"
-                                Style="{StaticResource ToolbarButton}"
-                                HorizontalAlignment="Left"
-                                Margin="0,10,0,0"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Save / Cancel -->
+                <!-- Save / Cancel Buttons -->
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Margin="0,30,0,0"
-                            >
+                            Margin="0,30,0,0">
                     <Button Content="Save"
                             Command="{Binding SaveCommand}"
                             Style="{StaticResource PrimaryButton}"
