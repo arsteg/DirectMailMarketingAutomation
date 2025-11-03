@@ -52,8 +52,17 @@ namespace MailMergeUI.Services
 
         private void Save(List<Campaign> data)
         {
-            _db.Campaigns.AddRange(data);
-            _db.SaveChanges();
+            try
+            {
+                data = data.Where(x => x.Id == 0).ToList();
+                _db.Campaigns.AddRange(data);
+                _db.SaveChanges();
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
 
         }
 

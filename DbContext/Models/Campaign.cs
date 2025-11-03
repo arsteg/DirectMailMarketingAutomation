@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace MailMerge.Data.Models
 {
     public class Campaign
     {
+        [Key]
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public LeadSource LeadSource { get; set; } = new();
