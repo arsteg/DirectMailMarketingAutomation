@@ -7,15 +7,14 @@
         mc:Ignorable="d"
         Title="Edit Campaign"
         Width="900" MinHeight="900"
-        Background="{DynamicResource BackgroundLight}">
-
+        Background="{DynamicResource BackgroundLight}"
+         WindowState="Maximized">
     <Window.Resources>
         <!-- Converters -->
-        <converters:ScheduleTypeToVisibilityConverter x:Key="ScheduleTypeToVisibilityConverter"/>      
+        <converters:ScheduleTypeToVisibilityConverter x:Key="ScheduleTypeToVisibilityConverter"/>
         <converters:DayOfWeekInListConverter x:Key="DayOfWeekInListConverter"/>
         <converters:EnumToListConverter x:Key="EnumToListConverter" />
     </Window.Resources>
-
     <Border Background="{DynamicResource CardBackgroundLight}"
             Padding="30"
             CornerRadius="12"
@@ -23,17 +22,14 @@
             BorderThickness="1"
             Margin="30"
             Effect="{DynamicResource ShadowEffect}">
-
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-
                 <!-- Header -->
                 <TextBlock Text="Edit Campaign"
                            FontSize="26"
                            FontWeight="Bold"
                            Foreground="{DynamicResource PrimaryBlue}"
                            Margin="0,0,0,25"/>
-
                 <!-- Campaign Name -->
                 <StackPanel Margin="0,0,0,25">
                     <TextBlock Text="Campaign Name"
@@ -49,7 +45,6 @@
                              BorderThickness="1"
                              FontSize="14"/>
                 </StackPanel>
-
                 <!-- Section: Lead Source -->
                 <Border Background="{DynamicResource BackgroundLight}"
                         CornerRadius="10"
@@ -58,22 +53,18 @@
                         BorderThickness="1"
                         Margin="0,10,0,0"
                         Effect="{DynamicResource ShadowEffect}">
-
                     <StackPanel>
                         <TextBlock Text="A. Lead Source (API Search)"
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="{DynamicResource PrimaryBlue}"
                                    Margin="0,0,0,15"/>
-
                         <Separator Margin="0,0,0,20"/>
-
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="220"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -81,7 +72,6 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-
                             <!-- Filters JSON -->
                             <TextBlock Text="Filters (JSON):" Grid.Row="0" Grid.Column="0"
                                        VerticalAlignment="Top"
@@ -98,7 +88,6 @@
                                      FontFamily="Consolas"
                                      FontSize="13"
                                      VerticalScrollBarVisibility="Auto"/>
-
                             <!-- Schedule Type -->
                             <TextBlock Text="Schedule Type:" Grid.Row="1" Grid.Column="0"
                                        VerticalAlignment="Center"
@@ -109,71 +98,147 @@
                                       Margin="8,4"
                                       MinWidth="200"
                                       Height="32" SelectionChanged="ComboBox_SelectionChanged">
-                                
                             </ComboBox>
-
-                            <!-- Run At -->
-                           
-
-                            <!-- Weekly Options -->
+                            <!-- Days of Week -->
                             <TextBlock x:Name="daysOfWeekLabel" Grid.Row="2" Grid.Column="0"
-           Text="Days of Week:"
-           VerticalAlignment="Top"
-           Margin="0,10,0,0"
-           Foreground="{DynamicResource TextDark}"/>
-
-                            <ItemsControl x:Name="daysOfWeekItemControl" Grid.Row="2" Grid.Column="1" 
-              ItemsSource="{Binding DayCheckBoxes}"
-              IsEnabled="{Binding IsDaysOfWeekEnabled}">
+                                       Text="Days of Week:"
+                                       VerticalAlignment="Top"
+                                       Margin="0,10,0,0"
+                                       Foreground="{DynamicResource TextDark}"/>
+                            <ItemsControl x:Name="daysOfWeekItemControl" Grid.Row="2" Grid.Column="1"
+                                          ItemsSource="{Binding DayCheckBoxes}"
+                                          IsEnabled="{Binding IsDaysOfWeekEnabled}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <CheckBox Content="{Binding DisplayName}"
-                      IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      Margin="6,3"
-                      FontSize="13"/>
+                                                  IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Margin="6,3"
+                                                  FontSize="13"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-
+                            <!-- Run At -->
                             <TextBlock Text="Run At:" Grid.Row="3" Grid.Column="0"
-            VerticalAlignment="Center"
-            Foreground="{DynamicResource TextDark}"/>
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextDark}"/>
                             <ComboBox Grid.Row="3" Grid.Column="1"
-           ItemsSource="{Binding TimesList}"
-             DisplayMemberPath="Key"
-             SelectedValuePath="Value"
-             SelectedValue="{Binding SelectedTime, Mode=TwoWay}"
-           MinWidth="200"
-           Height="32"
-           Padding="6"
-           Margin="8,4"/>
-                            <!-- Monthly Options -->
-                            <!--<StackPanel Grid.Row="4" Grid.ColumnSpan="2"
-                                        Margin="0,10,0,0"
-                                        Visibility="{Binding Schedule.Type, Converter={StaticResource ScheduleTypeToVisibilityConverter}, ConverterParameter=Monthly}">
-                                <TextBlock Text="Monthly Options:"
-                                           FontWeight="SemiBold"
-                                           Margin="0,0,0,8"/>
-                                <ItemsControl ItemsSource="{Binding DayCheckBoxes}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <CheckBox Content="{Binding DisplayName}"
-                                                      IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      Margin="6,3"
-                                                      FontSize="13"/>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>-->
+                                      ItemsSource="{Binding TimesList}"
+                                      DisplayMemberPath="Key"
+                                      SelectedValuePath="Value"
+                                      SelectedValue="{Binding SelectedTime, Mode=TwoWay}"
+                                      MinWidth="200"
+                                      Height="32"
+                                      Padding="6"
+                                      Margin="8,4"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- Save / Cancel Buttons -->
+                <!-- SECTION B: Follow-Up Sequence (Stages) -->
+                <Border Background="{DynamicResource BackgroundLight}"
+                        CornerRadius="10"
+                        Padding="25"
+                        BorderBrush="{DynamicResource DividerColor}"
+                        BorderThickness="1"
+                        Margin="0,30,0,0"
+                        Effect="{DynamicResource ShadowEffect}">
+                    <StackPanel>
+                        <TextBlock Text="B. Follow-Up Sequence (Stages)"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryBlue}"
+                                   Margin="0,0,0,15"/>
+                        <Separator Margin="0,0,0,20"/>
+                        <TextBlock Text="Add one or more stages. Each stage sends a letter after the specified delay (0 for first stage)."
+                                   Foreground="{DynamicResource TextDark}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,15"/>
+
+                        <!-- Stages List -->
+                        <ItemsControl ItemsSource="{Binding Stages}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource CardBackgroundLight}"
+                                            CornerRadius="8"
+                                            Padding="12"
+                                            Margin="0,0,0,12"
+                                            BorderBrush="{DynamicResource DividerColor}"
+                                            BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Stage Name -->
+                                            <TextBlock Text="Stage Name:" Grid.Row="0" Grid.Column="0"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,0,8"/>
+                                            <TextBox Text="{Binding StageName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Grid.Row="0" Grid.Column="1"
+                                                     Height="32"
+                                                     Padding="6"
+                                                     Margin="6,0,0,8"/>
+
+                                            <!-- Template -->
+                                            <TextBlock Text="Template:" Grid.Row="1" Grid.Column="0"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,0,8"/>
+                                            <ComboBox ItemsSource="{Binding DataContext.Templates, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      DisplayMemberPath="Name"
+                                                      SelectedValuePath="Id"
+                                                      SelectedValue="{Binding TemplateId, Mode=TwoWay}"
+                                                      Grid.Row="1" Grid.Column="1"
+                                                      Height="32"
+                                                      Margin="6,0,0,8"/>
+
+                                            <!-- Delay -->
+                                            <TextBlock Text="Delay (days):" Grid.Row="2" Grid.Column="0"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBox Text="{Binding DelayDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Grid.Row="2" Grid.Column="1"
+                                                     Width="60"
+                                                     Height="32"
+                                                     HorizontalAlignment="Left"
+                                                     Margin="6,0,0,0"
+                                                     PreviewTextInput="NumberValidationTextBox"/>
+
+                                            <!-- Remove -->
+                                            <Button Content="Remove"
+                                                    Command="{Binding DataContext.RemoveStageCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    Grid.Row="0" Grid.RowSpan="3" Grid.Column="2"
+                                                    Width="80"
+                                                    Height="32"
+                                                    Margin="15,0,0,0"
+                                                    Style="{StaticResource ToolbarButton}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Add Stage -->
+                        <Button Content="Add Stage"
+                                Command="{Binding AddStageCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                Width="140"
+                                Height="36"
+                                HorizontalAlignment="Left"
+                                Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Save / Cancel -->
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Margin="0,40,0,10"
-                            >
+                            Margin="0,40,0,10">
                     <Button Content="Save"
                             Command="{Binding SaveCommand}"
                             Style="{StaticResource PrimaryButton}"

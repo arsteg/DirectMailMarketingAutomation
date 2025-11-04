@@ -120,9 +120,8 @@ namespace MailMergeUI.ViewModels
 
         private void OpenEdit(Campaign? campaign)
         {
-            var vm = new CampaignEditViewModel(campaign, _service);
-            vm.OnSaved += (_) => LoadCampaigns();
-
+            var vm = new CampaignEditViewModel(campaign, _service);   // 2 parameters only
+            vm.OnSaved += () => LoadCampaigns();                     // parameter-less
             var window = new CampaignEditWindow(vm);
             window.ShowDialog();
         }

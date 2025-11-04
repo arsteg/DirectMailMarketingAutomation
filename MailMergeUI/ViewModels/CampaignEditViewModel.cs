@@ -1,187 +1,209 @@
 ﻿using MailMerge.Data.Models;
 using MailMergeUI.Helpers;
-using MailMergeUI.Models;
 using MailMergeUI.Services;
-using MailMergeUI.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MailMergeUI.ViewModels
 {
     public class CampaignEditViewModel : BaseViewModel
     {
         private readonly CampaignService _service;
-        private readonly Campaign _original;
         public Campaign Campaign { get; }
-        
 
-        public ObservableCollection<FollowUpStage> Stages => Campaign.Stages;
-        public ObservableCollection<LetterTemplate> AvailableTemplates { get; }       
+        // === EXISTING: Lead Source UI ===
+        public ObservableCollection<ScheduleType> ScheduleTypes { get; } = new(Enum.GetValues(typeof(ScheduleType)).Cast<ScheduleType>());
+        public ObservableCollection<CheckBoxModel> DayCheckBoxes { get; } = new();
+        public ObservableCollection<KeyValuePair<string, TimeSpan>> TimesList { get; } = new();
 
-        public ICommand AddStageCommand { get; }
-        public ICommand RemoveStageCommand { get; }
-        public ICommand SaveCommand { get; }
-        public ICommand CancelCommand { get; }
-
-        public Action<CampaignEditViewModel>? OnSaved;
-
-        // UI State
-        private TimeSpan _selectedTime;
         public TimeSpan SelectedTime
         {
-            get => _selectedTime;
-            set
-            {
-                if (_selectedTime != value)
-                {
-                    _selectedTime = value;
-                    OnPropertyChanged(nameof(SelectedTime));
-                }
-            }
-        }
-        public List<KeyValuePair<string, TimeSpan>> TimesList { get; } = GenerateTimesList();
-
-        private static List<KeyValuePair<string, TimeSpan>> GenerateTimesList()
-        {
-            var list = new List<KeyValuePair<string, TimeSpan>>
-    {
-        new KeyValuePair<string, TimeSpan>("-- Select Time --", TimeSpan.Zero)
-    };
-
-            for (int hour = 0; hour < 24; hour++)
-            {
-                for (int minute = 0; minute < 60; minute += 10)
-                {
-                    DateTime time = new DateTime(1, 1, 1, hour, minute, 0);
-                    string display = time.ToString("hh:mm tt"); // e.g. "01:10 AM"
-                    list.Add(new KeyValuePair<string, TimeSpan>(display, time.TimeOfDay));
-                }
-            }
-
-            return list;
+            get => Campaign.LeadSource.RunAt;
+            set { Campaign.LeadSource.RunAt = value; OnPropertyChanged(); }
         }
 
-        // Your original property
-        public List<DayOfWeek> DaysOfWeek { get; set; } = new();
+        public bool IsDaysOfWeekEnabled => Campaign.LeadSource.Type == ScheduleType.Weekly || Campaign.LeadSource.Type == ScheduleType.Monthly;
 
-        // For UI: List of day view models (for binding checkboxes)
-        public List<DayCheckBoxViewModel> DayCheckBoxes { get; }
+        // === NEW: Follow-Up Stages ===
+        public ObservableCollection<FollowUpStageViewModel> Stages { get; } = new();
+        public ObservableCollection<Template> Templates { get; } = new();
 
-        public ObservableCollection<ScheduleType> ScheduleTypes { get; }
-          
+        // === Commands ===
+        public ICommand SaveCommand { get; }
+        public ICommand CancelCommand { get; }
+        public ICommand AddStageCommand { get; }
+        public ICommand RemoveStageCommand { get; }
 
+        public event Action OnSaved;
 
         public CampaignEditViewModel(Campaign? campaign, CampaignService service)
         {
-            if (service == null) return;
             _service = service;
-            _original = campaign ?? new Campaign();
-            Campaign = _original;
-            //Campaign = new Campaign
-            //{
-            //    Id = _original.Id,
-            //    Name = _original.Name,
-            //    LeadSource = new LeadSource
-            //    {
-            //        ApiUrl = _original.LeadSource.ApiUrl,
-            //        ApiKey = _original.LeadSource.ApiKey,
-            //        FiltersJson = _original.LeadSource.FiltersJson,
-            //        RunAt = _original.LeadSource.RunAt
-            //    }
-            //    //Stages = _original.Stages.Select(s => new FollowUpStage
-            //    //{
-            //    //    StageName = s.StageName,
-            //    //    TemplateId = s.TemplateId,
-            //    //    DelayDays = s.DelayDays
-            //    //}).ToList()
-            //};
-            
-            DayCheckBoxes = Enum.GetValues(typeof(DayOfWeek))
-                .Cast<DayOfWeek>()
-                .Select(day => new DayCheckBoxViewModel(day, DaysOfWeek.Contains(day)))
-                .ToList();
+            Campaign = campaign ?? new Campaign
+            {
+                LeadSource = new LeadSource(),
+                Stages = new ObservableCollection<FollowUpStage>()
+            };
 
-            AvailableTemplates = new ObservableCollection<LetterTemplate>(_service.Templates);
-            AddStageCommand = new RelayCommand(_ => AddStage());
-            RemoveStageCommand = new RelayCommand(s => RemoveStage((FollowUpStage)s!));
+            SetupLeadSource();
+            LoadTemplates();
+            LoadStages();
+
             SaveCommand = new RelayCommand(_ => Save());
             CancelCommand = new RelayCommand(_ => CloseWindow());
-            ScheduleTypes = new ObservableCollection<ScheduleType>((ScheduleType[])Enum.GetValues(typeof(ScheduleType)));
+            AddStageCommand = new RelayCommand(_ => AddStage());
+            RemoveStageCommand = new RelayCommand(param => RemoveStage(param as FollowUpStageViewModel));
+        }
 
-            if (campaign != null)
+        private void SetupLeadSource()
+        {
+            // Days of Week
+            foreach (var day in Enum.GetNames(typeof(DayOfWeek)))
             {
-                SelectedTime = campaign.LeadSource.RunAt;
-                DayCheckBoxes = Enum.GetValues(typeof(DayOfWeek))
-                                .Cast<DayOfWeek>()
-                                .Select(day => new DayCheckBoxViewModel(
-                                    day,
-                                    campaign.LeadSource.DaysOfWeek.Contains(day.ToString(), StringComparer.OrdinalIgnoreCase)
-                                ))
-                                .ToList();
+                DayCheckBoxes.Add(new CheckBoxModel
+                {
+                    DisplayName = day,
+                    IsChecked = Campaign.LeadSource.DaysOfWeek.Contains(day)
+                });
             }
+
+            // Time slots
+            for (int h = 0; h < 24; h++)
+            {
+                TimesList.Add(new KeyValuePair<string, TimeSpan>($"{h:00}:00", TimeSpan.FromHours(h)));
+                TimesList.Add(new KeyValuePair<string, TimeSpan>($"{h:00}:30", TimeSpan.FromHours(h) + TimeSpan.FromMinutes(30)));
+            }
+        }
+
+        private void LoadTemplates()
+        {
+            // TODO: Replace with real template loading
+            Templates.Add(new Template { Id = "1", Name = "Welcome Letter" });
+            Templates.Add(new Template { Id = "2", Name = "Follow-Up" });
+            Templates.Add(new Template { Id = "3", Name = "Final Notice" });
+        }
+
+        private void LoadStages()
+        {
+            foreach (var stage in Campaign.Stages)
+                Stages.Add(new FollowUpStageViewModel(stage));
+
+            if (!Stages.Any())
+                AddStage();
         }
 
         private void AddStage()
         {
-            int nextDelay = Stages.Count == 0 ? 0 : Stages.Max(s => s.DelayDays) + 3;
-            Stages.Add(new FollowUpStage
-            {
-                StageName = $"Stage {Stages.Count + 1}",
-                DelayDays = nextDelay
-            });
+            var delay = Stages.Count == 0 ? 0 : 7;
+            var stage = new FollowUpStage { StageName = "New Stage", DelayDays = delay };
+            Stages.Add(new FollowUpStageViewModel(stage));
         }
 
-        private void RemoveStage(FollowUpStage stage)
+        private void RemoveStage(FollowUpStageViewModel? vm)
         {
-            Stages.Remove(stage);
-            RenumberDelays();
-        }
-
-        private void RenumberDelays()
-        {
-            int cumulative = 0;
-            foreach (var s in Stages)
+            if (vm != null)
             {
-                if (Stages.IndexOf(s) == 0) s.DelayDays = 0;
-                else s.DelayDays = cumulative;
-                cumulative += 3; // or keep user value?
+                Stages.Remove(vm);
+                if (Stages.Any()) Stages[0].DelayDays = 0;
             }
         }
-
-        //private bool CanSave()
-        //{
-        //    return !string.IsNullOrWhiteSpace(Campaign.Name)
-        //        && Uri.TryCreate(Campaign.LeadSource.ApiUrl, UriKind.Absolute, out _)
-        //        && Stages.All(s => !string.IsNullOrWhiteSpace(s.TemplateId));
-        //}
 
         private void Save()
         {
-            var existing = _service.Campaigns.FirstOrDefault(c => c.Id == Campaign.Id);
-            if (existing != null)
+            if (string.IsNullOrWhiteSpace(Campaign.Name))
             {
-                _service.Campaigns.Remove(existing);
+                MessageBox.Show("Campaign name is required.");
+                return;
             }
-            Campaign.LeadSource.DaysOfWeek = DayCheckBoxes.Where(x=>x.IsChecked == true).Select(x=>x.DisplayName).ToList();
-            Campaign.LeadSource.RunAt = SelectedTime;
-            _service.Campaigns.Add(Campaign);
-            _service.SaveCampaign(Campaign);
-            OnSaved?.Invoke(this);
-            CloseWindow();
+
+            if (!Stages.Any())
+            {
+                MessageBox.Show("At least one stage is required.");
+                return;
+            }
+
+            // Enforce first stage = 0 days
+            Stages[0].DelayDays = 0;
+
+            // Sync back to Campaign.Stages
+            Campaign.Stages.Clear();
+            foreach (var vm in Stages)
+                Campaign.Stages.Add(vm.Model);
+
+            // === SAFE SAVE: Use your existing service ===
+            try
+            {
+                if (Campaign.Id == 0)
+                {
+                    _service.Campaigns.Add(Campaign);
+                }
+                else
+                {
+                    var existing = _service.Campaigns.FirstOrDefault(c => c.Id == Campaign.Id);
+                    if (existing != null)
+                    {
+                        existing.Name = Campaign.Name;
+                        existing.LeadSource = Campaign.LeadSource;
+                        existing.Stages = Campaign.Stages;
+                    }
+                }
+                _service.SaveCampaign(Campaign); // This must exist in your service
+
+                OnSaved?.Invoke();
+                CloseWindow();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Save failed: {ex.Message}");
+            }
         }
 
         private void CloseWindow()
         {
-            Application.Current.Windows.OfType<CampaignEditWindow>().FirstOrDefault()?.Close();
+            var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+            window?.Close();
         }
+    }
+
+    // === Helper: Stage ViewModel ===
+    public class FollowUpStageViewModel : BaseViewModel
+    {
+        public FollowUpStage Model { get; }
+        public string StageName { get => Model.StageName; set { Model.StageName = value; OnPropertyChanged(); } }
+        public string TemplateId { get => Model.TemplateId; set { Model.TemplateId = value; OnPropertyChanged(); } }
+        public int DelayDays
+        {
+            get => Model.DelayDays;
+            set
+            {
+                Model.DelayDays = Math.Max(0, value);
+                OnPropertyChanged();
+            }
+        }
+
+        public FollowUpStageViewModel(FollowUpStage model) => Model = model;
+    }
+
+    // === Helper: Checkbox for Days ===
+    public class CheckBoxModel : BaseViewModel
+    {
+        public string DisplayName { get; set; } = "";
+        private bool _isChecked;
+        public bool IsChecked
+        {
+            get => _isChecked;
+            set { _isChecked = value; OnPropertyChanged(); }
+        }
+    }
+
+    // === Dummy Template (replace with real one later) ===
+    public class Template
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
     }
 }
