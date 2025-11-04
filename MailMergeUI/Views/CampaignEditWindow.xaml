@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:dtConverters="clr-namespace:MailMergeUI.Helpers"
+        xmlns:converters="clr-namespace:MailMergeUI.Helpers"
         mc:Ignorable="d"
         Title="Edit Campaign"
         Width="900" MinHeight="900"
@@ -11,9 +11,10 @@
 
     <Window.Resources>
         <!-- Converters -->
-        <dtConverters:ScheduleTypeToVisibilityConverter x:Key="ScheduleTypeToVisibilityConverter"/>
-        <dtConverters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
-        <dtConverters:DayOfWeekInListConverter x:Key="DayOfWeekInListConverter"/>
+        <converters:ScheduleTypeToVisibilityConverter x:Key="ScheduleTypeToVisibilityConverter"/>
+        <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter"/>
+        <converters:DayOfWeekInListConverter x:Key="DayOfWeekInListConverter"/>
+        <converters:EnumToListConverter x:Key="EnumToListConverter" />
     </Window.Resources>
 
     <Border Background="{DynamicResource CardBackgroundLight}"
@@ -97,7 +98,7 @@
                                        Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
                             <ComboBox Grid.Row="1" Grid.Column="1" 
                                       ItemsSource="{Binding ScheduleTypes}"
-                                      SelectedItem="{Binding Schedule.Type, Mode=TwoWay}"
+                                      SelectedItem="{Binding Campaign.LeadSource.Type, Mode=TwoWay}"
                                       Margin="8,4"/>
 
                             <!-- Run At -->
@@ -112,31 +113,41 @@
                                       BorderBrush="{DynamicResource DividerColor}"/>
 
                             <!-- Weekly Options -->
-                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2" 
-                                        Visibility="{Binding Schedule.Type, Converter={StaticResource ScheduleTypeToVisibilityConverter}, ConverterParameter=Weekly}">
-                                <TextBlock Text="Days of Week" FontWeight="Bold" Margin="0,10,0,5"/>
-                                <WrapPanel>
-                                    <ItemsControl ItemsSource="{Binding AllDays}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <CheckBox Content="{Binding .}"
-                                                          IsChecked="{Binding DataContext.Schedule.DaysOfWeek, 
-                                                                              Mode=TwoWay, 
-                                                                              Converter={StaticResource DayOfWeekInListConverter}, 
-                                                                              ConverterParameter={Binding .}, 
-                                                                              RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                          Margin="5,2"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </WrapPanel>
-                            </StackPanel>
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Days of Week"  Margin="0,10,0,5"/>
+                            <ItemsControl Grid.Row="3" Grid.Column="1" ItemsSource="{Binding AllDays}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding .}"
+                      IsChecked="{Binding DataContext.Schedule.DaysOfWeek, 
+                                          Mode=TwoWay, 
+                                          Converter={StaticResource DayOfWeekInListConverter}, 
+                                          ConverterParameter={Binding .}, 
+                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                      Margin="5,2"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                          
 
                             <!-- Monthly Options -->
                             <StackPanel Grid.Row="4" Grid.ColumnSpan="2"
                                         Visibility="{Binding Schedule.Type, Converter={StaticResource ScheduleTypeToVisibilityConverter}, ConverterParameter=Monthly}">
-                                <TextBlock Text="Day of Month" FontWeight="Bold" Margin="0,10,0,5"/>
-                                <TextBox Text="{Binding Schedule.DayOfMonth, Mode=TwoWay}" Width="60" Margin="0,0,0,10"/>
+
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding DayCheckBoxes}" Margin="0,0,0,20">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding DisplayName}"
+                              IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="0,5"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
 
                         </Grid>

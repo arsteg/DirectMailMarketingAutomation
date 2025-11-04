@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MailMergeUI.ViewModels
 {
@@ -23,7 +24,7 @@ namespace MailMergeUI.ViewModels
         
 
         public ObservableCollection<FollowUpStage> Stages => Campaign.Stages;
-        public ObservableCollection<LetterTemplate> AvailableTemplates { get; }
+        public ObservableCollection<LetterTemplate> AvailableTemplates { get; }       
 
         public ICommand AddStageCommand { get; }
         public ICommand RemoveStageCommand { get; }
@@ -75,6 +76,15 @@ namespace MailMergeUI.ViewModels
             }
         }
 
+        // Your original property
+        public List<DayOfWeek> DaysOfWeek { get; set; } = new();
+
+        // For UI: List of day view models (for binding checkboxes)
+        public List<DayCheckBoxViewModel> DayCheckBoxes { get; }
+
+        public ObservableCollection<ScheduleType> ScheduleTypes { get; }
+          
+
 
         public CampaignEditViewModel(Campaign? campaign, CampaignService service)
         {
@@ -104,6 +114,12 @@ namespace MailMergeUI.ViewModels
      .ToString("hh:mm tt", CultureInfo.InvariantCulture)
      .Trim();
 
+            // Initialize all 7 days with checkboxes (initially unchecked)
+            DayCheckBoxes = Enum.GetValues(typeof(DayOfWeek))
+                .Cast<DayOfWeek>()
+                .Select(day => new DayCheckBoxViewModel(day, DaysOfWeek.Contains(day)))
+                .ToList();
+
             AvailableTemplates = new ObservableCollection<LetterTemplate>(_service.Templates);
 
             SelectedTime =  DateTime.Today.Add(Campaign.LeadSource.RunAt).ToString("hh:mm tt", CultureInfo.InvariantCulture);
@@ -112,6 +128,8 @@ namespace MailMergeUI.ViewModels
             RemoveStageCommand = new RelayCommand(s => RemoveStage((FollowUpStage)s!));
             SaveCommand = new RelayCommand(_ => Save());
             CancelCommand = new RelayCommand(_ => CloseWindow());
+            ScheduleTypes = new ObservableCollection<ScheduleType>((ScheduleType[])Enum.GetValues(typeof(ScheduleType))
+      );
         }
 
         private void AddStage()
