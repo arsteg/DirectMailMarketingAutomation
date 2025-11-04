@@ -53,29 +53,34 @@ namespace MailMergeUI.Helpers
             return null;
         }
     }
-    public class TimeSpanToStringConverter : IValueConverter
-    {
-        // Converts TimeSpan → string (e.g., "12:50 AM")
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is TimeSpan timeSpan)
-            {
-                // Convert TimeSpan to a formatted time string
-                return DateTime.Today.Add(timeSpan).ToString("hh:mm tt", CultureInfo.InvariantCulture);
-            }
 
-            return string.Empty;
-        }
+    //public class TimeSpanToStringConverter : IValueConverter
+    //{
+    //    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    //    {
+    //        if (value is TimeSpan time)
+    //            return DateTime.Today.Add(time).ToString("hh:mm tt", culture);
 
-        // Converts string → TimeSpan (e.g., "12:50 AM" → TimeSpan(0,50,0))
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is string str && DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime))
-            {
-                return dateTime.TimeOfDay;
-            }
+    //        return string.Empty;
+    //    }
 
-            return Binding.DoNothing;
-        }
-    }
+    //    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    //    {
+    //        if (value is string str && !string.IsNullOrWhiteSpace(str))
+    //        {
+    //            if (DateTime.TryParseExact(str,
+    //                                       new[] { "h:mm tt", "hh:mm tt" },
+    //                                       culture,
+    //                                       DateTimeStyles.None,
+    //                                       out var dt))
+    //                return dt.TimeOfDay;
+
+    //            if (TimeSpan.TryParse(str, out var ts))
+    //                return ts;
+    //        }
+
+    //        return Binding.DoNothing;
+    //    }
+    //}
+
 }

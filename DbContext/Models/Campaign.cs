@@ -36,7 +36,7 @@ namespace MailMerge.Data.Models
         public string FiltersJson { get; set; } = "{}"; // e.g., {"min_price": 100000, "city": "Austin"}
         public TimeSpan RunAt { get; set; } = TimeSpan.FromHours(0);
         public ScheduleType Type { get; set; }
-        public List<DayOfWeek> DaysOfWeek { get; set; } = new();
+        public List<string> DaysOfWeek { get; set; } = new();
     }
 
     public enum ScheduleType

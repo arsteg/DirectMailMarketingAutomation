@@ -132,7 +132,7 @@ namespace MailMergeUI.ViewModels
             if (MessageBox.Show($"Delete campaign '{campaign.Name}'?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 _service.Campaigns.Remove(campaign);
-                _service.SaveCampaigns();
+                _service.DeleteCampaign(campaign);
                 LoadCampaigns();
             }
         }

@@ -117,7 +117,9 @@
                                        Foreground="{DynamicResource TextDark}"/>
                             <ComboBox Grid.Row="2" Grid.Column="1"
                                       ItemsSource="{Binding TimesList}"
-                                      SelectedItem="{Binding SelectedTime, Mode=TwoWay, Converter={StaticResource TimeSpanToStringConverter}}"
+                                        DisplayMemberPath="Key"
+                                        SelectedValuePath="Value"
+                                        SelectedValue="{Binding SelectedTime, Mode=TwoWay}"
                                       MinWidth="200"
                                       Height="32"
                                       Padding="6"
