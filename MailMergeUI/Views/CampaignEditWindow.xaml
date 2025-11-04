@@ -30,45 +30,48 @@
 
                 <!-- Header -->
                 <TextBlock Text="Edit Campaign"
-                           FontSize="22"
+                           FontSize="26"
                            FontWeight="Bold"
                            Foreground="{DynamicResource PrimaryBlue}"
-                           Margin="0,0,0,20"/>
+                           Margin="0,0,0,25"/>
 
                 <!-- Campaign Name -->
-                <StackPanel Margin="0,0,0,15">
+                <StackPanel Margin="0,0,0,25">
                     <TextBlock Text="Campaign Name"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextDark}"
                                Margin="0,0,0,5"/>
                     <TextBox Text="{Binding Campaign.Name}"
-                             Height="36"
+                             Height="38"
                              Padding="8"
                              BorderBrush="{DynamicResource DividerColor}"
                              Background="{DynamicResource CardBackgroundLight}"
                              Foreground="{DynamicResource TextDark}"
-                             BorderThickness="1"/>
+                             BorderThickness="1"
+                             FontSize="14"/>
                 </StackPanel>
 
-                <!-- A. Lead Source -->
-                <Border Background="{DynamicResource CardBackgroundLight}"
-                        CornerRadius="8"
-                        Padding="20"
+                <!-- Section: Lead Source -->
+                <Border Background="{DynamicResource BackgroundLight}"
+                        CornerRadius="10"
+                        Padding="25"
                         BorderBrush="{DynamicResource DividerColor}"
                         BorderThickness="1"
-                        Margin="0,20,0,0"
+                        Margin="0,10,0,0"
                         Effect="{DynamicResource ShadowEffect}">
 
                     <StackPanel>
                         <TextBlock Text="A. Lead Source (API Search)"
-                                   FontSize="16"
+                                   FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="{DynamicResource PrimaryBlue}"
                                    Margin="0,0,0,15"/>
 
+                        <Separator Margin="0,0,0,20"/>
+
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="220"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
@@ -82,93 +85,101 @@
 
                             <!-- Filters JSON -->
                             <TextBlock Text="Filters (JSON):" Grid.Row="0" Grid.Column="0"
-                                       Foreground="{DynamicResource TextDark}" 
-                                       VerticalAlignment="Top" 
-                                       Margin="0,6,0,0"/>
+                                       VerticalAlignment="Top"
+                                       Foreground="{DynamicResource TextDark}"
+                                       Margin="0,8,0,0"/>
                             <TextBox Text="{Binding Campaign.LeadSource.FiltersJson}"
                                      Grid.Row="0" Grid.Column="1"
-                                     Height="80" Padding="6"
+                                     Height="100"
+                                     Padding="10"
                                      Margin="8,4"
                                      TextWrapping="Wrap"
                                      AcceptsReturn="True"
-                                     BorderBrush="{DynamicResource DividerColor}"/>
+                                     BorderBrush="{DynamicResource DividerColor}"
+                                     FontFamily="Consolas"
+                                     FontSize="13"
+                                     VerticalScrollBarVisibility="Auto"/>
 
                             <!-- Schedule Type -->
-                            <TextBlock Text="Schedule Type" Grid.Row="1" Grid.Column="0"
-                                       Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
-                            <ComboBox Grid.Row="1" Grid.Column="1" 
+                            <TextBlock Text="Schedule Type:" Grid.Row="1" Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextDark}"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1"
                                       ItemsSource="{Binding ScheduleTypes}"
                                       SelectedItem="{Binding Campaign.LeadSource.Type, Mode=TwoWay}"
-                                      Margin="8,4"/>
+                                      Margin="8,4"
+                                      MinWidth="200"
+                                      Height="32"/>
 
                             <!-- Run At -->
                             <TextBlock Text="Run At:" Grid.Row="2" Grid.Column="0"
-                                       Foreground="{DynamicResource TextDark}" VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextDark}"/>
                             <ComboBox Grid.Row="2" Grid.Column="1"
                                       ItemsSource="{Binding TimesList}"
-                                      SelectedValue="{Binding Schedule.RunAt, Mode=TwoWay, Converter={StaticResource TimeSpanToStringConverter}}"
-                                      MinWidth="120" MinHeight="32"
+                                      SelectedItem="{Binding SelectedTime, Mode=TwoWay, Converter={StaticResource TimeSpanToStringConverter}}"
+                                      MinWidth="200"
+                                      Height="32"
                                       Padding="6"
-                                      Margin="8,4"
-                                      BorderBrush="{DynamicResource DividerColor}"/>
+                                      Margin="8,4"/>
 
                             <!-- Weekly Options -->
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Days of Week"  Margin="0,10,0,5"/>
-                            <ItemsControl Grid.Row="3" Grid.Column="1" ItemsSource="{Binding AllDays}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <CheckBox Content="{Binding .}"
-                      IsChecked="{Binding DataContext.Schedule.DaysOfWeek, 
-                                          Mode=TwoWay, 
-                                          Converter={StaticResource DayOfWeekInListConverter}, 
-                                          ConverterParameter={Binding .}, 
-                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                      Margin="5,2"/>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                          
+                            <TextBlock Grid.Row="3" Grid.Column="0"
+                                       Text="Days of Week:"
+                                       VerticalAlignment="Top"
+                                       Margin="0,10,0,0"
+                                       Foreground="{DynamicResource TextDark}"/>
+                            <ItemsControl Grid.Row="3" Grid.Column="1" ItemsSource="{Binding DayCheckBoxes}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding DisplayName}"
+                       IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       Margin="6,3"
+                       FontSize="13"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
                             <!-- Monthly Options -->
-                            <StackPanel Grid.Row="4" Grid.ColumnSpan="2"
+                            <!--<StackPanel Grid.Row="4" Grid.ColumnSpan="2"
+                                        Margin="0,10,0,0"
                                         Visibility="{Binding Schedule.Type, Converter={StaticResource ScheduleTypeToVisibilityConverter}, ConverterParameter=Monthly}">
-
-                                <ItemsControl Grid.Row="1" ItemsSource="{Binding DayCheckBoxes}" Margin="0,0,0,20">
+                                <TextBlock Text="Monthly Options:"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,8"/>
+                                <ItemsControl ItemsSource="{Binding DayCheckBoxes}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <CheckBox Content="{Binding DisplayName}"
-                              IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              Margin="0,5"/>
+                                                      IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      Margin="6,3"
+                                                      FontSize="13"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </StackPanel>
-
+                            </StackPanel>-->
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- B. Follow-Up Sequence -->
-                <!-- (kept as-is, your code here) -->
-
                 <!-- Save / Cancel Buttons -->
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Margin="0,30,0,0">
+                            Margin="0,40,0,10"
+                            >
                     <Button Content="Save"
                             Command="{Binding SaveCommand}"
                             Style="{StaticResource PrimaryButton}"
-                            Padding="20,8"/>
+                            Width="120"
+                            Height="38"
+                            FontWeight="SemiBold"
+                            Margin="0,0,10,0"/>
                     <Button Content="Cancel"
                             Command="{Binding CancelCommand}"
                             Style="{StaticResource ToolbarButton}"
-                            Padding="20,8"/>
+                            Width="120"
+                            Height="38"
+                            FontWeight="SemiBold"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

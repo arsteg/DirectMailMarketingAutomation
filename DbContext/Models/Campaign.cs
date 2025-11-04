@@ -34,7 +34,7 @@ namespace MailMerge.Data.Models
         public string ApiUrl { get; set; } = "";
         public string ApiKey { get; set; } = "";
         public string FiltersJson { get; set; } = "{}"; // e.g., {"min_price": 100000, "city": "Austin"}
-        public TimeSpan RunAt { get; set; } 
+        public TimeSpan RunAt { get; set; } = TimeSpan.FromHours(0);
         public ScheduleType Type { get; set; }
         public List<DayOfWeek> DaysOfWeek { get; set; } = new();
     }

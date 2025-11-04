@@ -34,7 +34,7 @@ namespace MailMergeUI.ViewModels
         public Action<CampaignEditViewModel>? OnSaved;
 
         // UI State
-        private string _selectedTime =string.Empty;
+        private string _selectedTime ;
         public string SelectedTime
         {
             get => _selectedTime;
@@ -109,10 +109,7 @@ namespace MailMergeUI.ViewModels
                 //    DelayDays = s.DelayDays
                 //}).ToList()
             };
-            SelectedTime = DateTime.Today
-     .Add(Campaign.LeadSource.RunAt)
-     .ToString("hh:mm tt", CultureInfo.InvariantCulture)
-     .Trim();
+            SelectedTime = DateTime.Today.Add(Campaign.LeadSource.RunAt).ToString("hh:mm tt", CultureInfo.InvariantCulture);
 
             // Initialize all 7 days with checkboxes (initially unchecked)
             DayCheckBoxes = Enum.GetValues(typeof(DayOfWeek))
@@ -122,7 +119,7 @@ namespace MailMergeUI.ViewModels
 
             AvailableTemplates = new ObservableCollection<LetterTemplate>(_service.Templates);
 
-            SelectedTime =  DateTime.Today.Add(Campaign.LeadSource.RunAt).ToString("hh:mm tt", CultureInfo.InvariantCulture);
+            SelectedTime = "12:00 PM";// DateTime.Today.Add(Campaign.LeadSource.RunAt).ToString("hh:mm tt", CultureInfo.InvariantCulture);
 
             AddStageCommand = new RelayCommand(_ => AddStage());
             RemoveStageCommand = new RelayCommand(s => RemoveStage((FollowUpStage)s!));
@@ -130,6 +127,8 @@ namespace MailMergeUI.ViewModels
             CancelCommand = new RelayCommand(_ => CloseWindow());
             ScheduleTypes = new ObservableCollection<ScheduleType>((ScheduleType[])Enum.GetValues(typeof(ScheduleType))
       );
+
+           
         }
 
         private void AddStage()
@@ -168,7 +167,8 @@ namespace MailMergeUI.ViewModels
 
         private void Save()
         {
-            TimeSpan time = DateTime.ParseExact(SelectedTime, "h:mm tt", System.Globalization.CultureInfo.InvariantCulture).TimeOfDay;
+            TimeSpan time = TimeSpan.FromSeconds(0);
+            TimeSpan.TryParse(SelectedTime, out time);          
 
             var existing = _service.Campaigns.FirstOrDefault(c => c.Id == Campaign.Id);
             if (existing != null)
