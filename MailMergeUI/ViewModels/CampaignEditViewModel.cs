@@ -48,8 +48,6 @@ namespace MailMergeUI.ViewModels
                 }
             }
         }
-
-
         public List<KeyValuePair<string, TimeSpan>> TimesList { get; } = GenerateTimesList();
 
         private static List<KeyValuePair<string, TimeSpan>> GenerateTimesList()

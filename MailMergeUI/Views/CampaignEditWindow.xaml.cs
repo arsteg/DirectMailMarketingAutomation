@@ -26,5 +26,26 @@ namespace MailMergeUI.Views
             InitializeComponent();
             this.DataContext = viewModel;
         }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (this.DataContext != null) {
+                                var vm = (CampaignEditViewModel)this.DataContext;
+                if (vm != null)
+                {
+                    if (e.AddedItems.Count > 0 && e.AddedItems[0]?.ToString() =="None")
+                    {
+                        daysOfWeekItemControl.Visibility= Visibility.Visible;
+                        daysOfWeekLabel.Visibility = Visibility.Visible;
+
+                    }
+                    else
+                    {
+                        daysOfWeekItemControl.Visibility = Visibility.Collapsed;
+                        daysOfWeekLabel.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+        }
     }
 }

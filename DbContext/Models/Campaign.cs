@@ -41,6 +41,7 @@ namespace MailMerge.Data.Models
 
     public enum ScheduleType
     {
+        None,
         Daily,
         Weekly,
         Monthly
