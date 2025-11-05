@@ -63,7 +63,7 @@ namespace MailMergeUI.Views
 
             if (!match && viewModel.SelectedTime != default)
             {
-                var selectedItem = viewModel.TimesList.First(x => x.Value == viewModel.SelectedTime);
+                var selectedItem = viewModel.TimesList.FirstOrDefault(x => x.Value == viewModel.SelectedTime);
                 comboBox.Text = selectedItem.Key;
             }
         }

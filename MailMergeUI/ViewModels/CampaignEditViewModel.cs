@@ -53,10 +53,13 @@ namespace MailMergeUI.ViewModels
 
                 _comboBoxText = value;
                 OnPropertyChanged();
-
+                if (TimesList == null)
+                {
+                    return;
+                }
                 // Try to find matching item
                 var match = TimesList.FirstOrDefault(x =>
-                    string.Equals(x.Key, value.Trim(), StringComparison.OrdinalIgnoreCase));
+                    string.Equals(x.Key, value?.Trim(), StringComparison.OrdinalIgnoreCase));
 
                 if (match.Key != null)
                 {
