@@ -8,7 +8,7 @@
         FontFamily="Segoe UI"
         ResizeMode="CanResize"
         AllowsTransparency="False"
-        WindowStyle="SingleBorderWindow"  WindowState="Maximized">
+        WindowStyle="SingleBorderWindow"  WindowState="Maximized"  >
 
     <Grid MouseDown="Grid_MouseDown">
         <!-- Define layout: Sidebar (250px) + MainContent (*) -->

@@ -8,7 +8,7 @@
         Title="Edit Campaign"
         Width="900" MinHeight="900"
         Background="{DynamicResource BackgroundLight}"
-         WindowState="Maximized">
+        >
     <Window.Resources>
         <!-- Converters -->
         <converters:ScheduleTypeToVisibilityConverter x:Key="ScheduleTypeToVisibilityConverter"/>
@@ -106,8 +106,7 @@
                                        Margin="0,10,0,0"
                                        Foreground="{DynamicResource TextDark}"/>
                             <ItemsControl x:Name="daysOfWeekItemControl" Grid.Row="2" Grid.Column="1"
-                                          ItemsSource="{Binding DayCheckBoxes}"
-                                          IsEnabled="{Binding IsDaysOfWeekEnabled}">
+                                          ItemsSource="{Binding DayCheckBoxes}"                                         >
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <CheckBox Content="{Binding DisplayName}"
@@ -122,14 +121,19 @@
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextDark}"/>
                             <ComboBox Grid.Row="3" Grid.Column="1"
-                                      ItemsSource="{Binding TimesList}"
-                                      DisplayMemberPath="Key"
-                                      SelectedValuePath="Value"
-                                      SelectedValue="{Binding SelectedTime, Mode=TwoWay}"
-                                      MinWidth="200"
-                                      Height="32"
-                                      Padding="6"
-                                      Margin="8,4"/>
+          ItemsSource="{Binding TimesList}"
+          DisplayMemberPath="Key"
+          SelectedValuePath="Value"
+          SelectedValue="{Binding SelectedTime, Mode=TwoWay}"
+          IsEditable="True"
+          IsTextSearchEnabled="True"
+          Text="{Binding ComboBoxText, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+          MinWidth="200"
+          Height="32"
+          Padding="6"
+          Margin="8,4"
+          LostFocus="ComboBox_LostFocus"
+          PreviewKeyDown="ComboBox_PreviewKeyDown"/>
                         </Grid>
                     </StackPanel>
                 </Border>

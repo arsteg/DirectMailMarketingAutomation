@@ -23,10 +23,119 @@ namespace MailMergeUI.ViewModels
         public TimeSpan SelectedTime
         {
             get => Campaign.LeadSource.RunAt;
-            set { Campaign.LeadSource.RunAt = value; OnPropertyChanged(); }
+            set { 
+                Campaign.LeadSource.RunAt = value;
+                OnPropertyChanged();
+                // Sync text to selected item
+                var item = TimesList.FirstOrDefault(x => x.Value == value);
+                if (item.Key != null)
+                {
+                    ComboBoxText = item.Key; // This triggers validation
+                }
+            }
         }
 
-        public bool IsDaysOfWeekEnabled => Campaign.LeadSource.Type == ScheduleType.Weekly || Campaign.LeadSource.Type == ScheduleType.Monthly;
+        // For dropdown control (optional)
+        private bool _isDropDownOpen;
+        public bool IsDropDownOpen
+        {
+            get => _isDropDownOpen;
+            set { _isDropDownOpen = value; OnPropertyChanged(); }
+        }
+
+        private string _comboBoxText = "";
+        public string ComboBoxText
+        {
+            get => _comboBoxText;
+            set
+            {
+                if (_comboBoxText == value) return;
+
+                _comboBoxText = value;
+                OnPropertyChanged();
+
+                // Try to find matching item
+                var match = TimesList.FirstOrDefault(x =>
+                    string.Equals(x.Key, value.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                if (match.Key != null)
+                {
+                    // Valid: update SelectedTime
+                    SelectedTime = match.Value;
+                    // Optionally: close dropdown
+                    IsDropDownOpen = false;
+                }
+                else
+                {
+                    // Invalid: do NOT update SelectedTime
+                    // But allow typing (for search)
+                    // We'll revert on LostFocus if needed
+                }
+            }
+        }
+
+        // Helper: parse strings like "1h", "30m", "2:30", "90" (minutes), etc.
+        private bool TryParseTimeSpan(string input, out TimeSpan result)
+        {
+            result = default;
+
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            input = input.Trim().ToLower();
+
+            // Try exact match in list first
+            var exact = TimesList.FirstOrDefault(x => x.Key.Equals(input, StringComparison.OrdinalIgnoreCase));
+            if (exact.Key != null)
+            {
+                result = exact.Value;
+                return true;
+            }
+
+            // Custom parsing logic
+            var totalMinutes = 0.0;
+
+            // Replace known suffixes
+            input = input.Replace("h", ":0").Replace("m", "").Replace("s", "sec");
+
+            var parts = input.Split(new[] { ' ', ':' }, StringSplitOptions.RemoveEmptyEntries);
+            try
+            {
+                foreach (var part in parts)
+                {
+                    if (double.TryParse(part, out var num))
+                        totalMinutes += num;
+                    else if (part.Contains("sec"))
+                        totalMinutes += num / 60.0;
+                }
+            }
+            catch { return false; }
+
+            result = TimeSpan.FromMinutes(totalMinutes);
+            return true;
+        }
+
+        // Optional: format TimeSpan for display
+        private string FormatTimeSpan(TimeSpan ts)
+        {
+            if (ts.TotalHours >= 1)
+                return $"{ts.TotalHours:F1}h";
+            else if (ts.TotalMinutes >= 1)
+                return $"{ts.TotalMinutes:F0}m";
+            else
+                return $"{ts.TotalSeconds:F0}s";
+        }
+
+        // Optional: Command to handle Enter press
+        public ICommand CommitTypedTimeCommand => new RelayCommand(_ =>
+        {
+            if (TryParseTimeSpan(ComboBoxText, out var ts))
+            {
+                SelectedTime = ts;
+            }
+        });
+
+        //public bool IsDaysOfWeekEnabled => Campaign.LeadSource.Type == ScheduleType.Weekly || Campaign.LeadSource.Type == ScheduleType.Monthly;
 
         // === NEW: Follow-Up Stages ===
         public ObservableCollection<FollowUpStageViewModel> Stages { get; } = new();
@@ -72,10 +181,17 @@ namespace MailMergeUI.ViewModels
             }
 
             // Time slots
+            TimesList.Clear(); // Optional: clear if re-populating
+
             for (int h = 0; h < 24; h++)
             {
-                TimesList.Add(new KeyValuePair<string, TimeSpan>($"{h:00}:00", TimeSpan.FromHours(h)));
-                TimesList.Add(new KeyValuePair<string, TimeSpan>($"{h:00}:30", TimeSpan.FromHours(h) + TimeSpan.FromMinutes(30)));
+                for (int m = 0; m < 60; m += 10)
+                {
+                    var timeSpan = TimeSpan.FromHours(h) + TimeSpan.FromMinutes(m);
+                    var display = $"{h:00}:{m:00}"; // e.g., 09:10, 14:30
+
+                    TimesList.Add(new KeyValuePair<string, TimeSpan>(display, timeSpan));
+                }
             }
         }
 

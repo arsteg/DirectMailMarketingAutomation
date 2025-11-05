@@ -14,7 +14,7 @@ namespace MailMergeUI
         {
             _dbContext = dbContext;
             InitializeComponent();
-            this.Loaded += DashboardWindow_Loaded;
+            this.Loaded += DashboardWindow_Loaded;            
         }
 
         private void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
