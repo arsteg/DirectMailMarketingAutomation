@@ -123,7 +123,16 @@ namespace MailMergeUI.ViewModels
             var vm = new CampaignEditViewModel(campaign, _service);   // 2 parameters only
             vm.OnSaved += () => LoadCampaigns();                     // parameter-less
             var window = new CampaignEditWindow(vm);
-            window.ShowDialog();
+            var mainWindow = Application.Current.MainWindow;
+            if (mainWindow != null)
+            {
+                window.WindowState = mainWindow.WindowState;
+
+                // Optional: position on top of main window
+                window.Owner = mainWindow;
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            }
+            window.Show();
         }
 
         private void Delete(Campaign campaign)

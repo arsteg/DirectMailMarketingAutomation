@@ -1,4 +1,5 @@
-﻿using MailMerge.Data.Models;
+﻿using MailMerge.Data;
+using MailMerge.Data.Models;
 using MailMergeUI.Helpers;
 using MailMergeUI.Models;
 using MailMergeUI.Services;
@@ -19,6 +20,7 @@ namespace MailMergeUI.ViewModels
         private readonly ApiService _api = new();
         private readonly PrinterService _printer = new();
         private readonly LogService _log = new();
+        private readonly MailMergeDbContext _dbContext;
 
 
         public ObservableCollection<Campaign> Campaigns { get; } = new();
@@ -69,9 +71,10 @@ namespace MailMergeUI.ViewModels
         public ICommand ShowBlacklistCommand { get; }
         public ICommand ShowLogCommand { get; }
 
-        public MainWindowViewModel()
+        public MainWindowViewModel(MailMergeDbContext dbContext)
         {
-            //DashboardVM = new DashboardViewModel(this);
+            _dbContext = dbContext;
+            LoadData();
            
             BlacklistVM = new BlacklistViewModel();
             LogVM = new SystemLogViewModel();
@@ -89,12 +92,14 @@ namespace MailMergeUI.ViewModels
         }
 
 
-        private void LoadSampleData()
+        private void LoadData()
         {
-            var c1 = new Campaign { Id = 1, Name = "Spring Promo", IsActive = true };
-            var c2 = new Campaign { Id = 2, Name = "Summer Follow-Up" };
-            Campaigns.Add(c1); Campaigns.Add(c2);
-            ActiveCampaign = c1;
+            var campaignList = _dbContext.Campaigns.ToList();
+            foreach(var campaign in campaignList)
+            {
+                Campaigns.Add(campaign);
+            }
+            ActiveCampaign = Campaigns.Any() ? Campaigns.FirstOrDefault() : new Campaign();
         }
 
         private async Task LoadPendingCountAsync()

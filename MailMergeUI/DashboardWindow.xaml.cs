@@ -19,7 +19,7 @@ namespace MailMergeUI
 
         private void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            this.DataContext = new MainWindowViewModel();
+            this.DataContext = new MainWindowViewModel(_dbContext);
         }
 
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
@@ -68,12 +68,11 @@ namespace MailMergeUI
                 this.DragMove();
         }
 
-
-
         private void btnShowBlacklisted_Click(object sender, RoutedEventArgs e)
         {
-            BlacklistView blacklistView = new BlacklistView();
+            BlacklistView blacklistView = new BlacklistView(this._dbContext);
             blacklistView.WindowState = this.WindowState;
+            blacklistView.WindowStartupLocation = this.WindowStartupLocation;
             blacklistView.Show();
             this.Close();
         }
@@ -82,6 +81,7 @@ namespace MailMergeUI
         {
             CampaignListView campaignListView = new CampaignListView(this._dbContext);
             campaignListView.WindowState = this.WindowState;
+            campaignListView.WindowStartupLocation = this.WindowStartupLocation;
             campaignListView.Show();
             this.Close();
         }

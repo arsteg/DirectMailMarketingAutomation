@@ -38,6 +38,7 @@ namespace MailMergeUI.Views
         {
             DashboardWindow dashboardWindow = new DashboardWindow(_dbContext);
             dashboardWindow.WindowState = this.WindowState;
+            dashboardWindow.WindowStartupLocation = this.WindowStartupLocation;
             dashboardWindow.Show();
             this.Close();
         }

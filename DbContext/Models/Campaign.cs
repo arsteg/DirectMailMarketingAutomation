@@ -13,6 +13,8 @@ namespace MailMerge.Data.Models
         [Key]
         public int Id { get; set; }
         public string Name { get; set; } = "";
+        public string OutputPath { get; set; } = string.Empty;
+        public DateTime LastRunningTime {get; set; }
         public LeadSource LeadSource { get; set; } = new();
         public ObservableCollection<FollowUpStage> Stages { get; set; } = new();
         public PrinterSettings LetterPrinter { get; set; } = new();
@@ -24,6 +26,7 @@ namespace MailMerge.Data.Models
     {
         public int Id { get; set; }
         public string StageName { get; set; } = "Stage";
+        public bool IsRun { get; set; }
         public string TemplateId { get; set; } = ""; // References Template.Id
         public int DelayDays { get; set; } = 0;
     }

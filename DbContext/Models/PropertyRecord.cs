@@ -75,5 +75,7 @@ namespace MailMerge.Data.Models
 
         [MaxLength(64)]
         public string TrusteePhone { get; set; }
+
+        public int CampaignId { get; set; }
     }
 }

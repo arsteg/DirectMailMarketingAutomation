@@ -29,7 +29,7 @@ namespace MailMerge.Data
             {
                 campaign.HasKey(c => c.Id);
                 campaign.Property(c => c.Name).HasMaxLength(255).IsRequired();
-
+                campaign.Property(c => c.OutputPath).HasMaxLength(255);
                 // 2. Configure 'LeadSource' as a single Owned Entity (Maps to columns in the Campaign table)
                 // The properties of LeadSource (SourceType, Priority) will appear directly in the Campaign table
                 campaign.OwnsOne(c => c.LeadSource, leadSource =>

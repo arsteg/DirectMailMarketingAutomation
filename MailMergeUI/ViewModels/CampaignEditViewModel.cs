@@ -1,12 +1,16 @@
 ﻿using MailMerge.Data.Models;
 using MailMergeUI.Helpers;
 using MailMergeUI.Services;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
+using System.Xml;
+using static System.Windows.Forms.AxHost;
 
 namespace MailMergeUI.ViewModels
 {
@@ -41,6 +45,27 @@ namespace MailMergeUI.ViewModels
         {
             get => _isDropDownOpen;
             set { _isDropDownOpen = value; OnPropertyChanged(); }
+        }
+
+        private string _cityString;
+        public string City
+        {
+            get => _cityString;
+            set { _cityString = value; OnPropertyChanged(); }
+        }
+
+        private string _outputPath;
+        public string OutputPath
+        {
+            get => _outputPath;
+            set { _outputPath = value; OnPropertyChanged(); }
+        }
+
+        private string _stateString;
+        public string State
+        {
+            get => _stateString;
+            set { _stateString = value; OnPropertyChanged(); }
         }
 
         private string _comboBoxText = "";
@@ -149,6 +174,7 @@ namespace MailMergeUI.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand AddStageCommand { get; }
         public ICommand RemoveStageCommand { get; }
+        public ICommand BrowseOutputPathCommand { get; }
 
         public event Action OnSaved;
 
@@ -161,6 +187,7 @@ namespace MailMergeUI.ViewModels
                 Stages = new ObservableCollection<FollowUpStage>()
             };
 
+            
             SetupLeadSource();
             LoadTemplates();
             LoadStages();
@@ -168,7 +195,38 @@ namespace MailMergeUI.ViewModels
             SaveCommand = new RelayCommand(_ => Save());
             CancelCommand = new RelayCommand(_ => CloseWindow());
             AddStageCommand = new RelayCommand(_ => AddStage());
+            BrowseOutputPathCommand = new RelayCommand(_ => BrowseOutputPath());
             RemoveStageCommand = new RelayCommand(param => RemoveStage(param as FollowUpStageViewModel));
+
+            if (campaign != null)
+            {
+                SelectedTime = campaign.LeadSource.RunAt;
+                DayCheckBoxes = new ObservableCollection<CheckBoxModel>(
+    Enum.GetValues(typeof(DayOfWeek))
+        .Cast<DayOfWeek>()
+        .Select(day => new CheckBoxModel
+        {
+            DisplayName = day.ToString(),
+            IsChecked = Campaign.LeadSource.DaysOfWeek.Contains(day.ToString())
+        })
+);
+            }
+        }
+
+        private void BrowseOutputPath()
+        {
+
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Select output folder";
+                dialog.UseDescriptionForTitle = true;
+                dialog.ShowNewFolderButton = true;
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    Campaign.OutputPath = dialog.SelectedPath;
+                }
+            }
         }
 
         private void SetupLeadSource()
@@ -235,13 +293,13 @@ namespace MailMergeUI.ViewModels
         {
             if (string.IsNullOrWhiteSpace(Campaign.Name))
             {
-                MessageBox.Show("Campaign name is required.");
+                System.Windows.MessageBox.Show("Campaign name is required.");
                 return;
             }
 
             if (!Stages.Any())
             {
-                MessageBox.Show("At least one stage is required.");
+                System.Windows.MessageBox.Show("At least one stage is required.");
                 return;
             }
 
@@ -256,6 +314,41 @@ namespace MailMergeUI.ViewModels
             // === SAFE SAVE: Use your existing service ===
             try
             {
+                var searchCriteriaBody = new
+                {
+                    Criteria = new[]
+            {
+                new
+                {
+                    name = "State",
+                    value = new[] { State?? "CA" }
+                },
+                new
+                {
+                    name = "City",
+                    value = new[] { City?? "Los Angeles" }
+                },
+                new
+                {
+                    name= "inForeclosure",
+                    value = new[] { "1" }
+                },
+                new
+                {
+                    name= "ForeclosureStage",
+                    value = new[] { "Preforeclosure", "Auction" }
+                },
+                new
+                {
+                    name= "ForeclosureRecDate",
+                    value = new[] { "Last Week" }
+                }
+                // You can add more criteria items here for filtering (e.g., City, County)
+            }
+                };
+                Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
+                Campaign.LeadSource.DaysOfWeek = DayCheckBoxes.Where(x=>x.IsChecked == true).Select(x=>x.DisplayName).ToList();
+                
                 if (Campaign.Id == 0)
                 {
                     _service.Campaigns.Add(Campaign);
@@ -277,13 +370,13 @@ namespace MailMergeUI.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Save failed: {ex.Message}");
+                System.Windows.MessageBox.Show($"Save failed: {ex.Message}");
             }
         }
 
         private void CloseWindow()
         {
-            var window = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
+            var window = System.Windows.Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this);
             window?.Close();
         }
     }

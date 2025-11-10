@@ -1,17 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MailMerge.Data.Models;
+using MailMergeEngine;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
 public class ApiService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly HttpClient _httpClient;
+    private readonly MailMergeEngine.MailMergeEngine _engine;
 
-    public ApiService(ApplicationDbContext context, HttpClient httpClient)
+    public ApiService(MailMergeEngine.MailMergeEngine engine)
     {
-        _context = context;
-        _httpClient = httpClient;
+        _engine = engine;
     }
 
     /// <summary>
@@ -21,34 +26,109 @@ public class ApiService
     /// <param name="url">The base API endpoint URL (e.g., "https://api.propertyradar.com/v1/properties").</param>
     /// <param name="bearerToken">The Bearer Token for authorization.</param>
     /// <param name="rawQueryParams">The full query string, including '?' and all parameters (e.g., "?Purchase=1&Fields=...&page=1&pageSize=500").</param>
-    /// <param name="searchCriteriaBody">The object structured as { "Criteria": [ ... ] } for the request body.</param>
     /// <returns>The number of records successfully saved to the database.</returns>
-    public async Task<int> PostAndSavePropertyRecordsAsync(
-    string url,
-    string bearerToken,
-    string rawQueryParams,
-    object searchCriteriaBody)
+    public async Task PostAndSavePropertyRecordsAsync()
     {
-        int totalRecordsSaved = 0;
+        string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
+        string url = "https://api.propertyradar.com/v1/properties";
+        string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
+        string rawQueryParams = $"?Purchase=1&Fields={RequestedFields}";
+        var _context = new ApplicationDbContext();
+        var _httpClient = new HttpClient();
+        //await context.Database.EnsureCreatedAsync();
+        string? templatePath = System.Configuration.ConfigurationManager.AppSettings["TemplatePath"];
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+        if (_context.Campaigns.Any())
+        {
+            var campaigns = _context.Campaigns.ToList();
+            foreach (var campaign in campaigns)
+            {
+                if (campaign == null || campaign.LeadSource == null)
+                    continue;
+
+                var scheduleType = campaign.LeadSource.Type;
+                var runAt = campaign.LeadSource.RunAt; // TimeSpan (e.g. 00:00:00)
+                var daysOfWeek = campaign.LeadSource.DaysOfWeek; // List<string>
+
+                if (scheduleType == ScheduleType.Daily)
+                {
+                    // Compare only the time part of current DateTime with the TimeSpan
+                    var nowTime = DateTime.Now.TimeOfDay;
+
+                    if (nowTime >= runAt)
+                    {
+                        // ✅ Run your scheduled code for daily schedule
+                        await RunCampaign(_context,_httpClient,campaign,url,rawQueryParams,bearerToken);
+                        foreach (var stage in campaign.Stages)
+                        {
+                            if (!stage.IsRun)
+                            {
+                                if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                {
+                                    var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
+                                    _engine.ExportBatch(templatePath, records, Path.Combine(campaign.OutputPath, stage.StageName, "merged.pdf"));
+                                }
+
+                                stage.IsRun = true;
+                            }
+                        }
+                    }
+                }
+                else if (scheduleType == ScheduleType.None)
+                {
+                    // Example: daysOfWeek = ["Monday", "Wednesday", "Friday"]
+                    var today = DateTime.Now.DayOfWeek.ToString(); // e.g. "Monday"
+
+                    if (daysOfWeek != null && daysOfWeek.Contains(today, StringComparer.OrdinalIgnoreCase))
+                    {
+                        // ✅ Run your scheduled code for specific days
+                        if (DateTime.Now.TimeOfDay >= runAt)
+                        {
+                            await RunCampaign(_context,_httpClient,campaign, url, rawQueryParams, bearerToken);
+                            foreach (var stage in campaign.Stages)
+                            {
+                                if (!stage.IsRun)
+                                {
+                                    if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                    {
+                                        var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
+                                        _engine.ExportBatch(templatePath, records, Path.Combine(campaign.OutputPath, stage.StageName, "merged.pdf"));
+                                    }
+
+                                    stage.IsRun = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                campaign.LastRunningTime = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+        }
+        //Console.WriteLine($"\nCompleted fetching all records. Total saved: {totalRecordsSaved} / {totalResults}.");
+        //return totalRecordsSaved;
+    }
+
+    private async Task RunCampaign(ApplicationDbContext _context,HttpClient _httpClient,Campaign campaign,string url,string rawQueryParams,string bearerToken)
+    {
         int start = 0;
         int batchSize = 500;
         int totalResults = 0;
         bool moreData = true;
 
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", bearerToken);
-
         do
         {
-            // 1️⃣ Build URL with pagination
+            // Build URL with pagination
             var pagedUrl = $"{url}{rawQueryParams}&Start={start}";
             Console.WriteLine($"\nFetching records starting from {start}...");
 
-            // 2️⃣ Serialize request body
-            var jsonContent = JsonSerializer.Serialize(searchCriteriaBody);
+            // Serialize request body
+            var jsonContent = campaign.LeadSource.FiltersJson;
             var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            // 3️⃣ Send POST
+            // Send POST
             var response = await _httpClient.PostAsync(pagedUrl, content);
             if (!response.IsSuccessStatusCode)
             {
@@ -57,7 +137,7 @@ public class ApiService
                 break;
             }
 
-            // 4️⃣ Deserialize response
+            // Deserialize response
             var responseStream = await response.Content.ReadAsStreamAsync();
             var apiResponse = await JsonSerializer.DeserializeAsync<ApiResponse>(responseStream);
 
@@ -69,49 +149,53 @@ public class ApiService
 
             totalResults = apiResponse.TotalResultCount;
 
-            // 5️⃣ Map results
+            // Map results
             var propertiesToSave = apiResponse.Results
                 .Select(dto => MapToPropertyRecord(dto))
                 .ToList();
 
-            // 6️⃣ Remove duplicates before saving
             var radarIds = propertiesToSave.Select(p => p.RadarId).ToList();
-            var existingRadarIds = await _context.Properties
+
+            // Fetch existing records with matching RadarIds
+            var existingRecords = await _context.Properties
                 .Where(p => radarIds.Contains(p.RadarId))
-                .Select(p => p.RadarId)
                 .ToListAsync();
 
+            // Determine new records (those not in DB)
+            var existingRadarIds = existingRecords.Select(p => p.RadarId).ToList();
             var newProperties = propertiesToSave
                 .Where(p => !existingRadarIds.Contains(p.RadarId))
                 .ToList();
 
+            // ✅ Update CampaignId for all existing records
+            foreach (var existing in existingRecords)
+            {
+                existing.CampaignId = campaign.Id; // <-- use your new campaignId variable here
+            }
+
+            // ✅ Add new records
             if (newProperties.Any())
             {
                 await _context.Properties.AddRangeAsync(newProperties);
+                // ✅ Save all changes (updates + inserts)
                 int saved = await _context.SaveChangesAsync();
-                totalRecordsSaved += saved;
-                Console.WriteLine($"Saved {saved} new records (start={start}).");
             }
             else
             {
                 Console.WriteLine($"No new records to insert for batch starting {start}.");
             }
 
-            // 7️⃣ Check if more results remain
+            // Check if more results remain
             start += batchSize;
             moreData = start < totalResults;
 
         } while (moreData);
 
-        Console.WriteLine($"\nCompleted fetching all records. Total saved: {totalRecordsSaved} / {totalResults}.");
-        return totalRecordsSaved;
+       
+
+
     }
 
-
-
-    /// <summary>
-    /// Maps the DTO properties to the Entity Model properties.
-    /// </summary>
     private PropertyRecord MapToPropertyRecord(PropertyResultDto dto)
     {
         // Mapping logic must be updated to include the new fields from the URL

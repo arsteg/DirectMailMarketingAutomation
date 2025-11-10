@@ -22,14 +22,16 @@ namespace MailMergeUI.Views
     public partial class BlacklistView : Window
     {
         private readonly MailMergeDbContext _dbContext;
-        public BlacklistView()
+        public BlacklistView(MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
             InitializeComponent();
         }
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
             DashboardWindow dashboardWindow = new DashboardWindow(_dbContext);
             dashboardWindow.WindowState = this.WindowState;
+            dashboardWindow.WindowStartupLocation = this.WindowStartupLocation;
             dashboardWindow.Show();
             this.Close();
         }
