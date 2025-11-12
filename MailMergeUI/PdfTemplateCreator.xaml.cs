@@ -228,7 +228,7 @@ namespace MailMergeUI
         //    Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
         //}
 
-        private void ExportPdf_Click(object sender, RoutedEventArgs e)
+        private async void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
             // Ensure the current page's elements are saved before exporting
             SaveCurrentPageState();
@@ -247,6 +247,11 @@ namespace MailMergeUI
 
             try
             {
+                await _mailMergeEngine.SaveTemplate(new MailMerge.Data.Models.Template
+                {
+                    Name = TemplateNameTextBox.Text,
+                    Path = saveDialog.FileName
+                });
                 ExportToPdf(saveDialog.FileName);
                 // Open the generated PDF file using the default system viewer
                 Process.Start(new ProcessStartInfo(saveDialog.FileName) { UseShellExecute = true });
@@ -283,7 +288,15 @@ namespace MailMergeUI
             CreateAndAddDraggableItem(newText, 20, 20);
         }
 
-        
+        private void TemplateNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Check if ExportButton exists (it might not during initial loading)
+            if (ExportButton != null)
+            {
+                // Enable the button only if the text box is not null, empty, or just whitespace
+                ExportButton.IsEnabled = !string.IsNullOrWhiteSpace(TemplateNameTextBox.Text);
+            }
+        }
 
         private void CreateAndAddDraggableItem(UIElement content, double x, double y)
         {

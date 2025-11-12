@@ -10,6 +10,6 @@
     <PackageReference Include="itext.bouncy-castle-fips-adapter" Version="9.2.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DbContext\MailMerge.Data.csproj" />
+    <ProjectReference Include="..\MailMerge.Data\MailMerge.Data.csproj" />
   </ItemGroup>
 </Project>

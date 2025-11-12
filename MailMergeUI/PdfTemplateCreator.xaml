@@ -59,6 +59,42 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="ToolBarTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DividerColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Border"
+                                CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}"
+                                          SnapsToDevicePixels="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBlue}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Modern ComboBox Style -->
         <Style x:Key="ToolBarComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Margin" Value="4,0"/>
@@ -200,7 +236,17 @@
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
 
-                    <Button Name="ExportButton" Content="Export to PDF" Style="{StaticResource ToolBarButtonStyle}" Click="ExportPdf_Click"/>
+                    <TextBlock Text="Template Name:" 
+                               VerticalAlignment="Center" 
+                               Foreground="{StaticResource TextLight}" 
+                               Margin="10,0,5,0"/>
+
+                    <TextBox x:Name="TemplateNameTextBox" 
+                             Width="150" 
+                             Style="{StaticResource ToolBarTextBoxStyle}"
+                             TextChanged="TemplateNameTextBox_TextChanged"/>
+
+                    <Button Name="ExportButton" IsEnabled="False" Content="Export to PDF" Style="{StaticResource ToolBarButtonStyle}" Click="ExportPdf_Click"/>
 
                 </StackPanel>
 

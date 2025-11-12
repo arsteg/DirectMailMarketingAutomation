@@ -24,6 +24,8 @@ namespace MailMerge.Data
             modelBuilder.Entity<User>()
                 .HasKey(u => u.Id);
 
+            modelBuilder.Entity<Template>()
+                .HasKey(u => u.Id);
 
             modelBuilder.Entity<Campaign>(campaign =>
             {
@@ -101,6 +103,8 @@ namespace MailMerge.Data
         }
 
         public DbSet<User> Users { get; set; }
+
+        public DbSet<Template> Templates { get; set; }
 
         public DbSet<PropertyRecord> Properties { get; set; }
 

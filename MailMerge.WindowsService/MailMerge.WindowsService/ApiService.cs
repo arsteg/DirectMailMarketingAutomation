@@ -1,4 +1,5 @@
-﻿using MailMerge.Data.Models;
+﻿using MailMerge.Data;
+using MailMerge.Data.Models;
 using MailMergeEngine;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
@@ -13,9 +14,11 @@ using System.Text.Json;
 public class ApiService
 {
     private readonly MailMergeEngine.MailMergeEngine _engine;
+    private readonly MailMergeDbContext _context;
 
-    public ApiService(MailMergeEngine.MailMergeEngine engine)
+    public ApiService(MailMergeEngine.MailMergeEngine engine,MailMergeDbContext dbContext)
     {
+        _context = dbContext;
         _engine = engine;
     }
 
@@ -33,10 +36,8 @@ public class ApiService
         string url = "https://api.propertyradar.com/v1/properties";
         string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
         string rawQueryParams = $"?Purchase=1&Fields={RequestedFields}";
-        var _context = new ApplicationDbContext();
         var _httpClient = new HttpClient();
         //await context.Database.EnsureCreatedAsync();
-        string? templatePath = System.Configuration.ConfigurationManager.AppSettings["TemplatePath"];
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 
         if (_context.Campaigns.Any())
@@ -67,6 +68,7 @@ public class ApiService
                                 if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                 {
                                     var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
+                                    var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x=>x.Path).FirstOrDefaultAsync();
                                     var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
                                     if (!Directory.Exists(outputPath))
                                     {
@@ -98,6 +100,7 @@ public class ApiService
                                     if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                     {
                                         var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
+                                        var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
                                         var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
                                         if (!Directory.Exists(outputPath))
                                         {
@@ -121,7 +124,7 @@ public class ApiService
         //return totalRecordsSaved;
     }
 
-    private async Task RunCampaign(ApplicationDbContext _context,HttpClient _httpClient,Campaign campaign,string url,string rawQueryParams,string bearerToken)
+    private async Task RunCampaign(MailMergeDbContext _context,HttpClient _httpClient,Campaign campaign,string url,string rawQueryParams,string bearerToken)
     {
         int start = 0;
         int batchSize = 500;

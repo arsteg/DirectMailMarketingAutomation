@@ -36,11 +36,12 @@
 //    }
 //}
 
-using ConsoleApp1;
-using MailMerge.Data;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using CliWrap;
+using ConsoleApp1;
+using MailMerge.Data;
 
 const string ServiceName = "Cache Background Service";
 

@@ -1,4 +1,5 @@
-﻿using MailMerge.Data.Models;
+﻿using MailMerge.Data;
+using MailMerge.Data.Models;
 using MailMergeUI.Helpers;
 using MailMergeUI.Services;
 using Newtonsoft.Json;
@@ -17,6 +18,7 @@ namespace MailMergeUI.ViewModels
     public class CampaignEditViewModel : BaseViewModel
     {
         private readonly CampaignService _service;
+        private readonly MailMergeDbContext _dbContext;
         public Campaign Campaign { get; }
 
         // === EXISTING: Lead Source UI ===
@@ -167,7 +169,7 @@ namespace MailMergeUI.ViewModels
 
         // === NEW: Follow-Up Stages ===
         public ObservableCollection<FollowUpStageViewModel> Stages { get; } = new();
-        public ObservableCollection<Template> Templates { get; } = new();
+        public ObservableCollection<TempLateViewModel> Templates { get; } = new();
 
         // === Commands ===
         public ICommand SaveCommand { get; }
@@ -178,8 +180,9 @@ namespace MailMergeUI.ViewModels
 
         public event Action OnSaved;
 
-        public CampaignEditViewModel(Campaign? campaign, CampaignService service)
+        public CampaignEditViewModel(Campaign? campaign, CampaignService service,MailMergeDbContext dbContext)
         {
+            _dbContext = dbContext;
             _service = service;
             Campaign = campaign ?? new Campaign
             {
@@ -258,10 +261,19 @@ namespace MailMergeUI.ViewModels
 
         private void LoadTemplates()
         {
-            // TODO: Replace with real template loading
-            Templates.Add(new Template { Id = "1", Name = "Welcome Letter" });
-            Templates.Add(new Template { Id = "2", Name = "Follow-Up" });
-            Templates.Add(new Template { Id = "3", Name = "Final Notice" });
+            var templates = _dbContext.Templates.ToList();
+
+            foreach (var template in templates)
+            {
+                var obj = new TempLateViewModel
+                {
+                    Id = template.Id.ToString(),
+                    Path = template.Path,
+                    Name = template.Name
+                };
+
+                Templates.Add(obj);
+            }
         }
 
         private void LoadStages()
@@ -422,9 +434,10 @@ namespace MailMergeUI.ViewModels
     }
 
     // === Dummy Template (replace with real one later) ===
-    public class Template
+    public class TempLateViewModel
     {
         public string Id { get; set; } = "";
         public string Name { get; set; } = "";
+        public string Path { get; set; } = "";
     }
 }

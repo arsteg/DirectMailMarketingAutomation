@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MailMergeEngine
 {
@@ -80,6 +81,15 @@ namespace MailMergeEngine
             }
 
             return _db.Properties.ToList();
+        }
+
+        public async Task SaveTemplate(Template template)
+        {
+            if (template == null)
+                return;
+
+            _db.Templates.Add(template);
+            _db.SaveChanges();
         }
 
         public byte[] FillTemplate(string templatePath, PropertyRecord record)
