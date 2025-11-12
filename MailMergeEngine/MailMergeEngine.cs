@@ -64,19 +64,17 @@ namespace MailMergeEngine
                 leads.Add(lead);
             }
 
-            // ✅ Load all existing keys in memory once
             var existingKeys = _db.Properties
                 .Select(l => new { l.PrimaryName, l.Address })
                 .ToHashSet();
 
-            // ✅ Only add non-existing
             var newLeads = leads
                 .Where(l => !existingKeys.Contains(new { l.PrimaryName, l.Address }))
                 .ToList();
 
             if (newLeads.Any())
             {
-                _db.Properties.AddRange(newLeads);  // Bulk add
+                _db.Properties.AddRange(newLeads);
                 _db.SaveChanges();
             }
 
@@ -89,80 +87,87 @@ namespace MailMergeEngine
                 return;
 
             _db.Templates.Add(template);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
 
-        public byte[] FillTemplate(string templatePath, PropertyRecord record)
+        public async Task<byte[]> FillTemplate(string templatePath, PropertyRecord record)
         {
-            using (var templateReader = new PdfReader(templatePath))
-            using (var ms = new MemoryStream())
+            await using var ms = new MemoryStream();
+
+            using (var reader = new PdfReader(templatePath))
+            using (var writer = new PdfWriter(ms))
+            using (var pdfDoc = new PdfDocument(reader, writer))
             {
-                using (var writer = new PdfWriter(ms))
-                using (var pdfDoc = new iText.Kernel.Pdf.PdfDocument(templateReader, writer))
+                var form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+                var fields = form.GetAllFormFields();
+
+                void SetField(string field, string value)
                 {
-                    var form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-                    var fields = form.GetAllFormFields();
-
-                    void SetField(string field, string value)
-                    {
-                        if (fields.ContainsKey(field))
-                            fields[field].SetValue(value ?? "");
-                    }
-
-                    SetField("Radar ID", record.RadarId);
-                    SetField("Apn", record.Apn);
-                    SetField("Type", record.Type);
-                    SetField("Address", record.Address);
-                    SetField("City", record.City);
-                    SetField("State", record.State);
-                    SetField("ZIP", record.Zip);
-                    SetField("Owner", record.Owner);
-                    SetField("Owner Type", record.OwnerType);
-                    SetField("Owner Occ?", record.OwnerOcc);
-                    SetField("Primary Name", record.PrimaryName);
-                    SetField("Primary First", record.PrimaryFirst);
-                    SetField("Mail Address", record.MailAddress);
-                    SetField("Mail City", record.MailCity);
-                    SetField("Mail State", record.MailState);
-                    SetField("Mail ZIP", record.MailZip);
-                    SetField("Foreclosure", record.Foreclosure);
-                    SetField("FCL Stage", record.FclStage);
-                    SetField("FCL Doc Type", record.FclDocType);
-                    SetField("FCL Rec Date", record.FclRecDate);
-                    SetField("Trustee", record.Trustee);
-                    SetField("Trustee Phone", record.TrusteePhone);
-                    SetField("TS Number", record.TsNumber);
-
-                    form.FlattenFields();
+                    if (fields.ContainsKey(field))
+                        fields[field].SetValue(value ?? string.Empty);
                 }
-                return ms.ToArray();
+
+                SetField("Radar ID", record.RadarId);
+                SetField("Apn", record.Apn);
+                SetField("Type", record.Type);
+                SetField("Address", record.Address);
+                SetField("City", record.City);
+                SetField("State", record.State);
+                SetField("ZIP", record.Zip);
+                SetField("Owner", record.Owner);
+                SetField("Owner Type", record.OwnerType);
+                SetField("Owner Occ?", record.OwnerOcc);
+                SetField("Primary Name", record.PrimaryName);
+                SetField("Primary First", record.PrimaryFirst);
+                SetField("Mail Address", record.MailAddress);
+                SetField("Mail City", record.MailCity);
+                SetField("Mail State", record.MailState);
+                SetField("Mail ZIP", record.MailZip);
+                SetField("Foreclosure", record.Foreclosure);
+                SetField("FCL Stage", record.FclStage);
+                SetField("FCL Doc Type", record.FclDocType);
+                SetField("FCL Rec Date", record.FclRecDate);
+                SetField("Trustee", record.Trustee);
+                SetField("Trustee Phone", record.TrusteePhone);
+                SetField("TS Number", record.TsNumber);
+
+                form.FlattenFields();
+                pdfDoc.Close(); // Ensure full flush
             }
+
+            return ms.ToArray();
         }
 
-        public void ExportBatch(string templatePath, IEnumerable<PropertyRecord> records, string outputPath)
+        public async Task ExportBatch(string templatePath, IEnumerable<PropertyRecord> records, string outputPath)
         {
-            using (var writer = new PdfWriter(outputPath))
-            using (var pdfDoc = new iText.Kernel.Pdf.PdfDocument(writer))
-            {
-                pdfDoc.InitializeOutlines();
+            // Always ensure directory exists
+            var dir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
 
-                foreach (var r in records)
-                {
-                    byte[] filled = FillTemplate(templatePath, r);
-                    using (var filledDoc = new iText.Kernel.Pdf.PdfDocument(new PdfReader(new MemoryStream(filled))))
-                    {
-                        filledDoc.CopyPagesTo(1, filledDoc.GetNumberOfPages(), pdfDoc);
-                    }
-                }
+            await using var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var writer = new PdfWriter(fs);
+            using var pdfDoc = new PdfDocument(writer);
+
+            pdfDoc.InitializeOutlines();
+
+            foreach (var r in records)
+            {
+                var filled = await FillTemplate(templatePath, r);
+                using var filledStream = new MemoryStream(filled);
+                using var filledDoc = new PdfDocument(new PdfReader(filledStream));
+                filledDoc.CopyPagesTo(1, filledDoc.GetNumberOfPages(), pdfDoc);
             }
+
+            pdfDoc.Close(); // ✅ Explicit close to flush data
+            await fs.FlushAsync(); // ✅ Ensures stream actually written
         }
 
-        public bool ValidateUser(string user,string password)
+        public bool ValidateUser(string user, string password)
         {
             var hashedPassword = PasswordHelper.HashPassword(password);
-            var record = _db.Users.Where(x => user == x.Email && hashedPassword == x.Password).FirstOrDefault();
+            var record = _db.Users.FirstOrDefault(x => x.Email == user && x.Password == hashedPassword);
             return record != null;
         }
-
     }
 }

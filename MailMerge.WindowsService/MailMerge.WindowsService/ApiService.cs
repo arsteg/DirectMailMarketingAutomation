@@ -57,7 +57,7 @@ public class ApiService
                     // Compare only the time part of current DateTime with the TimeSpan
                     var nowTime = DateTime.Now;
 
-                    if (nowTime.TimeOfDay >= runAt && campaign.LastRunningTime.Date != nowTime.Date)
+                    if (nowTime.TimeOfDay >= runAt)
                     {
                         // ✅ Run your scheduled code for daily schedule
                         await RunCampaign(_context,_httpClient,campaign,url,rawQueryParams,bearerToken);
@@ -74,12 +74,13 @@ public class ApiService
                                     {
                                         Directory.CreateDirectory(outputPath);
                                     }
-                                    _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, "merged.pdf"));
+                                    _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.pdf"));
                                 }
 
                                 stage.IsRun = true;
                             }
                         }
+                        
                     }
                 }
                 else if (scheduleType == ScheduleType.None)
@@ -106,7 +107,7 @@ public class ApiService
                                         {
                                             Directory.CreateDirectory(outputPath);
                                         }
-                                        _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, "merged.pdf"));
+                                        _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.pdf"));
                                     }
 
                                     stage.IsRun = true;
@@ -115,9 +116,6 @@ public class ApiService
                         }
                     }
                 }
-
-                campaign.LastRunningTime = DateTime.Now;
-                await _context.SaveChangesAsync();
             }
         }
         //Console.WriteLine($"\nCompleted fetching all records. Total saved: {totalRecordsSaved} / {totalResults}.");
@@ -204,8 +202,8 @@ public class ApiService
 
         } while (moreData);
 
-       
-
+        campaign.LastRunningTime = DateTime.Now;
+        await _context.SaveChangesAsync();
 
     }
 

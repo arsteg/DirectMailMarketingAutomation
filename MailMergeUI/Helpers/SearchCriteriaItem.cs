@@ -9,16 +9,16 @@ namespace MailMergeUI.Helpers
 {
     public class SearchCriteriaItem
     {
-        public string Name { get; set; }
-        public List<string> Value { get; set; }
+        public string name { get; set; }
+        public List<string> value { get; set; }
 
         public SearchCriteriaItem(string name, params string[] values)
         {
-            Name = name;
+            this.name = name;
             if(values == null || values.Length == 0)
-                Value = new List<string>();
+                value = new List<string>();
             else
-                Value = new List<string>(values);
+                value = new List<string>(values);
         }
     }
 
@@ -67,12 +67,12 @@ namespace MailMergeUI.Helpers
                 var criteriaBody = JsonConvert.DeserializeObject<SearchCriteriaBody>(filtersJson);
 
                 var stateItem = criteriaBody?.Criteria?.FirstOrDefault(c =>
-                    c.Name.Equals("State", StringComparison.OrdinalIgnoreCase));
+                    c.name.Equals("State", StringComparison.OrdinalIgnoreCase));
                 var cityItem = criteriaBody?.Criteria?.FirstOrDefault(c =>
-                    c.Name.Equals("City", StringComparison.OrdinalIgnoreCase));
+                    c.name.Equals("City", StringComparison.OrdinalIgnoreCase));
 
-                string state = stateItem?.Value?.FirstOrDefault() ?? string.Empty;
-                string city = cityItem?.Value?.FirstOrDefault() ?? string.Empty;
+                string state = stateItem?.value?.FirstOrDefault() ?? string.Empty;
+                string city = cityItem?.value?.FirstOrDefault() ?? string.Empty;
 
                 return (state, city);
             }
