@@ -1,0 +1,12 @@
+{
+  "California": ["Los Angeles", "San Francisco", "San Diego", "Sacramento", "Fresno"],
+  "Texas": ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth"],
+  "New York": ["New York City", "Buffalo", "Rochester", "Albany", "Syracuse"],
+  "Florida": ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee"],
+  "Illinois": ["Chicago", "Springfield", "Peoria", "Naperville", "Rockford"],
+  "Pennsylvania": ["Philadelphia", "Pittsburgh", "Allentown", "Erie", "Reading"],
+  "Ohio": ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"],
+  "Georgia": ["Atlanta", "Savannah", "Augusta", "Athens", "Macon"],
+  "North Carolina": ["Charlotte", "Raleigh", "Durham", "Greensboro", "Wilmington"],
+  "Michigan": ["Detroit", "Grand Rapids", "Lansing", "Ann Arbor", "Flint"] 
+}

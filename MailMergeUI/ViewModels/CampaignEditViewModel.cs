@@ -297,6 +297,14 @@ namespace MailMergeUI.ViewModels
                 return;
             }
 
+            var locationValidator = LocationValidator.ValidateLocation(State, City);
+
+            if (locationValidator.Item1==false)
+            {
+                System.Windows.MessageBox.Show(locationValidator.Item2);
+                return;
+            }
+
             if (!Stages.Any())
             {
                 System.Windows.MessageBox.Show("At least one stage is required.");

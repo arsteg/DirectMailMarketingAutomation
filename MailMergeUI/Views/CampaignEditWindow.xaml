@@ -75,12 +75,30 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <!-- Filters JSON -->
-                            <TextBlock Text="City:" Grid.Row="0" Grid.Column="0"
+
+                            <TextBlock Text="State:" Grid.Row="0" Grid.Column="0"
+  VerticalAlignment="Top"
+  Foreground="{DynamicResource TextDark}"
+  Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding State}"
+Grid.Row="0" Grid.Column="1"
+                            Grid.ColumnSpan="2"
+Height="32"
+Padding="1"
+Margin="10"
+TextWrapping="Wrap"
+AcceptsReturn="True"
+BorderBrush="{DynamicResource DividerColor}"
+FontFamily="Consolas"
+FontSize="13"
+/>
+                            
+                            <TextBlock Text="City:" Grid.Row="1" Grid.Column="0"
                                        VerticalAlignment="Top"
                                        Foreground="{DynamicResource TextDark}"
                                        Margin="0,8,0,0"/>
                             <TextBox Text="{Binding City}"
-                                     Grid.Row="0" Grid.Column="1"
+                                     Grid.Row="1" Grid.Column="1"
                                      Grid.ColumnSpan="2"
                                      Height="32"
                                      Padding="1"
@@ -90,22 +108,7 @@
                                      BorderBrush="{DynamicResource DividerColor}"
                                      FontFamily="Consolas"
                                      FontSize="13"/>
-                            <TextBlock Text="State:" Grid.Row="1" Grid.Column="0"
-           VerticalAlignment="Top"
-           Foreground="{DynamicResource TextDark}"
-           Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding State}"
-         Grid.Row="1" Grid.Column="1"
-                                     Grid.ColumnSpan="2"
-         Height="32"
-         Padding="1"
-         Margin="10"
-         TextWrapping="Wrap"
-         AcceptsReturn="True"
-         BorderBrush="{DynamicResource DividerColor}"
-         FontFamily="Consolas"
-         FontSize="13"
-         />
+                           
                             <!-- Schedule Type -->
                             <TextBlock Text="Schedule Type:" Grid.Row="2" Grid.Column="0"
                                        VerticalAlignment="Center"
