@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DbContext\MailMerge.Data.csproj" />
+    <ProjectReference Include="..\MailMerge.Data\MailMerge.Data.csproj" />
     <ProjectReference Include="..\MailMergeEngine\MailMergeEngine.csproj" />
   </ItemGroup>
   <ItemGroup>

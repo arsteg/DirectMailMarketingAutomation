@@ -1,4 +1,5 @@
-﻿using ConsoleApp1;
+﻿
+using MailMerge.Data.Helpers;
 using MailMerge.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
