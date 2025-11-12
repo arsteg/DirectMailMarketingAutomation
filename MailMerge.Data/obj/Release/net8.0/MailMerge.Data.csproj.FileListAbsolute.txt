@@ -1,0 +1,15 @@
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\bin\Release\net8.0\MailMerge.Data.deps.json
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\bin\Release\net8.0\MailMerge.Data.runtimeconfig.json
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\bin\Release\net8.0\MailMerge.Data.dll
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\bin\Release\net8.0\MailMerge.Data.pdb
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.csproj.AssemblyReference.cache
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.AssemblyInfoInputs.cache
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.AssemblyInfo.cs
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.csproj.CoreCompileInputs.cache
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.sourcelink.json
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.dll
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\refint\MailMerge.Data.dll
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.pdb
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\MailMerge.Data.genruntimeconfig.cache
+D:\Work\eHRM\DirectMailMarketingAutomation\DbContext\obj\Release\net8.0\ref\MailMerge.Data.dll

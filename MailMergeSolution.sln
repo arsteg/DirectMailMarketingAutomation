@@ -6,11 +6,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMergeEngine", "MailMerg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMergeUI", "MailMergeUI\MailMergeUI.csproj", "{CCCC1111-2222-3333-4444-555555555555}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMerge.Data", "DbContext\MailMerge.Data.csproj", "{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMerge.Data", "MailMerge.Data\MailMerge.Data.csproj", "{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MailMerge.Installer", "MailMerge.Installer\MailMerge.Installer.vdproj", "{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1\ConsoleApp1.csproj", "{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMerge.WindowsService", "MailMerge.WindowsService\MailMerge.WindowsService\MailMerge.WindowsService.csproj", "{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MailMax.BackgroundService.Installer", "MailMax.BackgroundService.Installer\MailMax.BackgroundService.Installer.vdproj", "{83192CE5-35DA-12C0-1942-B0B69B510459}"
 EndProject

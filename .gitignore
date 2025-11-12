@@ -126,3 +126,7 @@
 /ConsoleApp1/ConsoleApp1/bin
 /ConsoleApp1/ConsoleApp1/obj
 /MailMax.BackgroundService.Installer/Release
+/MailMax.BackgroundService.Installer/Debug
+/MailMerge.WindowsService/.vs
+/MailMerge.WindowsService/MailMerge.WindowsService/bin
+/MailMerge.WindowsService/MailMerge.WindowsService/obj
