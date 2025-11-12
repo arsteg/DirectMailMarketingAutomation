@@ -12,6 +12,8 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MailMerge.Installer", "Mail
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1\ConsoleApp1.csproj", "{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "MailMax.BackgroundService.Installer", "MailMax.BackgroundService.Installer\MailMax.BackgroundService.Installer.vdproj", "{83192CE5-35DA-12C0-1942-B0B69B510459}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,8 @@ Global
 		{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83192CE5-35DA-12C0-1942-B0B69B510459}.Debug|Any CPU.ActiveCfg = Debug
+		{83192CE5-35DA-12C0-1942-B0B69B510459}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

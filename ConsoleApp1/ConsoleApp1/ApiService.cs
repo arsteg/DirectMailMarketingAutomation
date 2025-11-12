@@ -54,9 +54,9 @@ public class ApiService
                 if (scheduleType == ScheduleType.Daily)
                 {
                     // Compare only the time part of current DateTime with the TimeSpan
-                    var nowTime = DateTime.Now.TimeOfDay;
+                    var nowTime = DateTime.Now;
 
-                    if (nowTime >= runAt)
+                    if (nowTime.TimeOfDay >= runAt && campaign.LastRunningTime.Date != nowTime.Date)
                     {
                         // ✅ Run your scheduled code for daily schedule
                         await RunCampaign(_context,_httpClient,campaign,url,rawQueryParams,bearerToken);
@@ -67,7 +67,12 @@ public class ApiService
                                 if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                 {
                                     var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
-                                    _engine.ExportBatch(templatePath, records, Path.Combine(campaign.OutputPath, stage.StageName, "merged.pdf"));
+                                    var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                    if (!Directory.Exists(outputPath))
+                                    {
+                                        Directory.CreateDirectory(outputPath);
+                                    }
+                                    _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, "merged.pdf"));
                                 }
 
                                 stage.IsRun = true;
@@ -93,7 +98,12 @@ public class ApiService
                                     if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                     {
                                         var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
-                                        _engine.ExportBatch(templatePath, records, Path.Combine(campaign.OutputPath, stage.StageName, "merged.pdf"));
+                                        var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                        if (!Directory.Exists(outputPath))
+                                        {
+                                            Directory.CreateDirectory(outputPath);
+                                        }
+                                        _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, "merged.pdf"));
                                     }
 
                                     stage.IsRun = true;
@@ -184,7 +194,7 @@ public class ApiService
             {
                 Console.WriteLine($"No new records to insert for batch starting {start}.");
             }
-
+            await _context.SaveChangesAsync();
             // Check if more results remain
             start += batchSize;
             moreData = start < totalResults;

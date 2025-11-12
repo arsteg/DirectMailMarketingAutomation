@@ -321,12 +321,12 @@ namespace MailMergeUI.ViewModels
                 new
                 {
                     name = "State",
-                    value = new[] { State?? "CA" }
+                    value = new[] { State?? "" }
                 },
                 new
                 {
                     name = "City",
-                    value = new[] { City?? "Los Angeles" }
+                    value = new[] { City?? "" }
                 },
                 new
                 {
@@ -347,6 +347,7 @@ namespace MailMergeUI.ViewModels
             }
                 };
                 Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
+                
                 Campaign.LeadSource.DaysOfWeek = DayCheckBoxes.Where(x=>x.IsChecked == true).Select(x=>x.DisplayName).ToList();
                 
                 if (Campaign.Id == 0)

@@ -40,9 +40,47 @@ using ConsoleApp1;
 using MailMerge.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using CliWrap;
+
+const string ServiceName = "Cache Background Service";
+
+if (args is { Length: 1 })
+{
+    try
+    {
+        string executablePath =
+            Path.Combine(AppContext.BaseDirectory, "ConsoleApp1.exe");
+
+        if (args[0] is "/Install")
+        {
+            await Cli.Wrap("sc")
+                .WithArguments(new[] { "create", ServiceName, $"binPath={executablePath}", "start=auto" })
+                .ExecuteAsync();
+        }
+        else if (args[0] is "/Uninstall")
+        {
+            await Cli.Wrap("sc")
+                .WithArguments(new[] { "stop", ServiceName })
+                .ExecuteAsync();
+
+            await Cli.Wrap("sc")
+                .WithArguments(new[] { "delete", ServiceName })
+                .ExecuteAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex);
+    }
+
+    return;
+}
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddWindowsService(options =>
+{
+    options.ServiceName = "Cache Background Service";
+});
 string dbPath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                         "MailMax",
@@ -55,7 +93,8 @@ builder.Services.AddDbContext<MailMergeDbContext>(options =>
 {
     options.UseSqlite(connectionString);
 });
-builder.Services.AddScoped<MailMergeEngine.MailMergeEngine>();
-
+builder.Services.AddSingleton<MailMergeEngine.MailMergeEngine>();
+builder.Services.AddSingleton<ApiService>();
+builder.Services.AddHostedService<WindowsBackgroundService>();
 var host = builder.Build();
 host.Run();
