@@ -162,14 +162,31 @@ FontSize="13"
            VerticalAlignment="Top"
            Foreground="{DynamicResource TextDark}"
            Margin="0,8,0,0"/>
+                            <StackPanel  Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+                                <TextBox Text="{Binding OutputPath}"
+         
+
+Height="32"
+Padding="1"
+Margin="8,4,10,0"
+TextWrapping="Wrap"
+AcceptsReturn="True"
+BorderBrush="{DynamicResource DividerColor}"
+FontFamily="Consolas"
+FontSize="13" MinWidth="200"/>
+
+                                <Button Content="Browse..."
+  Command="{Binding DataContext.BrowseOutputPathCommand,RelativeSource={RelativeSource AncestorType=Window}}"
+  CommandParameter="{Binding}"
+  
+  Width="80"
+  Height="36"      
+  Style="{StaticResource ToolbarButton}"/>
+                                
+                            </StackPanel>
                             
-                            <Button Content="Browse..."
-                            Command="{Binding DataContext.BrowseOutputPathCommand,RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}"
-                            Grid.Row="5" Grid.Column="2"
-                            Width="80"
-                            Height="32"      
-                            Style="{StaticResource ToolbarButton}"/>
+                            
+                          
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -242,6 +259,7 @@ FontSize="13"
                                             <TextBlock Text="Delay (days):" Grid.Row="2" Grid.Column="0"
                                                        VerticalAlignment="Center"/>
                                             <TextBox Text="{Binding DelayDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+        
                                                      Grid.Row="2" Grid.Column="1"
                                                      Width="60"
                                                      Height="32"

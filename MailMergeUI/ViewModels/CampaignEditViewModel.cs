@@ -213,6 +213,10 @@ namespace MailMergeUI.ViewModels
             IsChecked = Campaign.LeadSource.DaysOfWeek.Contains(day.ToString())
         })
 );
+                OutputPath = campaign.OutputPath;
+
+                 (this.State, this.City) = SearchCriteriaHelper.GetStateAndCityFromJson(campaign.LeadSource.FiltersJson);
+
             }
         }
 
@@ -228,6 +232,7 @@ namespace MailMergeUI.ViewModels
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     Campaign.OutputPath = dialog.SelectedPath;
+                    this.OutputPath = Campaign.OutputPath;
                 }
             }
         }
@@ -276,14 +281,29 @@ namespace MailMergeUI.ViewModels
             }
         }
 
+        //private void LoadStages()
+        //{
+        //    foreach (var stage in Campaign.Stages)
+        //        Stages.Add(new FollowUpStageViewModel(stage));
+
+        //    if (!Stages.Any())
+        //        AddStage();
+        //}
+
         private void LoadStages()
         {
+            Stages.Clear(); // Add this
             foreach (var stage in Campaign.Stages)
-                Stages.Add(new FollowUpStageViewModel(stage));
-
+            {
+                var vm = new FollowUpStageViewModel(stage);
+                Stages.Add(vm);
+                // Force UI update
+                OnPropertyChanged(nameof(FollowUpStageViewModel.DelayDays));
+            }
             if (!Stages.Any())
                 AddStage();
         }
+
 
         private void AddStage()
         {
@@ -324,7 +344,8 @@ namespace MailMergeUI.ViewModels
             }
 
             // Enforce first stage = 0 days
-            Stages[0].DelayDays = 0;
+            if (Stages.Count > 0 && Stages[0].DelayDays != 0)
+                Stages[0].DelayDays = 0; // Only enforce if invalid
 
             // Sync back to Campaign.Stages
             Campaign.Stages.Clear();
@@ -334,39 +355,9 @@ namespace MailMergeUI.ViewModels
             // === SAFE SAVE: Use your existing service ===
             try
             {
-                var searchCriteriaBody = new
-                {
-                    Criteria = new[]
-            {
-                new
-                {
-                    name = "State",
-                    value = new[] { State?? "" }
-                },
-                new
-                {
-                    name = "City",
-                    value = new[] { City?? "" }
-                },
-                new
-                {
-                    name= "inForeclosure",
-                    value = new[] { "1" }
-                },
-                new
-                {
-                    name= "ForeclosureStage",
-                    value = new[] { "Preforeclosure", "Auction" }
-                },
-                new
-                {
-                    name= "ForeclosureRecDate",
-                    value = new[] { "Last Week" }
-                }
-                // You can add more criteria items here for filtering (e.g., City, County)
-            }
-                };
-                Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
+                Campaign.LeadSource.FiltersJson = SearchCriteriaHelper.BuildSearchCriteriaJson(State, City);
+
+                //Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
                 
                 Campaign.LeadSource.DaysOfWeek = DayCheckBoxes.Where(x=>x.IsChecked == true).Select(x=>x.DisplayName).ToList();
                 
@@ -413,12 +404,21 @@ namespace MailMergeUI.ViewModels
             get => Model.DelayDays;
             set
             {
-                Model.DelayDays = Math.Max(0, value);
-                OnPropertyChanged();
+                if (Model.DelayDays != value)
+                {
+                    Model.DelayDays = Math.Max(0, value);
+                    OnPropertyChanged();
+                }
             }
         }
 
-        public FollowUpStageViewModel(FollowUpStage model) => Model = model;
+        public FollowUpStageViewModel(FollowUpStage model)
+        {
+            Model = model;
+            OnPropertyChanged(nameof(DelayDays)); // Add this
+            OnPropertyChanged(nameof(StageName));
+            OnPropertyChanged(nameof(TemplateId));
+        }
     }
 
     // === Helper: Checkbox for Days ===
