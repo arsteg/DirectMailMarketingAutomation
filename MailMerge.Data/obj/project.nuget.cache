@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "a/xSYMzySyo=",
+  "dgSpecHash": "k0CA3zHCQYw=",
   "success": true,
-  "projectFilePath": "D:\\Work\\eHRM\\DirectMailMarketingAutomation\\DbContext\\MailMerge.Data.csproj",
+  "projectFilePath": "D:\\Work\\eHRM\\DirectMailMarketingAutomation\\MailMerge.Data\\MailMerge.Data.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\91987\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\91987\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
