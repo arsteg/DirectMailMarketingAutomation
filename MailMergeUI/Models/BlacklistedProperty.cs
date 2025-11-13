@@ -10,5 +10,6 @@ namespace MailMergeUI.Models
     {
         public string Address { get; set; } = "";
         public DateTime BlacklistedAt { get; set; } = DateTime.Now;
+        public string? BlackListingReason { get; set; }
     }
 }

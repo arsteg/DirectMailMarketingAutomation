@@ -63,7 +63,7 @@ namespace MailMergeUI.ViewModels
 
         //public DashboardViewModel DashboardVM { get; }
       
-        public BlacklistViewModel BlacklistVM { get; }
+        public BlackListViewModel BlacklistVM { get; }
         public SystemLogViewModel LogVM { get; }
 
         public ICommand ShowDashboardCommand { get; }
@@ -76,7 +76,7 @@ namespace MailMergeUI.ViewModels
             _dbContext = dbContext;
             LoadData();
            
-            BlacklistVM = new BlacklistViewModel();
+            BlacklistVM = new BlackListViewModel(_dbContext);
             LogVM = new SystemLogViewModel();
             //ShowDashboardCommand = new RelayCommand(_ => CurrentView = DashboardVM);
             

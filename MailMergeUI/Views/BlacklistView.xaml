@@ -5,83 +5,163 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:converters="clr-namespace:MailMergeUI.Helpers"
         mc:Ignorable="d"
-        Title="BlacklistView" Height="450" Width="800">
+        Title="Blacklist Manager"
+        Width="1000" Height="750"
+        Background="{DynamicResource BackgroundLight}">
+
     <Window.Resources>
         <converters:DateTimeConverter x:Key="DateTimeConverter"/>
     </Window.Resources>
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
 
-        <Grid>          
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="btnBack" Content=" ← Back" Style="{StaticResource LogoutButton}" Click="btnBack_Click"/>
+    <Border Background="{DynamicResource CardBackgroundLight}"
+            Padding="30"
+            CornerRadius="12"
+            BorderBrush="{DynamicResource DividerColor}"
+            BorderThickness="1"
+            Margin="30">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- Header -->
+                <RowDefinition Height="Auto"/>   <!-- Title -->
+                <RowDefinition Height="60"/>     <!-- Search -->
+                <RowDefinition Height="*"/>      <!-- Results -->
+                <RowDefinition Height="Auto"/>   <!-- Blacklist History -->
+            </Grid.RowDefinitions>
+
+            <!-- Header Bar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource HeaderBackgroundLight}"
+                    Padding="16,10"
+                    BorderBrush="{DynamicResource DividerColor}"
+                    BorderThickness="0,0,0,1"
+                    CornerRadius="8,8,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="btnBack"
+                            Content="Back"
+                            Style="{StaticResource ToolbarButton}"
+                            Click="btnBack_Click"
+                            Padding="14,6"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Page Title -->
+            <TextBlock Grid.Row="1"
+                       Text="Blacklist Properties"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource PrimaryBlue}"
+                       Margin="0,20,0,20"/>
+
+            <!-- Search Bar -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
+                <TextBox Text="{Binding SearchAddress, UpdateSourceTrigger=PropertyChanged}"
+                         Width="380"
+                         FontSize="14"
+                         Padding="10"
+                         Margin="0,0,8,0"/>
+                <Button Content="Search"
+                        Command="{Binding SearchCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        Padding="20,10"/>
             </StackPanel>
+
+            <!-- Search Results (Editable Blacklist Checkbox) -->
+            <Border Grid.Row="3"
+                    Background="{DynamicResource CardBackgroundLight}"
+                    CornerRadius="8"
+                    BorderBrush="{DynamicResource DividerColor}"
+                    BorderThickness="1"
+                    Padding="10"
+                    Margin="0,0,0,12">
+
+                <DataGrid ItemsSource="{Binding SearchResults}"
+                          SelectedItem="{Binding SelectedProperty}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          HeadersVisibility="Column"
+                          RowHeight="40"
+                          GridLinesVisibility="None"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          FontSize="14">
+
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="{DynamicResource HeaderBackgroundLight}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Height" Value="36"/>
+                            <Setter Property="Padding" Value="10,0"/>
+                        </Style>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource DividerColor}"/>
+                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F5F9FF"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Radar ID" Binding="{Binding RadarId}" Width="120"/>
+                        <DataGridTextColumn Header="APN" Binding="{Binding Apn}" Width="120"/>
+                        <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
+                        <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="180"/>
+
+                        <!-- Editable Blacklist Checkbox -->
+                        <DataGridTemplateColumn Header="Blacklisted" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsBlackListed, UpdateSourceTrigger=PropertyChanged}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Command="{Binding DataContext.ToggleBlacklistCommand,
+                                RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                      CommandParameter="{Binding}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Blacklisted On"
+                                            Binding="{Binding BlackListedOn, Converter={StaticResource DateTimeConverter}}"
+                                            Width="140"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Blacklisted History -->
+            <StackPanel Grid.Row="4" Margin="0,0,0,20">
+                <TextBlock Text="Recently Blacklisted" 
+                           FontWeight="Bold" 
+                           Foreground="{DynamicResource PrimaryBlue}"
+                           Margin="0,0,0,8"/>
+                <Border Background="{DynamicResource CardBackgroundLight}"
+                        CornerRadius="8"
+                        BorderBrush="{DynamicResource DividerColor}"
+                        BorderThickness="1"
+                        Padding="10">
+                    <DataGrid ItemsSource="{Binding Blacklist}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              RowHeight="36"
+                              GridLinesVisibility="None">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Address" Binding="{Binding Address}" Width="*"/>
+                            <DataGridTextColumn Header="Reason" Binding="{Binding BlackListingReason}" Width="220"/>
+                            <DataGridTextColumn Header="When" 
+                                                Binding="{Binding BlacklistedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" 
+                                                Width="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </StackPanel>
+
         </Grid>
-        <!-- ==================== SEARCH & ADD ==================== -->
-        <TextBlock Grid.Row="1"
-                Text="Blacklist Management"
-                FontSize="20"
-                FontWeight="SemiBold"
-                Margin="0,0,0,15"/>
-
-        <StackPanel Grid.Row="1"
-                 Orientation="Horizontal"
-                 Margin="0,0,0,15">
-            <TextBox Text="{Binding SearchAddress, UpdateSourceTrigger=PropertyChanged}"
-                  Width="300"                 
-                  Margin="0,0,10,0"/>
-            <Button Content="Blacklist"
-                 Command="{Binding BlacklistCommand}"
-                 Padding="12,6"/>
-        </StackPanel>
-
-        <!-- ==================== LIST ==================== -->
-        <DataGrid Grid.Row="2"
-               ItemsSource="{Binding Blacklist}"
-               AutoGenerateColumns="False"
-               CanUserAddRows="False"
-               CanUserDeleteRows="False"
-               IsReadOnly="True"
-               AlternatingRowBackground="#FFF5F5F5"
-               GridLinesVisibility="Horizontal">
-
-            <DataGrid.Columns>
-                <!-- Address -->
-                <DataGridTextColumn Header="Property Address"
-                                 Binding="{Binding Address}"
-                                 Width="*"/>
-
-                <!-- Blacklisted At -->
-                <DataGridTextColumn Header="Blacklisted At"
-                                 Binding="{Binding BlacklistedAt, Converter={StaticResource DateTimeConverter}}"
-                                 Width="180"/>
-
-                <!-- Remove button -->
-                <DataGridTemplateColumn Header="Actions" Width="80">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="Remove"
-                                 Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                 CommandParameter="{Binding}"
-                                 Background="#FFCCCC"
-                                 Foreground="DarkRed"
-                                 Padding="6,2"
-                                 HorizontalAlignment="Center"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
-    </Grid>
+    </Border>
 </Window>
-
-
-
-
-
-

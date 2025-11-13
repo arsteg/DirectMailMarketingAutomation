@@ -77,5 +77,13 @@ namespace MailMerge.Data.Models
         public string TrusteePhone { get; set; }
 
         public int CampaignId { get; set; }
+        public bool IsBlackListed { get; set; }
+
+        [MaxLength(256)]
+        public string? BlackListingReason { get; set; }
+
+        public DateTime? BlackListedOn { get; set; }
+
     }
+
 }

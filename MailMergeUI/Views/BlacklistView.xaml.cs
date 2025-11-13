@@ -1,4 +1,5 @@
 ﻿using MailMerge.Data;
+using MailMergeUI.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -24,8 +25,10 @@ namespace MailMergeUI.Views
         private readonly MailMergeDbContext _dbContext;
         public BlacklistView(MailMergeDbContext dbContext)
         {
-            _dbContext = dbContext;
             InitializeComponent();
+            // Set ViewModel manually with injected DbContext
+            DataContext = new BlackListViewModel(dbContext);
+            _dbContext= dbContext;
         }
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {

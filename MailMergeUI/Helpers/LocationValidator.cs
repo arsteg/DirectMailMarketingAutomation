@@ -37,15 +37,18 @@ namespace MailMergeUI.Helpers
             if (!StatesAndCities.ContainsKey(stateName))
                 return (false, $"Invalid state name: '{stateName}'.");
 
-            if (string.IsNullOrWhiteSpace(cityName))
-                return (false, $"Valid state: '{stateName}'.");
-
-            bool cityExists = StatesAndCities[stateName]
-                .Any(c => c.Equals(cityName, StringComparison.OrdinalIgnoreCase));
-
-            return (cityExists, cityExists
+            if (!string.IsNullOrWhiteSpace(cityName))
+            {
+                bool cityExists = StatesAndCities[stateName]
+               .Any(c => c.Equals(cityName, StringComparison.OrdinalIgnoreCase));
+                
+                return (cityExists, cityExists
                 ? $"Valid city '{cityName}' found in '{stateName}'."
                 : $"Invalid city '{cityName}' for state '{stateName}'.");
+            }
+            else {
+                return (true, $"Valid state '{stateName}' provided.");
+            }
         }
     }
 }
