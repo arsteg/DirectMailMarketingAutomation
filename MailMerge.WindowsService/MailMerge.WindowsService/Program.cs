@@ -37,11 +37,13 @@
 //}
 
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using CliWrap;
 using ConsoleApp1;
 using MailMerge.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using MailMerge.WindowsService.Utils;
 
 const string ServiceName = "Cache Background Service";
 
@@ -68,6 +70,14 @@ if (args is { Length: 1 })
                 .WithArguments(new[] { "delete", ServiceName })
                 .ExecuteAsync();
         }
+        // Configure once at startup
+        Log.Logger = LogHelper.Configure();
+
+        Log.Information("=== Application started ===");
+
+        // Optional: Global exception handling
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception");
     }
     catch (Exception ex)
     {

@@ -1,11 +1,13 @@
 
 using MailMerge.Data;
+using MailMergeUI.Logging;
 using MailMergeUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PdfSharp.Fonts;
+using Serilog;
 using System;
 using System.IO;
 using System.Windows;
@@ -70,6 +72,15 @@ namespace MailMergeUI
             startupForm.Show();
 
             base.OnStartup(e);
+
+            // Configure once at startup
+            Log.Logger = LogHelper.Configure();
+
+            Log.Information("=== Application started ===");
+
+            // Optional: Global exception handling
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+                Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception");
         }
 
         protected override async void OnExit(ExitEventArgs e)

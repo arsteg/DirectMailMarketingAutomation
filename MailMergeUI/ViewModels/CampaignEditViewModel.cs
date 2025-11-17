@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Xml;
 using static System.Windows.Forms.AxHost;
+using Serilog;
 
 namespace MailMergeUI.ViewModels
 {
