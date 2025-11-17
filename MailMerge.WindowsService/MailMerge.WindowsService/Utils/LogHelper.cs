@@ -10,7 +10,10 @@ namespace MailMerge.WindowsService.Utils
     public static class LogHelper
     {
         private const string LogFolder = "Logs";
-        private const string LogFileTemplate = "app-{Date}.log";
+        // Replace this line:
+        // private const string LogFileTemplate = $"app-{DateTime.Today()}.log";
+        // With the following:
+        private static readonly string LogFileTemplate = $"app-{DateTime.Today:yyyyMMdd}.log";
         private static readonly string LogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, LogFolder);
 
         public static Serilog.ILogger Configure()

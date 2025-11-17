@@ -12,7 +12,7 @@ namespace MailMergeUI.Logging
     public static class LogHelper
     {
         private const string LogFolder = "Logs";
-        private const string LogFileTemplate = "app-{Date}.log";
+        private static readonly string LogFileTemplate = $"app-{DateTime.UtcNow}.log";
         private static readonly string LogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, LogFolder);
 
         public static ILogger Configure()

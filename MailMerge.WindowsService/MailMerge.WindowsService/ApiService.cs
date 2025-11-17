@@ -214,8 +214,8 @@ public class ApiService
             campaign.LastRunningTime = DateTime.Now;
             await _context.SaveChangesAsync();
 
-
-          catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Log.Error($"Error in RunCampaign for Campaign {campaign.Name}: {ex.Message}");
         }
