@@ -33,6 +33,7 @@ public class ApiService
     /// <returns>The number of records successfully saved to the database.</returns>
     public async Task PostAndSavePropertyRecordsAsync()
     {
+        try { 
         string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
         string url = "https://api.propertyradar.com/v1/properties";
         string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
@@ -121,93 +122,104 @@ public class ApiService
         }
         //Console.WriteLine($"\nCompleted fetching all records. Total saved: {totalRecordsSaved} / {totalResults}.");
         //return totalRecordsSaved;
-    }
-
-    private async Task RunCampaign(MailMergeDbContext _context,HttpClient _httpClient,Campaign campaign,string url,string rawQueryParams,string bearerToken)
-    {
-        int start = 0;
-        int batchSize = 500;
-        int totalResults = 0;
-        bool moreData = true;
-
-        do
+        }
+        catch (Exception ex)
         {
-            // Build URL with pagination
-            var pagedUrl = $"{url}{rawQueryParams}&Start={start}";
-            Console.WriteLine($"\nFetching records starting from {start}...");
-
-            // Serialize request body
-            var jsonContent = campaign.LeadSource.FiltersJson;
-            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-            // Send POST
-            var response = await _httpClient.PostAsync(pagedUrl, content);
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"\n--- API Call Failed at start={start}. Status: {response.StatusCode} ---\nDetails: {errorContent}");
-                break;
-            }
-
-            // Deserialize response
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            var apiResponse = await JsonSerializer.DeserializeAsync<ApiResponse>(responseStream);
-
-            if (apiResponse?.Results == null || !apiResponse.Results.Any())
-            {
-                Console.WriteLine("\nNo results found for this batch.");
-                break;
-            }
-
-            totalResults = apiResponse.TotalResultCount;
-
-            // Map results
-            var propertiesToSave = apiResponse.Results
-                .Select(dto => MapToPropertyRecord(dto))
-                .ToList();
-
-            var radarIds = propertiesToSave.Select(p => p.RadarId).ToList();
-
-            // Fetch existing records with matching RadarIds
-            var existingRecords = await _context.Properties
-                .Where(p => radarIds.Contains(p.RadarId))
-                .ToListAsync();
-
-            // Determine new records (those not in DB)
-            var existingRadarIds = existingRecords.Select(p => p.RadarId).ToList();
-            var newProperties = propertiesToSave
-                .Where(p => !existingRadarIds.Contains(p.RadarId))
-                .ToList();
-
-            // ✅ Update CampaignId for all existing records
-            foreach (var existing in existingRecords)
-            {
-                existing.CampaignId = campaign.Id; // <-- use your new campaignId variable here
-            }
-
-            // ✅ Add new records
-            if (newProperties.Any())
-            {
-                await _context.Properties.AddRangeAsync(newProperties);
-                // ✅ Save all changes (updates + inserts)
-                int saved = await _context.SaveChangesAsync();
-            }
-            else
-            {
-                Console.WriteLine($"No new records to insert for batch starting {start}.");
-            }
-            await _context.SaveChangesAsync();
-            // Check if more results remain
-            start += batchSize;
-            moreData = start < totalResults;
-
-        } while (moreData);
-
-        campaign.LastRunningTime = DateTime.Now;
-        await _context.SaveChangesAsync();
-
+            Log.Error($"Error in PostAndSavePropertyRecordsAsync: {ex.Message}");
+        }
     }
 
+    private async Task RunCampaign(MailMergeDbContext _context, HttpClient _httpClient, Campaign campaign, string url, string rawQueryParams, string bearerToken)
+    {
+        try
+        {
+            int start = 0;
+            int batchSize = 500;
+            int totalResults = 0;
+            bool moreData = true;
+
+            do
+            {
+                // Build URL with pagination
+                var pagedUrl = $"{url}{rawQueryParams}&Start={start}";
+                Console.WriteLine($"\nFetching records starting from {start}...");
+
+                // Serialize request body
+                var jsonContent = campaign.LeadSource.FiltersJson;
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                // Send POST
+                var response = await _httpClient.PostAsync(pagedUrl, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"\n--- API Call Failed at start={start}. Status: {response.StatusCode} ---\nDetails: {errorContent}");
+                    break;
+                }
+
+                // Deserialize response
+                var responseStream = await response.Content.ReadAsStreamAsync();
+                var apiResponse = await JsonSerializer.DeserializeAsync<ApiResponse>(responseStream);
+
+                if (apiResponse?.Results == null || !apiResponse.Results.Any())
+                {
+                    Console.WriteLine("\nNo results found for this batch.");
+                    break;
+                }
+
+                totalResults = apiResponse.TotalResultCount;
+
+                // Map results
+                var propertiesToSave = apiResponse.Results
+                    .Select(dto => MapToPropertyRecord(dto))
+                    .ToList();
+
+                var radarIds = propertiesToSave.Select(p => p.RadarId).ToList();
+
+                // Fetch existing records with matching RadarIds
+                var existingRecords = await _context.Properties
+                    .Where(p => radarIds.Contains(p.RadarId))
+                    .ToListAsync();
+
+                // Determine new records (those not in DB)
+                var existingRadarIds = existingRecords.Select(p => p.RadarId).ToList();
+                var newProperties = propertiesToSave
+                    .Where(p => !existingRadarIds.Contains(p.RadarId))
+                    .ToList();
+
+                // ✅ Update CampaignId for all existing records
+                foreach (var existing in existingRecords)
+                {
+                    existing.CampaignId = campaign.Id; // <-- use your new campaignId variable here
+                }
+
+                // ✅ Add new records
+                if (newProperties.Any())
+                {
+                    await _context.Properties.AddRangeAsync(newProperties);
+                    // ✅ Save all changes (updates + inserts)
+                    int saved = await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    Console.WriteLine($"No new records to insert for batch starting {start}.");
+                }
+                await _context.SaveChangesAsync();
+                // Check if more results remain
+                start += batchSize;
+                moreData = start < totalResults;
+
+            } while (moreData);
+
+            campaign.LastRunningTime = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+
+          catch (Exception ex)
+        {
+            Log.Error($"Error in RunCampaign for Campaign {campaign.Name}: {ex.Message}");
+        }
+    }
     private PropertyRecord MapToPropertyRecord(PropertyResultDto dto)
     {
         // Mapping logic must be updated to include the new fields from the URL

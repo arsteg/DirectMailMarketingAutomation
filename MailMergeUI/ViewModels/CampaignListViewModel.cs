@@ -89,34 +89,41 @@ namespace MailMergeUI.ViewModels
 
         private void LoadCampaigns()
         {
-            if (_service == null)
-                return;
+            try
+                {
+                if (_service == null)
+                    return;
 
-            Campaigns.Clear();
+                Campaigns.Clear();
 
-            var allCampaigns = _service.Campaigns.ToList();
-            TotalPages = (int)Math.Ceiling((double)allCampaigns.Count / ItemsPerPage);
+                var allCampaigns = _service.Campaigns.ToList();
+                TotalPages = (int)Math.Ceiling((double)allCampaigns.Count / ItemsPerPage);
 
-            var pagedCampaigns = allCampaigns
-                .Skip((CurrentPage - 1) * ItemsPerPage)
-                .Take(ItemsPerPage)
-                .ToList();
+                var pagedCampaigns = allCampaigns
+                    .Skip((CurrentPage - 1) * ItemsPerPage)
+                    .Take(ItemsPerPage)
+                    .ToList();
 
-            foreach (var c in pagedCampaigns)
-                Campaigns.Add(c);
+                foreach (var c in pagedCampaigns)
+                    Campaigns.Add(c);
 
-            TotalPages = (int)Math.Ceiling((double)allCampaigns.Count / ItemsPerPage);
-            if (CurrentPage > TotalPages)
-                CurrentPage = TotalPages;
+                TotalPages = (int)Math.Ceiling((double)allCampaigns.Count / ItemsPerPage);
+                if (CurrentPage > TotalPages)
+                    CurrentPage = TotalPages;
 
-            OnPropertyChanged(nameof(Campaigns));
-            OnPropertyChanged(nameof(CurrentPage));
-            OnPropertyChanged(nameof(TotalPages));
+                OnPropertyChanged(nameof(Campaigns));
+                OnPropertyChanged(nameof(CurrentPage));
+                OnPropertyChanged(nameof(TotalPages));
 
-            OnPropertyChanged(nameof(PageInfoText));
-            OnPropertyChanged(nameof(CurrentPage));            
-            OnPropertyChanged(nameof(allCampaigns.Count)); 
-
+                OnPropertyChanged(nameof(PageInfoText));
+                OnPropertyChanged(nameof(CurrentPage));
+                OnPropertyChanged(nameof(allCampaigns.Count));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error loading campaigns");
+                MessageBox.Show("Error loading campaigns: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void OpenEdit(Campaign? campaign)

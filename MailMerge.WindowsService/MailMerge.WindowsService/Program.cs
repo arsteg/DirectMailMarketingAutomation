@@ -82,6 +82,7 @@ if (args is { Length: 1 })
     catch (Exception ex)
     {
         Console.WriteLine(ex);
+        Log.Fatal(ex, "Failed to install/uninstall the service.");
     }
 
     return;

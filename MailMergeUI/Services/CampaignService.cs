@@ -81,9 +81,10 @@ namespace MailMergeUI.Services
                 _db.SaveChanges();
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 //do nothing
+                Log.Error(ex, "Error saving campaign");
             }
 
         }

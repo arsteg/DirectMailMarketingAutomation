@@ -183,42 +183,48 @@ namespace MailMergeUI.ViewModels
 
         public CampaignEditViewModel(Campaign? campaign, CampaignService service,MailMergeDbContext dbContext)
         {
-            _dbContext = dbContext;
-            _service = service;
-            Campaign = campaign ?? new Campaign
+            try {
+                _dbContext = dbContext;
+                _service = service;
+                Campaign = campaign ?? new Campaign
+                {
+                    LeadSource = new LeadSource(),
+                    Stages = new ObservableCollection<FollowUpStage>()
+                };
+
+
+                SetupLeadSource();
+                LoadTemplates();
+                LoadStages();
+
+                SaveCommand = new RelayCommand(_ => Save());
+                CancelCommand = new RelayCommand(_ => CloseWindow());
+                AddStageCommand = new RelayCommand(_ => AddStage());
+                BrowseOutputPathCommand = new RelayCommand(_ => BrowseOutputPath());
+                RemoveStageCommand = new RelayCommand(param => RemoveStage(param as FollowUpStageViewModel));
+
+                if (campaign != null)
+                {
+                    SelectedTime = campaign.LeadSource.RunAt;
+                    DayCheckBoxes = new ObservableCollection<CheckBoxModel>(
+        Enum.GetValues(typeof(DayOfWeek))
+            .Cast<DayOfWeek>()
+            .Select(day => new CheckBoxModel
             {
-                LeadSource = new LeadSource(),
-                Stages = new ObservableCollection<FollowUpStage>()
-            };
+                DisplayName = day.ToString(),
+                IsChecked = Campaign.LeadSource.DaysOfWeek.Contains(day.ToString())
+            })
+    );
+                    OutputPath = campaign.OutputPath;
 
-            
-            SetupLeadSource();
-            LoadTemplates();
-            LoadStages();
+                    (this.State, this.City) = SearchCriteriaHelper.GetStateAndCityFromJson(campaign.LeadSource.FiltersJson);
 
-            SaveCommand = new RelayCommand(_ => Save());
-            CancelCommand = new RelayCommand(_ => CloseWindow());
-            AddStageCommand = new RelayCommand(_ => AddStage());
-            BrowseOutputPathCommand = new RelayCommand(_ => BrowseOutputPath());
-            RemoveStageCommand = new RelayCommand(param => RemoveStage(param as FollowUpStageViewModel));
-
-            if (campaign != null)
-            {
-                SelectedTime = campaign.LeadSource.RunAt;
-                DayCheckBoxes = new ObservableCollection<CheckBoxModel>(
-    Enum.GetValues(typeof(DayOfWeek))
-        .Cast<DayOfWeek>()
-        .Select(day => new CheckBoxModel
-        {
-            DisplayName = day.ToString(),
-            IsChecked = Campaign.LeadSource.DaysOfWeek.Contains(day.ToString())
-        })
-);
-                OutputPath = campaign.OutputPath;
-
-                 (this.State, this.City) = SearchCriteriaHelper.GetStateAndCityFromJson(campaign.LeadSource.FiltersJson);
-
+                }
             }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error initializing CampaignEditViewModel");
+            } 
         }
 
         private void BrowseOutputPath()
@@ -323,7 +329,7 @@ namespace MailMergeUI.ViewModels
         }
 
         private void Save()
-        {
+        {           
             if (string.IsNullOrWhiteSpace(Campaign.Name))
             {
                 System.Windows.MessageBox.Show("Campaign name is required.");
@@ -384,6 +390,7 @@ namespace MailMergeUI.ViewModels
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show($"Save failed: {ex.Message}");
+                Log.Error(ex, "Error saving campaign");
             }
         }
 
