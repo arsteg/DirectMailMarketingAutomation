@@ -252,7 +252,8 @@
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10">
 
-                    <Button Name="LoadPdf" Content="Load PDF" Style="{StaticResource ToolBarButtonStyle}" Click="LoadPdf_Click"/>
+                    <!--<Button Name="LoadPdf" Content="Load PDF" Style="{StaticResource ToolBarButtonStyle}" Click="LoadPdf_Click"/>-->
+                    <Button Name="LoadWord" Content="Load Word" Style="{StaticResource ToolBarButtonStyle}" Click="LoadWord_Click"/>
 
                     <Button Name="LoadCSV" Content="Load CSV" Style="{StaticResource ToolBarButtonStyle}" Click="LoadCSV_Click"/>
 
@@ -306,8 +307,8 @@
                     </Canvas.Background>
                 </Canvas>
             </Border>
-            
-            
+
+
         </ScrollViewer>
         <wv2:WebView2 x:Name="PdfWebView" Grid.Row="1" Margin="8"/>
     </Grid>

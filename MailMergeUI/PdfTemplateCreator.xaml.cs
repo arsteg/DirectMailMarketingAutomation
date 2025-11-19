@@ -1,34 +1,22 @@
-﻿using Azure;
-using Ghostscript.NET;
-using Ghostscript.NET.Rasterizer;
-using iText.Forms.Form;
-using iText.Forms.Form.Element;
+﻿using DocumentFormat.OpenXml.Packaging;
 using iText.IO.Image;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas;
-using iText.Kernel.Pdf.Xobject;
 using iText.Layout;
-using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using MailMerge.Data.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
-using Org.BouncyCastle.Asn1.Pkcs;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
-using PdfSharp.Pdf.AcroForms;
-using PdfSharp.Pdf.Annotations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -59,6 +47,8 @@ namespace MailMergeUI
         private const float WpfToPdfScale = 72f / 96f;
         private const double FontSizeScale = 1.15;
         private readonly MailMergeEngine.MailMergeEngine _mailMergeEngine;
+
+        private string? _loadedDocumentText;
 
         public PdfTemplateCreator()
         {
@@ -91,6 +81,8 @@ namespace MailMergeUI
             _pageElements[_currentPage] = new List<UIElement>();
             UpdateNavigationUI();
         }
+
+
 
         /// <summary>
         /// Handles the click event for the "Export to PDF" button.
@@ -228,6 +220,119 @@ namespace MailMergeUI
         //    Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
         //}
 
+        private void LoadWord_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                // Only load .docx since Open XML SDK doesn't natively support old .doc format
+                Filter = "Word Documents (*.docx)|*.docx",
+                Title = "Load Word Document Template"
+            };
+
+            if (openFileDialog.ShowDialog() != true) return;
+
+            try
+            {
+                string wordPath = openFileDialog.FileName;
+                _loadedPdfPath = null; // Clear PDF content
+
+                // CALL THE NEW OPEN XML SDK METHOD
+                string extractedText = ExtractTextFromDocx(wordPath);
+
+                // Assuming a single page for a Word doc for simplicity in this model
+                _pageCount = 1;
+                _currentPage = 1;
+                _pageElements.Clear();
+                _pageElements[1] = new List<UIElement>();
+
+                // Store the text for the background
+                _loadedDocumentText = extractedText;
+
+                // Set up the canvas as a blank A4 sheet size (794x1123 from XAML)
+                TemplateCanvas.Width = 794;
+                TemplateCanvas.Height = 1123;
+                PdfBackgroundBrush.ImageSource = null; // Clear PDF image background
+
+                // Add a permanent, non-draggable text display for the loaded content
+                RenderWordContentToCanvas(extractedText);
+
+                // Restore page state (which is empty) and update UI
+                RestorePageState(_currentPage);
+                UpdateNavigationUI();
+
+                ExportButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading Word document: {ex.Message}", "Word Load Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _loadedDocumentText = null;
+            }
+        }
+
+        private string ExtractTextFromDocx(string path)
+        {
+            var textBuilder = new StringBuilder();
+
+            try
+            {
+                using (WordprocessingDocument wordDoc = WordprocessingDocument.Open(path, false))
+                {
+                    // Access the main document part (where the content lives)
+                    var body = wordDoc.MainDocumentPart?.Document.Body;
+
+                    if (body != null)
+                    {
+                        // Iterate through all Paragraph objects in the document body
+                        foreach (var paragraph in body.Elements<DocumentFormat.OpenXml.Wordprocessing.Paragraph>())
+                        {
+                            // Use InnerText to combine the text from all Run elements in the paragraph
+                            textBuilder.AppendLine(paragraph.InnerText);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Rethrow a more informative exception
+                throw new InvalidOperationException($"Failed to extract text from DOCX using Open XML SDK. The file may be corrupt or not a valid .docx file. Details: {ex.Message}", ex);
+            }
+
+            return textBuilder.ToString();
+        }
+
+        private void RenderWordContentToCanvas(string text)
+        {
+            // We use a non-draggable, non-interactive TextBox to display the document text.
+            var backgroundTextDisplay = new TextBox
+            {
+                Text = text,
+                IsReadOnly = false,
+                TextWrapping = TextWrapping.Wrap,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Foreground = (Brush)FindResource("TextDark"),
+                FontFamily = new FontFamily("Calibri"),
+                FontSize = 20,
+                // Make it fill most of the A4 canvas with margins
+                Width = TemplateCanvas.Width - 40,
+                Height = TemplateCanvas.Height - 40
+            };
+
+            // Wrap in a Border to position it
+            var container = new Border { Child = backgroundTextDisplay };
+
+            Canvas.SetLeft(container, 20); // Margin
+            Canvas.SetTop(container, 20);  // Margin
+
+            // Add it to the canvas, ensuring it is *not* added to _pageElements 
+            // so it doesn't get exported as an editable field.
+            TemplateCanvas.Children.Add(container);
+
+            // To ensure it's visually behind the interactive elements
+            Panel.SetZIndex(container, -1);
+        }
+
         private async void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
             // Ensure the current page's elements are saved before exporting
@@ -269,6 +374,7 @@ namespace MailMergeUI
         /// </summary>
         private void AddTextBlock_Click(object sender, RoutedEventArgs e)
         {
+            SaveCurrentPageState();
             var newText = new TextBox
             {
                 Text = "New Editable Text",
@@ -486,6 +592,7 @@ namespace MailMergeUI
             {
                 try
                 {
+                    SaveCurrentPageState();
                     // Load image for display
                     BitmapImage bitmap = new BitmapImage();
                     bitmap.BeginInit();
@@ -529,6 +636,7 @@ namespace MailMergeUI
         {
             if (FormFieldComboBox.SelectedItem is string selectedField && selectedField != "Select Field...")
             {
+                SaveCurrentPageState();
                 var newField = new TextBox
                 {
                     Text = "{" + selectedField + "}", // Use the selected field name
@@ -559,45 +667,45 @@ namespace MailMergeUI
             }
         }
 
-        private void LoadPdf_Click(object sender, RoutedEventArgs e)
-        {
-            var openFileDialog = new OpenFileDialog
-            {
-                Filter = "PDF Documents (*.pdf)|*.pdf",
-                Title = "Load PDF Template"
-            };
+        //private void LoadPdf_Click(object sender, RoutedEventArgs e)
+        //{
+        //    var openFileDialog = new OpenFileDialog
+        //    {
+        //        Filter = "PDF Documents (*.pdf)|*.pdf",
+        //        Title = "Load PDF Template"
+        //    };
 
-            if (openFileDialog.ShowDialog() != true) return;
+        //    if (openFileDialog.ShowDialog() != true) return;
 
-            try
-            {
-                _loadedPdfPath = openFileDialog.FileName;
+        //    try
+        //    {
+        //        _loadedPdfPath = openFileDialog.FileName;
 
-                // Use iText to quickly get page count
-                using (var pdfDoc = new iText.Kernel.Pdf.PdfDocument(new PdfReader(_loadedPdfPath)))
-                {
-                    _pageCount = pdfDoc.GetNumberOfPages();
-                }
+        //        // Use iText to quickly get page count
+        //        using (var pdfDoc = new iText.Kernel.Pdf.PdfDocument(new PdfReader(_loadedPdfPath)))
+        //        {
+        //            _pageCount = pdfDoc.GetNumberOfPages();
+        //        }
 
-                // Reset state
-                _pageElements.Clear();
-                TemplateCanvas.Children.Clear(); // Clear any existing elements
-                for (int i = 1; i <= _pageCount; i++)
-                {
-                    _pageElements[i] = new List<UIElement>(); // Initialize list for each page
-                }
+        //        // Reset state
+        //        _pageElements.Clear();
+        //        TemplateCanvas.Children.Clear(); // Clear any existing elements
+        //        for (int i = 1; i <= _pageCount; i++)
+        //        {
+        //            _pageElements[i] = new List<UIElement>(); // Initialize list for each page
+        //        }
 
-                LoadPage(1); // Load the first page
+        //        LoadPage(1); // Load the first page
 
-                // Enable UI controls
-                ExportButton.IsEnabled = true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading PDF: {ex.Message}");
-                _loadedPdfPath = null;
-            }
-        }
+        //        // Enable UI controls
+        //        ExportButton.IsEnabled = true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"Error loading PDF: {ex.Message}");
+        //        _loadedPdfPath = null;
+        //    }
+        //}
 
         private void PrevPage_Click(object sender, RoutedEventArgs e)
         {
@@ -617,7 +725,7 @@ namespace MailMergeUI
 
         private void LoadPage(int pageNumber)
         {
-            if (_loadedPdfPath == null || pageNumber < 1 || pageNumber > _pageCount)
+            if (pageNumber < 1 || pageNumber > _pageCount)
                 return;
 
             // 1. Save elements on the current page before switching
@@ -628,63 +736,84 @@ namespace MailMergeUI
 
             // Clear canvas for the new page
             TemplateCanvas.Children.Clear();
-
-            // 2. Use Ghostscript to render the page
-            using (var rasterizer = new GhostscriptRasterizer())
-            {
-                string dllPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"gsdll64.dll");
-                // Optional: specify Ghostscript version if needed
-                var version = new GhostscriptVersionInfo(dllPath);
-
-                rasterizer.Open(_loadedPdfPath, version, false);
-
-                // ✅ Increase DPI for higher quality
-                int dpi = 600; // Try 300 or 600 for ultra sharpness
-                using (var img = rasterizer.GetPage(dpi, pageNumber))
-                {
-                    // Convert System.Drawing.Image → BitmapImage (for WPF)
-                    using (var ms = new MemoryStream())
-                    {
-                        img.Save(ms, ImageFormat.Png);
-                        ms.Position = 0;
-
-                        var bitmapImage = new BitmapImage();
-                        bitmapImage.BeginInit();
-                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmapImage.StreamSource = ms;
-                        bitmapImage.EndInit();
-
-                        PdfBackgroundBrush.ImageSource = bitmapImage;
-                        bitmapImage.Freeze(); // optional for perf
-
-                        TemplateCanvas.Width = bitmapImage.PixelWidth;
-                        TemplateCanvas.Height = bitmapImage.PixelHeight;
-                    }
-                }
-            }
-
             _currentPage = pageNumber;
 
-            // 3. Restore page state and update UI
+            // HANDLE PDF BACKGROUND (Requires your RenderPdfPageToCanvas implementation)
+            if (_loadedDocumentText != null)
+            {
+                // Re-render the Word background on the canvas
+                RenderWordContentToCanvas(_loadedDocumentText);
+                PdfBackgroundBrush.ImageSource = null; // Clear PDF image background
+
+                // Ensure the canvas size is correct for the single page
+                TemplateCanvas.Width = 794;
+                TemplateCanvas.Height = 1123;
+            }
+            // Handle blank state
+            else
+            {
+                TemplateCanvas.Width = 794;
+                TemplateCanvas.Height = 1123;
+                PdfBackgroundBrush.ImageSource = null;
+            }
+
+            // 3. Restore page state and update UI (CRITICAL STEP for displaying elements)
             RestorePageState(_currentPage);
             UpdateNavigationUI();
         }
 
+
+
+        /// <summary>
+        /// Saves all currently displayed UI elements (user-added) to the page state dictionary.
+        /// </summary>
         private void SaveCurrentPageState()
         {
-            if (_pageElements.ContainsKey(_currentPage))
+            if (!_pageElements.ContainsKey(_currentPage))
             {
-                _pageElements[_currentPage] = TemplateCanvas.Children.Cast<UIElement>().ToList();
+                _pageElements[_currentPage] = new List<UIElement>();
             }
+
+            // 💡 FIX: Update _loadedDocumentText from the background TextBox (ZIndex = -1)
+            var backgroundBorder = TemplateCanvas.Children
+                .OfType<Border>()
+                .FirstOrDefault(b => Panel.GetZIndex(b) == -1);
+
+            if (backgroundBorder?.Child is TextBox backgroundTextBox)
+            {
+                // **CRITICAL**: Read the edited text from the canvas back into the source variable.
+                _loadedDocumentText = backgroundTextBox.Text;
+            }
+
+
+            // 1. Clear the old list for the current page
+            _pageElements[_currentPage].Clear();
+
+            // 2. Iterate through all children on the canvas and save only the draggable elements.
+            // Draggable elements are those with ZIndex >= 0 (the Word background is ZIndex -1).
+            var elementsToSave = TemplateCanvas.Children
+                .Cast<UIElement>()
+                .Where(e => Panel.GetZIndex(e) != -1)
+                .ToList();
+
+            // 3. Save the list of elements for the current page number.
+            _pageElements[_currentPage] = elementsToSave;
         }
 
+        /// <summary>
+        /// Clears the canvas and loads elements for the specified page number.
+        /// </summary>
         private void RestorePageState(int pageNumber)
         {
-            TemplateCanvas.Children.Clear();
-            if (_pageElements.ContainsKey(pageNumber))
+            // The canvas should be cleared in LoadPage() before this is called.
+            SelectItem(null); // Deselect any item
+
+            // Add user-added elements for the new page
+            if (_pageElements.TryGetValue(pageNumber, out var elements))
             {
-                foreach (var element in _pageElements[pageNumber])
+                foreach (var element in elements)
                 {
+                    // Re-add element to the canvas
                     TemplateCanvas.Children.Add(element);
                 }
             }
@@ -706,7 +835,7 @@ namespace MailMergeUI
             {
                 if (ofd.ShowDialog() == true)
                 {
-                    
+
                     csvPath = ofd.FileName;
 
                 }
@@ -715,11 +844,11 @@ namespace MailMergeUI
 
                 //Export the template to temp pdf file
                 string tempTemplateFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"temp_template_preview_{Guid.NewGuid()}.pdf");
-                ExportToPdf(tempTemplateFile);
+                ExportToPdf(tempTemplateFile); // This generates a PDF *with* the text/image fields.
 
                 //Load csv
                 records = _mailMergeEngine.ReadCsv(csvPath);
-                
+
 
                 //create and show preview
                 string tempPreviewFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"temp_CSV_preview_{Guid.NewGuid()}.pdf");
@@ -766,15 +895,49 @@ namespace MailMergeUI
                         doc.Add(new AreaBreak(AreaBreakType.NEXT_PAGE));
                     }
 
-                    // Render the background image if a source PDF was loaded
-                    RenderPageBackground(doc, _loadedPdfPath, pageNumber, pdfPageWidth, pdfPageHeight);
+                    // NEW: Render the Word text on the first page, allowing it to flow.
+                    // This must happen *before* user-added elements are fixed-positioned on top.
+                    if (pageNumber == 1)
+                    {
+                        RenderWordTextToPdf(doc, _loadedDocumentText, pageNumber, pdfPageWidth, pdfPageHeight);
+                    }
 
                     // Add each UI element to the current page
+                    // This is where you encounter a new issue: the user-added elements
+                    // will now be fixed-positioned on the *new* page numbers if the 
+                    // word content caused a page break. 
+                    // You will need a way to correlate the UI elements on the WPF page 
+                    // with the new iText page they land on, but since the WPF canvas is 
+                    // always page 1, we will stick to the original logic for now.
                     foreach (UIElement element in elementsOnPage)
                     {
                         AddUIElementToPdf(doc, element, pageNumber);
                     }
                 }
+            }
+        }
+
+        private void RenderWordTextToPdf(Document doc, string text, int pageNumber, float pageWidth, float pageHeight)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+
+            // Assuming A4 page and standard margins (20 points from the edge)
+            float margin = 20 * WpfToPdfScale;
+            // float contentWidth = pageWidth - (2 * margin); // REMOVE fixed width calculation
+
+            // The text should only be added on the first page break if we are using the 
+            // iText document flow for background text.
+            if (pageNumber == 1)
+            {
+                var para = new Paragraph(text)
+                    .SetFontSize(12 * WpfToPdfScale)
+                    .SetMarginLeft(margin)
+                    .SetMarginRight(margin)
+                    .SetMarginTop(margin)
+                    .SetMarginBottom(margin);
+
+                // **CRITICAL CHANGE**: Add the paragraph to the document without SetFixedPosition
+                doc.Add(para);
             }
         }
 
@@ -916,6 +1079,7 @@ namespace MailMergeUI
         {
             if (DateFieldComboBox.SelectedIndex != 0)
             {
+                SaveCurrentPageState();
                 var newText = new TextBox
                 {
                     Tag = "TextBlock", // Identify this as a simple text block
