@@ -464,12 +464,6 @@ namespace MailMergeUI
             }
         }
 
-       
-        
-       
-
-       
-
         #endregion
 
         #region Helper Methods
