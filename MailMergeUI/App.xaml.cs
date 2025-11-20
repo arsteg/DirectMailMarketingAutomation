@@ -1,4 +1,3 @@
-
 using MailMerge.Data;
 using MailMergeUI.Logging;
 using MailMergeUI.Services;
@@ -10,6 +9,10 @@ using PdfSharp.Fonts;
 using Serilog;
 using System;
 using System.IO;
+using System.Windows;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Syncfusion.Licensing;
 using System.Windows;
 
 namespace MailMergeUI
@@ -56,6 +59,19 @@ namespace MailMergeUI
 
             // Capture the service provider for global access
             Services = _appHost.Services;
+
+            // Register Syncfusion license from appsettings
+            string licenseKey = _appHost.Services.GetRequiredService<IConfiguration>()["SyncfusionLicense"];
+
+            if (!string.IsNullOrWhiteSpace(licenseKey))
+            {
+                SyncfusionLicenseProvider.RegisterLicense(licenseKey);
+            }
+            else
+            {
+                MessageBox.Show("Syncfusion license key not found in appsettings.json!",
+                                "License Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         protected override async void OnStartup(StartupEventArgs e)
