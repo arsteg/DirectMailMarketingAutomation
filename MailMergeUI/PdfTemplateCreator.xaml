@@ -3,41 +3,215 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:sync="http://schemas.syncfusion.com/wpf"
              xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
-    <Grid Background="#F5F5F5">
+    <UserControl.Resources>
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#1976D2"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#1565C0"/>
+        </Style>
+
+        <Style x:Key="FormatToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <Style x:Key="SeparatorStyle" TargetType="Separator">
+            <Setter Property="Margin" Value="8,0"/>
+            <Setter Property="Background" Value="#E0E0E0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#FAFAFA">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
-        <Border Grid.Row="0" Background="White" Padding="12" BorderBrush="#DDD" BorderThickness="0,0,0,1">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" Padding="20,16" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <TextBlock Text="Email Template Designer" FontSize="20" FontWeight="Bold" Foreground="#1976D2"/>
+                <TextBlock Text="Create professional email templates with ease" FontSize="12" Foreground="#999999" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Toolbar -->
+        <Border Grid.Row="1" Background="White" Padding="16" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Vertical">
+                <!-- First Row -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
+                    <Button Content="📁 Load Word" Style="{StaticResource ModernButtonStyle}" Padding="12,6" Click="LoadWord_Click" ToolTip="Load a Word document"/>
+                    <Button Content="📊 Preview CSV" Style="{StaticResource ModernButtonStyle}" Padding="12,6" Click="LoadCSV_Click" ToolTip="Preview with CSV data" Margin="8,0,0,0"/>
+                    <Separator Style="{StaticResource SeparatorStyle}"/>
+                    <TextBlock Text="Template Name:" VerticalAlignment="Center" FontSize="13" Foreground="#666666" Margin="8,0,0,0"/>
+                    <TextBox x:Name="TemplateNameTextBox" Width="220" Text="My Template" Style="{StaticResource ModernTextBoxStyle}" ToolTip="Enter template name" Margin="8,0,0,0"/>
+                    <Separator Style="{StaticResource SeparatorStyle}"/>
+                    <Button x:Name="ExportButton" Content="📥 Export PDF" Style="{StaticResource PrimaryButtonStyle}" Padding="16,6" Click="ExportPdf_Click" ToolTip="Export template as PDF" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- Second Row - Merge Fields and Date -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Insert Merge Field:" VerticalAlignment="Center" FontSize="13" Foreground="#666666" FontWeight="Medium"/>
+                    <ComboBox x:Name="FormFieldComboBox" Width="200" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="FormFieldComboBox_SelectionChanged" ToolTip="Select a field to insert" Margin="8,0,0,0"/>
+                    <TextBlock Text="Date Format:" VerticalAlignment="Center" FontSize="13" Foreground="#666666" FontWeight="Medium" Margin="12,0,0,0"/>
+                    <ComboBox x:Name="DateFieldComboBox" Width="180" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="DateFieldComboBox_SelectionChanged" ToolTip="Choose date format" Margin="8,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Formatting Toolbar -->
+        <Border Grid.Row="2" Background="White" Padding="16,12" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Load Word" Margin="0,0,10,0" Padding="12,6" Click="LoadWord_Click"/>
-                <ComboBox x:Name="FormFieldComboBox" Width="180" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="FormFieldComboBox_SelectionChanged"/>
-                <ComboBox x:Name="DateFieldComboBox" Width="160" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="DateFieldComboBox_SelectionChanged"/>
-                <TextBox x:Name="TemplateNameTextBox" Width="200" Text="My Template" TextChanged="TemplateNameTextBox_TextChanged"/>
-                <Button x:Name="ExportButton" Content="Export PDF" Margin="16,0" Padding="20,8" Background="#1976D2" Foreground="White" FontWeight="SemiBold" Click="ExportPdf_Click"/>
-                <Button Content="Preview with CSV" Margin="10,0" Click="LoadCSV_Click"/>
+                <TextBlock Text="Format:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="0,0,12,0"/>
+
+                <!-- Bold -->
+                <ToggleButton x:Name="BoldButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Bold (Ctrl+B)" Click="Bold_Click">
+                    <TextBlock Text="B" FontSize="14" FontWeight="Bold"/>
+                </ToggleButton>
+
+                <!-- Italic -->
+                <ToggleButton x:Name="ItalicButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Italic (Ctrl+I)" Click="Italic_Click" Margin="4,0,0,0">
+                    <TextBlock Text="I" FontSize="14" FontStyle="Italic"/>
+                </ToggleButton>
+
+                <!-- Underline -->
+                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Underline (Ctrl+U)" Click="Underline_Click" Margin="4,0,0,0">
+                    <TextBlock Text="U" FontSize="14" FontWeight="Bold"/>
+                </ToggleButton>
+
+                <Separator Style="{StaticResource SeparatorStyle}"/>
+
+                <!-- Font Size -->
+                <TextBlock Text="Size:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="4,0,6,0"/>
+                <ComboBox x:Name="FontSizeComboBox" Width="70" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="3" SelectionChanged="FontSize_Changed" ToolTip="Font size">
+                    <ComboBoxItem>8</ComboBoxItem>
+                    <ComboBoxItem>10</ComboBoxItem>
+                    <ComboBoxItem>12</ComboBoxItem>
+                    <ComboBoxItem>14</ComboBoxItem>
+                    <ComboBoxItem>16</ComboBoxItem>
+                    <ComboBoxItem>18</ComboBoxItem>
+                    <ComboBoxItem>20</ComboBoxItem>
+                    <ComboBoxItem>24</ComboBoxItem>
+                    <ComboBoxItem>28</ComboBoxItem>
+                    <ComboBoxItem>32</ComboBoxItem>
+                </ComboBox>
+
+                <!-- Font Family -->
+                <TextBlock Text="Font:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="12,0,6,0"/>
+                <ComboBox x:Name="FontFamilyComboBox" Width="140" Style="{StaticResource ModernComboBoxStyle}" SelectionChanged="FontFamily_Changed" ToolTip="Font family">
+                    <ComboBoxItem>Calibri</ComboBoxItem>
+                    <ComboBoxItem>Arial</ComboBoxItem>
+                    <ComboBoxItem>Times New Roman</ComboBoxItem>
+                    <ComboBoxItem>Courier New</ComboBoxItem>
+                    <ComboBoxItem>Georgia</ComboBoxItem>
+                    <ComboBoxItem>Segoe UI</ComboBoxItem>
+                    <ComboBoxItem>Verdana</ComboBoxItem>
+                </ComboBox>
+
+                <Separator Style="{StaticResource SeparatorStyle}"/>
+
+                <!-- Text Color -->
+                <ToggleButton x:Name="TextColorButton" Style="{StaticResource FormatToggleStyle}" Width="40" ToolTip="Text color" Click="TextColor_Click">
+                    <TextBlock Text="🎨" FontSize="16"/>
+                </ToggleButton>
+
+                <!-- Highlight -->
+                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" Width="40" ToolTip="Highlight" Click="Highlight_Click" Margin="4,0,0,0">
+                    <TextBlock Text="🖍️" FontSize="16"/>
+                </ToggleButton>
+
+                <Separator Style="{StaticResource SeparatorStyle}"/>
+
+                <!-- Alignment -->
+                <Button x:Name="AlignLeftButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Align Left" Click="AlignLeft_Click">
+                    <TextBlock Text="⬅️" FontSize="14"/>
+                </Button>
+
+                <Button x:Name="AlignCenterButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Align Center" Click="AlignCenter_Click" Margin="4,0,0,0">
+                    <TextBlock Text="⏺️" FontSize="14"/>
+                </Button>
+
+                <Button x:Name="AlignRightButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Align Right" Click="AlignRight_Click" Margin="4,0,0,0">
+                    <TextBlock Text="➡️" FontSize="14"/>
+                </Button>
+
+                <Separator Style="{StaticResource SeparatorStyle}"/>
+
+                <!-- Lists -->
+                <Button x:Name="BulletListButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Bullet List" Click="BulletList_Click">
+                    <TextBlock Text="•" FontSize="16"/>
+                </Button>
+
+                <Button x:Name="NumberListButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Numbered List" Click="NumberList_Click" Margin="4,0,0,0">
+                    <TextBlock Text="1." FontSize="14"/>
+                </Button>
+
+                <Separator Style="{StaticResource SeparatorStyle}"/>
+
+                <!-- Clear Format -->
+                <Button Content="Clear Format" Style="{StaticResource ModernButtonStyle}" Padding="10,6" Click="ClearFormat_Click" ToolTip="Clear all formatting"/>
             </StackPanel>
         </Border>
 
         <!-- Rich Text Editor -->
-        <sync:SfRichTextBoxAdv x:Name="RichTextEditor" 
-                               Grid.Row="1" 
-                               Margin="10"
-                               Background="White"
-                               FontFamily="Calibri"
-                               FontSize="14"/>
+        <Border Grid.Row="3" Margin="16" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8">
+            <sync:SfRichTextBoxAdv x:Name="RichTextEditor" 
+                                   Background="White"
+                                   FontFamily="Calibri"
+                                   FontSize="14"
+                                   Padding="16"/>
+        </Border>
 
-        <!-- CSV Preview -->
-        <wv2:WebView2 x:Name="PdfWebView" Grid.Row="1" Visibility="Collapsed"/>
+        <!-- PDF Preview Web View -->
+        <wv2:WebView2 x:Name="PdfWebView" Grid.Row="3" Visibility="Collapsed"/>
 
         <!-- Status Bar -->
-        <Border Grid.Row="2" Background="#EEE" Padding="12" BorderBrush="#DDD" BorderThickness="0,1,0,0">
+        <Border Grid.Row="4" Background="#FAFAFA" Padding="16,12" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
             <DockPanel>
-                <TextBlock Text="Ready" x:Name="StatusText"/>
-                <Button Content="Back to Editor" HorizontalAlignment="Right" Click="BackButton_Click" Visibility="Collapsed" x:Name="BackButton"/>
+                <TextBlock Text="✓ Ready" x:Name="StatusText" Foreground="#666666" FontSize="12" VerticalAlignment="Center"/>
+                <Button Content="← Back to Editor" Style="{StaticResource ModernButtonStyle}" HorizontalAlignment="Right" Click="BackButton_Click" Visibility="Collapsed" x:Name="BackButton" Padding="14,6"/>
             </DockPanel>
         </Border>
     </Grid>

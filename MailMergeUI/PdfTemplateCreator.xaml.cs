@@ -18,7 +18,7 @@ namespace MailMergeUI
     public partial class PdfTemplateCreator : UserControl
     {
         private readonly MailMergeEngine.MailMergeEngine _mailMergeEngine;
-
+        private SfRichTextBoxAdv _richTextEditor;
 
         public PdfTemplateCreator()
         {
@@ -41,6 +41,15 @@ namespace MailMergeUI
 
             // Delete key support (correct way for SfRichTextBoxAdv)
             RichTextEditor.PreviewKeyDown += RichTextEditor_PreviewKeyDown;
+            _richTextEditor = RichTextEditor;
+            InitializeFormatting();
+        }
+
+        private void InitializeFormatting()
+        {
+            // Set default font size
+            FontSizeComboBox.SelectedIndex = 3; // 14pt
+            FontFamilyComboBox.SelectedItem = "Calibri";
         }
 
         // DELETE KEY HANDLER (correct & safe)
@@ -204,5 +213,274 @@ namespace MailMergeUI
             RichTextEditor.Visibility = Visibility.Visible;
             BackButton.Visibility = Visibility.Collapsed;
         }
+
+             
+
+        #region Text Formatting - Bold, Italic, Underline
+
+        private void Bold_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (BoldButton.IsChecked == true)
+                {
+                   // _richTextEditor.ApplyBold(true);
+                }
+                else
+                {
+                   // _richTextEditor.ApplyBold(false);
+                }
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying bold: {ex.Message}", "Error");
+            }
+        }
+
+        private void Italic_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (ItalicButton.IsChecked == true)
+                {
+                   // _richTextEditor.ApplyItalic(true);
+                }
+                else
+                {
+                    //_richTextEditor.ApplyItalic(false);
+                }
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying italic: {ex.Message}", "Error");
+            }
+        }
+
+        private void Underline_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (UnderlineButton.IsChecked == true)
+                {
+                    //_richTextEditor.ApplyUnderline(true);
+                }
+                else
+                {
+                    //_richTextEditor.ApplyUnderline(false);
+                }
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying underline: {ex.Message}", "Error");
+            }
+        }
+
+        #endregion
+
+        #region Font Formatting
+
+        private void FontSize_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (FontSizeComboBox.SelectedItem != null)
+                {
+                    if (double.TryParse(FontSizeComboBox.SelectedItem.ToString(), out double fontSize))
+                    {
+                        //_richTextEditor.ApplyFontSize(fontSize);
+                        _richTextEditor.Focus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error changing font size: {ex.Message}", "Error");
+            }
+        }
+
+        private void FontFamily_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (FontFamilyComboBox.SelectedItem != null)
+                {
+                    string fontFamily = FontFamilyComboBox.SelectedItem.ToString();
+                    //_richTextEditor.ApplyFontFamily(new FontFamily(fontFamily));
+                    _richTextEditor.Focus();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error changing font family: {ex.Message}", "Error");
+            }
+        }
+
+        #endregion
+
+        #region Color and Highlight
+
+        private void TextColor_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Windows.Forms.ColorDialog colorDialog = new System.Windows.Forms.ColorDialog();
+                if (colorDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Color selectedColor = Color.FromArgb(
+                        colorDialog.Color.A,
+                        colorDialog.Color.R,
+                        colorDialog.Color.G,
+                        colorDialog.Color.B);
+
+                    //_richTextEditor.ApplyForeColor(selectedColor);
+                    _richTextEditor.Focus();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error changing text color: {ex.Message}", "Error");
+            }
+        }
+
+        private void Highlight_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Windows.Forms.ColorDialog colorDialog = new System.Windows.Forms.ColorDialog();
+                if (colorDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Color selectedColor = Color.FromArgb(
+                        colorDialog.Color.A,
+                        colorDialog.Color.R,
+                        colorDialog.Color.G,
+                        colorDialog.Color.B);
+
+                    //_richTextEditor.ApplyBackColor(selectedColor);
+                    _richTextEditor.Focus();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying highlight: {ex.Message}", "Error");
+            }
+        }
+
+        #endregion
+
+        #region Alignment
+
+        private void AlignLeft_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //_richTextEditor.ApplyTextAlignment(TextAlignment.Left);
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error aligning left: {ex.Message}", "Error");
+            }
+        }
+
+        private void AlignCenter_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+               // _richTextEditor.ApplyTextAlignment(TextAlignment.Center);
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error aligning center: {ex.Message}", "Error");
+            }
+        }
+
+        private void AlignRight_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //_richTextEditor.ApplyTextAlignment(TextAlignment.Right);
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error aligning right: {ex.Message}", "Error");
+            }
+        }
+
+        #endregion
+
+        #region Lists
+
+        private void BulletList_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //_richTextEditor.ApplyBullets(FormatType.Docx, ListStyle.Disc);
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying bullet list: {ex.Message}", "Error");
+            }
+        }
+
+        private void NumberList_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //_richTextEditor.ApplyNumbering(FormatType.Docx, ListStyle.Decimal);
+                _richTextEditor.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error applying numbered list: {ex.Message}", "Error");
+            }
+        }
+
+        #endregion
+
+        #region Clear Formatting and Utility
+
+        private void ClearFormat_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //_richTextEditor.ClearFormatting();
+                BoldButton.IsChecked = false;
+                ItalicButton.IsChecked = false;
+                UnderlineButton.IsChecked = false;
+                FontSizeComboBox.SelectedIndex = 3; // Reset to 14pt
+                FontFamilyComboBox.SelectedItem = "Calibri";
+                _richTextEditor.Focus();
+                UpdateStatus("Formatting cleared");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error clearing formatting: {ex.Message}", "Error");
+            }
+        }
+
+       
+        
+       
+
+       
+
+        #endregion
+
+        #region Helper Methods
+
+        private void UpdateStatus(string message)
+        {
+            StatusText.Text = $"✓ {message}";
+        }
+
+        #endregion
+
+
     }
 }
