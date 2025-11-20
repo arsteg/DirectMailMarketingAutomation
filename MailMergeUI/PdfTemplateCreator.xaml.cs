@@ -222,14 +222,7 @@ namespace MailMergeUI
         {
             try
             {
-                if (BoldButton.IsChecked == true)
-                {
-                   // _richTextEditor.ApplyBold(true);
-                }
-                else
-                {
-                   // _richTextEditor.ApplyBold(false);
-                }
+                RichTextEditor.Selection.CharacterFormat.Bold = !RichTextEditor.Selection.CharacterFormat.Bold;
                 _richTextEditor.Focus();
             }
             catch (Exception ex)
@@ -242,14 +235,7 @@ namespace MailMergeUI
         {
             try
             {
-                if (ItalicButton.IsChecked == true)
-                {
-                   // _richTextEditor.ApplyItalic(true);
-                }
-                else
-                {
-                    //_richTextEditor.ApplyItalic(false);
-                }
+                RichTextEditor.Selection.CharacterFormat.Italic = !RichTextEditor.Selection.CharacterFormat.Italic;
                 _richTextEditor.Focus();
             }
             catch (Exception ex)
@@ -264,11 +250,11 @@ namespace MailMergeUI
             {
                 if (UnderlineButton.IsChecked == true)
                 {
-                    //_richTextEditor.ApplyUnderline(true);
+                    RichTextEditor.Selection.CharacterFormat.Underline = Underline.Single;
                 }
                 else
                 {
-                    //_richTextEditor.ApplyUnderline(false);
+                    RichTextEditor.Selection.CharacterFormat.Underline = Underline.None;
                 }
                 _richTextEditor.Focus();
             }
@@ -290,7 +276,7 @@ namespace MailMergeUI
                 {
                     if (double.TryParse(FontSizeComboBox.SelectedItem.ToString(), out double fontSize))
                     {
-                        //_richTextEditor.ApplyFontSize(fontSize);
+                        _richTextEditor.Selection.CharacterFormat.FontSize =  fontSize;
                         _richTextEditor.Focus();
                     }
                 }
@@ -449,7 +435,14 @@ namespace MailMergeUI
         {
             try
             {
-                //_richTextEditor.ClearFormatting();
+                // Clears ALL formatting (character + paragraph) from the current selection
+                if (RichTextEditor.Selection != null && !RichTextEditor.Selection.IsEmpty)
+                {
+                    RichTextEditor.Selection.CharacterFormat.Bold=false;
+                    RichTextEditor.Selection.CharacterFormat.Italic = false;
+                    RichTextEditor.Selection.CharacterFormat.Underline = Underline.None;
+                }
+
                 BoldButton.IsChecked = false;
                 ItalicButton.IsChecked = false;
                 UnderlineButton.IsChecked = false;
