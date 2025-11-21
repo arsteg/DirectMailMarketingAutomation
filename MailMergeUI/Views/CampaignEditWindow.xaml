@@ -113,7 +113,7 @@ FontSize="13"
                             <TextBlock Text="Schedule Type:" Grid.Row="2" Grid.Column="0"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextDark}"/>
-                            <ComboBox Grid.Row="2" Grid.Column="1"
+                            <ComboBox x:Name="cboScheduleTypes" Grid.Row="2" Grid.Column="1"
                                       Grid.ColumnSpan="2"
                                       ItemsSource="{Binding ScheduleTypes}"
                                       SelectedItem="{Binding Campaign.LeadSource.Type, Mode=TwoWay}"

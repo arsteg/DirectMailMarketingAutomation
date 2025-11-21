@@ -163,7 +163,7 @@
                 </ToggleButton>
 
                 <!-- Highlight -->
-                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" Width="40" ToolTip="Highlight" Click="Highlight_Click" Margin="4,0,0,0">
+                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" Width="40" ToolTip="Highlight" Click="HighlightColor_Click" Margin="4,0,0,0">
                     <TextBlock Text="🖍️" FontSize="16"/>
                 </ToggleButton>
 

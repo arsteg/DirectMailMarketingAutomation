@@ -29,26 +29,58 @@ namespace MailMergeUI.Helpers
             });
         }
 
-        public static (bool, string) ValidateLocation(string stateName, string cityName = null)
+        public static (bool IsValid, string Message) ValidateLocation(string stateName, string cityNames = null)
         {
+            // Validate state
             if (string.IsNullOrWhiteSpace(stateName))
-                return (false,"Please provide a state name.");
+                return (false, "Please provide a state name.");
+
+            stateName = stateName.Trim();
 
             if (!StatesAndCities.ContainsKey(stateName))
                 return (false, $"Invalid state name: '{stateName}'.");
 
-            if (!string.IsNullOrWhiteSpace(cityName))
-            {
-                bool cityExists = StatesAndCities[stateName]
-               .Any(c => c.Equals(cityName, StringComparison.OrdinalIgnoreCase));
-                
-                return (cityExists, cityExists
-                ? $"Valid city '{cityName}' found in '{stateName}'."
-                : $"Invalid city '{cityName}' for state '{stateName}'.");
-            }
-            else {
+            // No cities specified → state is valid, we're done
+            if (string.IsNullOrWhiteSpace(cityNames))
                 return (true, $"Valid state '{stateName}' provided.");
+
+            // Cities were specified → split and validate ALL of them
+            var cities = cityNames.Split(',')
+                                  .Select(c => c.Trim())
+                                  .Where(c => !string.IsNullOrEmpty(c))
+                                  .ToList();
+
+            // In case someone passes only commas/spaces like ", ,"
+            if (!cities.Any())
+                return (true, $"Valid state '{stateName}' provided (no cities specified).");
+
+            var stateCities = StatesAndCities[stateName];
+            var invalidCities = new List<string>();
+
+            foreach (var city in cities)
+            {
+                if (!stateCities.Any(c => c.Equals(city, StringComparison.OrdinalIgnoreCase)))
+                    invalidCities.Add(city);
             }
+
+            // All cities are valid
+            if (invalidCities.Count == 0)
+            {
+                string cityList = cities.Count == 1
+                    ? $"'{cities[0]}'"
+                    : $"({string.Join(", ", cities)})";
+
+                return (true, cities.Count == 1
+                    ? $"Valid city {cityList} found in '{stateName}'."
+                    : $"All specified cities {cityList} are valid in '{stateName}'.");
+            }
+
+            // Some or all cities are invalid
+            string invalidList = string.Join(", ", invalidCities);
+            return (false, invalidCities.Count == 1
+                ? $"Invalid city '{invalidList}' for state '{stateName}'."
+                : $"The following cities do not exist in '{stateName}': {invalidList}.");
         }
+
     }
 }

@@ -26,6 +26,7 @@ namespace MailMergeUI.Views
         {
             InitializeComponent();
             this.DataContext = viewModel;
+
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

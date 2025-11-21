@@ -69,7 +69,7 @@ public class ApiService
                             {
                                 if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                 {
-                                    var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
+                                    var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed==false).ToListAsync();
                                     var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x=>x.Path).FirstOrDefaultAsync();
                                     var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
                                     if (!Directory.Exists(outputPath))

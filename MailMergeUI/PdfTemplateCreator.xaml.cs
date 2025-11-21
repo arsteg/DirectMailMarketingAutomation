@@ -274,7 +274,7 @@ namespace MailMergeUI
             {
                 if (FontSizeComboBox.SelectedItem != null)
                 {
-                    if (double.TryParse(FontSizeComboBox.SelectedItem.ToString(), out double fontSize))
+                    if (double.TryParse(FontSizeComboBox.SelectedValue.ToString().Split(":")[0], out double fontSize))
                     {
                         _richTextEditor.Selection.CharacterFormat.FontSize =  fontSize;
                         _richTextEditor.Focus();
@@ -293,8 +293,9 @@ namespace MailMergeUI
             {
                 if (FontFamilyComboBox.SelectedItem != null)
                 {
-                    string fontFamily = FontFamilyComboBox.SelectedItem.ToString();
-                    //_richTextEditor.ApplyFontFamily(new FontFamily(fontFamily));
+                    string? fontFamily = FontFamilyComboBox.SelectedValue?.ToString()?.Split(":")[1];
+                    ;
+                    _richTextEditor.Selection.CharacterFormat.FontFamily =  (new FontFamily(fontFamily));
                     _richTextEditor.Focus();
                 }
             }
@@ -304,53 +305,70 @@ namespace MailMergeUI
             }
         }
 
+
+
         #endregion
 
         #region Color and Highlight
 
         private void TextColor_Click(object sender, RoutedEventArgs e)
         {
-            try
+            var colorDialog = new System.Windows.Forms.ColorDialog();
+            if (colorDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                System.Windows.Forms.ColorDialog colorDialog = new System.Windows.Forms.ColorDialog();
-                if (colorDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    Color selectedColor = Color.FromArgb(
-                        colorDialog.Color.A,
-                        colorDialog.Color.R,
-                        colorDialog.Color.G,
-                        colorDialog.Color.B);
+                // Convert System.Drawing.Color to WPF Color
+                var drawingColor = colorDialog.Color;
+                var wpfColor = Color.FromArgb(drawingColor.A, drawingColor.R, drawingColor.G, drawingColor.B);
 
-                    //_richTextEditor.ApplyForeColor(selectedColor);
-                    _richTextEditor.Focus();
+                // Apply to selected text
+                if (_richTextEditor.Selection != null)
+                {
+                    _richTextEditor.Selection.CharacterFormat.FontColor = wpfColor;
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error changing text color: {ex.Message}", "Error");
+
+                _richTextEditor.Focus();
             }
         }
 
-        private void Highlight_Click(object sender, RoutedEventArgs e)
+        private void HighlightColor_Click(object sender, RoutedEventArgs e)
         {
-            try
+            var colorDialog = new System.Windows.Forms.ColorDialog();
+            if (colorDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                System.Windows.Forms.ColorDialog colorDialog = new System.Windows.Forms.ColorDialog();
-                if (colorDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    Color selectedColor = Color.FromArgb(
-                        colorDialog.Color.A,
-                        colorDialog.Color.R,
-                        colorDialog.Color.G,
-                        colorDialog.Color.B);
+                // Convert System.Drawing.Color to Syncfusion HighlightColor enum
+                var drawingColor = colorDialog.Color;
 
-                    //_richTextEditor.ApplyBackColor(selectedColor);
-                    _richTextEditor.Focus();
+                HighlightColor highlightColor = HighlightColor.NoColor; // default
+
+                // Try to match the closest Syncfusion HighlightColor
+                if (drawingColor == System.Drawing.Color.Yellow)
+                    highlightColor = HighlightColor.Yellow;
+                else if (drawingColor == System.Drawing.Color.Green)
+                    highlightColor = HighlightColor.Green;
+                else if (drawingColor == System.Drawing.Color.Blue)
+                    highlightColor = HighlightColor.Blue;
+                else if (drawingColor == System.Drawing.Color.Red)
+                    highlightColor = HighlightColor.Red;
+                else if (drawingColor == System.Drawing.Color.Pink)
+                    highlightColor = HighlightColor.Pink;
+                else if (drawingColor == System.Drawing.Color.Turquoise)
+                    highlightColor = HighlightColor.Turquoise;
+                else if (drawingColor == System.Drawing.Color.Orange)
+                    highlightColor = HighlightColor.BrightGreen;
+                else if (drawingColor == System.Drawing.Color.DarkBlue)
+                    highlightColor = HighlightColor.DarkBlue;
+                else if (drawingColor == System.Drawing.Color.DarkRed)
+                    highlightColor = HighlightColor.DarkRed;
+                else
+                    highlightColor = HighlightColor.Yellow; // fallback
+
+                // Apply to selected text
+                if (RichTextEditor.Selection != null)
+                {
+                    _richTextEditor.Selection.CharacterFormat.HighlightColor = highlightColor;
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error applying highlight: {ex.Message}", "Error");
+
+                RichTextEditor.Focus();
             }
         }
 
@@ -360,41 +378,32 @@ namespace MailMergeUI
 
         private void AlignLeft_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (_richTextEditor.Selection != null)
             {
-                //_richTextEditor.ApplyTextAlignment(TextAlignment.Left);
-                _richTextEditor.Focus();
+                _richTextEditor.Selection.ParagraphFormat.TextAlignment = TextAlignment.Left;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error aligning left: {ex.Message}", "Error");
-            }
+
+            _richTextEditor.Focus();
         }
 
         private void AlignCenter_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (_richTextEditor.Selection != null)
             {
-               // _richTextEditor.ApplyTextAlignment(TextAlignment.Center);
-                _richTextEditor.Focus();
+                _richTextEditor.Selection.ParagraphFormat.TextAlignment = TextAlignment.Center;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error aligning center: {ex.Message}", "Error");
-            }
+
+            _richTextEditor.Focus();
         }
 
         private void AlignRight_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (_richTextEditor.Selection != null)
             {
-                //_richTextEditor.ApplyTextAlignment(TextAlignment.Right);
-                _richTextEditor.Focus();
+                _richTextEditor.Selection.ParagraphFormat.TextAlignment = TextAlignment.Right;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error aligning right: {ex.Message}", "Error");
-            }
+
+            _richTextEditor.Focus();
         }
 
         #endregion
