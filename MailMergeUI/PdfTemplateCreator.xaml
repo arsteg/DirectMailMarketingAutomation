@@ -9,17 +9,61 @@
             <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F5F5"/>
+                                <Setter Property="BorderBrush" Value="#D0D0D0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#EFEFEF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
             <Setter Property="Background" Value="#1976D2"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="BorderBrush" Value="#1565C0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                                <Setter Property="BorderBrush" Value="#0D47A1"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D47A1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="FormatToggleStyle" TargetType="ToggleButton">
@@ -27,10 +71,34 @@
             <Setter Property="Foreground" Value="#666666"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Width" Value="36"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="8"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                                <Setter Property="BorderBrush" Value="#D0D0D0"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="#E3F2FD"/>
+                                <Setter Property="Foreground" Value="#1976D2"/>
+                                <Setter Property="BorderBrush" Value="#1976D2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
@@ -38,8 +106,8 @@
             <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
@@ -49,88 +117,87 @@
             <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="FontSize" Value="13"/>
         </Style>
 
         <Style x:Key="SeparatorStyle" TargetType="Separator">
-            <Setter Property="Margin" Value="8,0"/>
+            <Setter Property="Margin" Value="12,0"/>
             <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Width" Value="1"/>
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FAFAFA">
+    <Grid Background="#F8F9FA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>      
+        </Grid.RowDefinitions>
 
-        <!-- Main Toolbar -->
+        <!-- Top Bar with Back Button -->
+        <Border Grid.Row="0" Background="White" Padding="16,14" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <Button Content="← Back to Editor" Style="{StaticResource ModernButtonStyle}" HorizontalAlignment="Left" Click="BackButton_Click" Visibility="Collapsed" x:Name="BackButton" Padding="14,8"/>
+        </Border>
+
+        <!-- Main Toolbar - Single Row -->
         <Border Grid.Row="1" Background="White" Padding="16" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
+                <!-- Load Word -->
+                <Button Content="📁 Load Word" Style="{StaticResource ModernButtonStyle}" Padding="14,8" Click="LoadWord_Click" ToolTip="Load a Word document"/>
 
-                <!-- Left Side - First Row -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
-                    <TextBlock Text="Insert Merge Field:" VerticalAlignment="Center" FontSize="13" Foreground="#666666" FontWeight="Medium"/>
-                    <ComboBox x:Name="FormFieldComboBox" Width="200" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="FormFieldComboBox_SelectionChanged" ToolTip="Select a field to insert" Margin="8,0,0,0"/>
-                    <TextBlock Text="Date Format:" VerticalAlignment="Center" FontSize="13" Foreground="#666666" FontWeight="Medium" Margin="20,0,0,0"/>
-                    <ComboBox x:Name="DateFieldComboBox" Width="180" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="DateFieldComboBox_SelectionChanged" ToolTip="Choose date format" Margin="8,0,0,0"/>
-                </StackPanel>
+                <!-- Preview CSV -->
+                <Button Content="📊 Preview CSV" Style="{StaticResource ModernButtonStyle}" Padding="14,8" Click="LoadCSV_Click" ToolTip="Preview with CSV data"/>
 
-                <!-- Right Side - First Row -->
-                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,10">
-                    <Button Content="📁 Load Word" Style="{StaticResource ModernButtonStyle}" Padding="12,6" Click="LoadWord_Click" ToolTip="Load a Word document"/>
-                    <Button Content="📊 Preview CSV" Style="{StaticResource ModernButtonStyle}" Padding="12,6" Click="LoadCSV_Click" ToolTip="Preview with CSV data" Margin="8,0,0,0"/>
-                </StackPanel>
+                <Separator Style="{StaticResource SeparatorStyle}"/>
 
-                <!-- Left Side - Second Row -->
-                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Template Name:" VerticalAlignment="Center" FontSize="13" Foreground="#666666" FontWeight="Medium"/>
-                    <TextBox x:Name="TemplateNameTextBox" Width="220" Text="My Template" Style="{StaticResource ModernTextBoxStyle}" ToolTip="Enter template name" Margin="8,0,0,0"/>
-                </StackPanel>
+                <!-- Insert Merge Field -->
+                <TextBlock Text="Merge Field:" VerticalAlignment="Center" FontSize="12" Foreground="#666666" FontWeight="SemiBold"/>
+                <ComboBox x:Name="FormFieldComboBox" Width="180" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="FormFieldComboBox_SelectionChanged" ToolTip="Select a field to insert" Margin="5,0,0,0"/>
 
-                <!-- Right Side - Second Row -->
-                <Button Grid.Row="1" Grid.Column="1" x:Name="ExportButton" Content="📥 Export PDF" Style="{StaticResource PrimaryButtonStyle}" Padding="16,6" Click="ExportPdf_Click" ToolTip="Export template as PDF" HorizontalAlignment="Right"/>
-            </Grid>
+                <!-- Date Format -->
+                <TextBlock Text="Date Format:" VerticalAlignment="Center" FontSize="12" Foreground="#666666" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                <ComboBox x:Name="DateFieldComboBox" Width="160" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="DateFieldComboBox_SelectionChanged" ToolTip="Choose date format" Margin="5,0,0,0"/>
+
+                <!-- Template Name -->
+                <TextBlock Text="Template:" VerticalAlignment="Center" FontSize="12" Foreground="#666666" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                <TextBox x:Name="TemplateNameTextBox" Width="180" Text="My Template" Style="{StaticResource ModernTextBoxStyle}" ToolTip="Enter template name" Margin="5,0,0,0"/>
+
+                <Separator Style="{StaticResource SeparatorStyle}"/>
+
+                <!-- Export PDF -->
+                <Button x:Name="ExportButton" Content="📥 Export PDF" Style="{StaticResource PrimaryButtonStyle}" Padding="16,8" Click="ExportPdf_Click" ToolTip="Export template as PDF"/>
+            </StackPanel>
         </Border>
 
         <!-- Formatting Toolbar -->
         <Border Grid.Row="2" Background="White" Padding="16,12" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Format:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="0,0,12,0"/>
+                <TextBlock Text="Format:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="0,0,8,0"/>
 
                 <!-- Bold -->
                 <ToggleButton x:Name="BoldButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Bold (Ctrl+B)" Click="Bold_Click">
-                    <TextBlock Text="B" FontSize="14" FontWeight="Bold"/>
+                    <TextBlock Text="B" FontSize="15" FontWeight="Bold"/>
                 </ToggleButton>
 
                 <!-- Italic -->
-                <ToggleButton x:Name="ItalicButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Italic (Ctrl+I)" Click="Italic_Click" Margin="4,0,0,0">
-                    <TextBlock Text="I" FontSize="14" FontStyle="Italic"/>
+                <ToggleButton x:Name="ItalicButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Italic (Ctrl+I)" Click="Italic_Click">
+                    <TextBlock Text="I" FontSize="15" FontStyle="Italic"/>
                 </ToggleButton>
 
                 <!-- Underline -->
-                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Underline (Ctrl+U)" Click="Underline_Click" Margin="4,0,0,0">
-                    <TextBlock Text="U" FontSize="14" FontWeight="Bold"/>
+                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Underline (Ctrl+U)" Click="Underline_Click">
+                    <TextBlock Text="U" FontSize="15" FontWeight="Bold"/>
                 </ToggleButton>
 
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Font Size -->
-                <TextBlock Text="Size:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="4,0,6,0"/>
-                <ComboBox x:Name="FontSizeComboBox" Width="70" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="3" SelectionChanged="FontSize_Changed" ToolTip="Font size">
+                <TextBlock Text="Size:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold"/>
+                <ComboBox x:Name="FontSizeComboBox" Width="70" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="3" SelectionChanged="FontSize_Changed" ToolTip="Font size" Margin="5,0,0,0">
                     <ComboBoxItem>8</ComboBoxItem>
                     <ComboBoxItem>10</ComboBoxItem>
                     <ComboBoxItem>12</ComboBoxItem>
@@ -144,8 +211,8 @@
                 </ComboBox>
 
                 <!-- Font Family -->
-                <TextBlock Text="Font:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="12,0,6,0"/>
-                <ComboBox x:Name="FontFamilyComboBox" Width="140" Style="{StaticResource ModernComboBoxStyle}" SelectionChanged="FontFamily_Changed" ToolTip="Font family">
+                <TextBlock Text="Font:" VerticalAlignment="Center" FontSize="12" Foreground="#999999" FontWeight="Bold" Margin="12,0,0,0"/>
+                <ComboBox x:Name="FontFamilyComboBox" Width="130" Style="{StaticResource ModernComboBoxStyle}" SelectionChanged="FontFamily_Changed" ToolTip="Font family" Margin="5,0,0,0">
                     <ComboBoxItem>Calibri</ComboBoxItem>
                     <ComboBoxItem>Arial</ComboBoxItem>
                     <ComboBoxItem>Times New Roman</ComboBoxItem>
@@ -158,50 +225,50 @@
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Text Color -->
-                <ToggleButton x:Name="TextColorButton" Style="{StaticResource FormatToggleStyle}" Width="40" ToolTip="Text color" Click="TextColor_Click">
-                    <TextBlock Text="🎨" FontSize="16"/>
+                <ToggleButton x:Name="TextColorButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Text color" Click="TextColor_Click">
+                    <TextBlock Text="🎨" FontSize="18"/>
                 </ToggleButton>
 
                 <!-- Highlight -->
-                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" Width="40" ToolTip="Highlight" Click="HighlightColor_Click" Margin="4,0,0,0">
-                    <TextBlock Text="🖍️" FontSize="16"/>
+                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Highlight" Click="HighlightColor_Click">
+                    <TextBlock Text="🖍️" FontSize="18"/>
                 </ToggleButton>
 
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Alignment -->
-                <Button x:Name="AlignLeftButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Align Left" Click="AlignLeft_Click">
-                    <TextBlock Text="⬅️" FontSize="14"/>
+                <Button x:Name="AlignLeftButton" Style="{StaticResource ModernButtonStyle}" Width="40" Height="40" Padding="8" ToolTip="Align Left" Click="AlignLeft_Click">
+                    <TextBlock Text="◀ " FontSize="15"/>
                 </Button>
 
-                <Button x:Name="AlignCenterButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Align Center" Click="AlignCenter_Click" Margin="4,0,0,0">
-                    <TextBlock Text="⏺️" FontSize="14"/>
+                <Button x:Name="AlignCenterButton" Style="{StaticResource ModernButtonStyle}" Width="40" Height="40" Padding="8" ToolTip="Align Center" Click="AlignCenter_Click">
+                    <TextBlock Text="◆" FontSize="15"/>
                 </Button>
 
-                <Button x:Name="AlignRightButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Align Right" Click="AlignRight_Click" Margin="4,0,0,0">
-                    <TextBlock Text="➡️" FontSize="14"/>
+                <Button x:Name="AlignRightButton" Style="{StaticResource ModernButtonStyle}" Width="40" Height="40" Padding="8" ToolTip="Align Right" Click="AlignRight_Click">
+                    <TextBlock Text="▶" FontSize="15"/>
                 </Button>
 
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Lists -->
-                <Button x:Name="BulletListButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Bullet List" Click="BulletList_Click">
-                    <TextBlock Text="•" FontSize="16"/>
+                <Button x:Name="BulletListButton" Style="{StaticResource ModernButtonStyle}" Width="40" Height="40" Padding="8" ToolTip="Bullet List" Click="BulletList_Click">
+                    <TextBlock Text="◦" FontSize="18"/>
                 </Button>
 
-                <Button x:Name="NumberListButton" Style="{StaticResource ModernButtonStyle}" Width="36" Height="36" Padding="8" ToolTip="Numbered List" Click="NumberList_Click" Margin="4,0,0,0">
-                    <TextBlock Text="1." FontSize="14"/>
+                <Button x:Name="NumberListButton" Style="{StaticResource ModernButtonStyle}" Width="40" Height="40" Padding="8" ToolTip="Numbered List" Click="NumberList_Click">
+                    <TextBlock Text="1" FontSize="16" FontWeight="Bold"/>
                 </Button>
 
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Clear Format -->
-                <Button Content="Clear Format" Style="{StaticResource ModernButtonStyle}" Padding="10,6" Click="ClearFormat_Click" ToolTip="Clear all formatting"/>
+                <Button Content="✕ Clear" Style="{StaticResource ModernButtonStyle}" Padding="12,8" Click="ClearFormat_Click" ToolTip="Clear all formatting"/>
             </StackPanel>
         </Border>
 
         <!-- Rich Text Editor -->
-        <Border Grid.Row="3" Margin="16" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8">
+        <Border Grid.Row="3" Margin="16" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="2">
             <sync:SfRichTextBoxAdv x:Name="RichTextEditor" 
                                    Background="White"
                                    FontFamily="Calibri"
@@ -214,10 +281,7 @@
 
         <!-- Status Bar -->
         <Border Grid.Row="4" Background="#FAFAFA" Padding="16,12" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
-            <DockPanel>
-                <TextBlock Text="✓ Ready" x:Name="StatusText" Foreground="#666666" FontSize="12" VerticalAlignment="Center"/>
-                <Button Content="← Back to Editor" Style="{StaticResource ModernButtonStyle}" HorizontalAlignment="Right" Click="BackButton_Click" Visibility="Collapsed" x:Name="BackButton" Padding="14,6"/>
-            </DockPanel>
+            <TextBlock Text="✓ Ready" x:Name="StatusText" Foreground="#666666" FontSize="12" VerticalAlignment="Center"/>
         </Border>
     </Grid>
 </UserControl>
