@@ -67,17 +67,27 @@ public class ApiService
                         {
                             if (!stage.IsRun)
                             {
-                                if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
-                                {
-                                    var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed==false).ToListAsync();
-                                    var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x=>x.Path).FirstOrDefaultAsync();
-                                    var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
-                                    if (!Directory.Exists(outputPath))
+                                    try
                                     {
-                                        Directory.CreateDirectory(outputPath);
+                                        if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                        {
+                                            var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+                                            var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
+                                            var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                            if (!Directory.Exists(outputPath))
+                                            {
+                                                Directory.CreateDirectory(outputPath);
+                                            }
+                                            if (templatePath != null)
+                                                await _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
+                                        }
                                     }
-                                    _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.pdf"));
-                                }
+                                    catch (Exception)
+                                    {
+
+                                        throw;
+                                    }
+                                
 
                                 stage.IsRun = true;
                             }
@@ -109,7 +119,8 @@ public class ApiService
                                         {
                                             Directory.CreateDirectory(outputPath);
                                         }
-                                        _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.pdf"));
+                                            if (templatePath != null)
+                                                await _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
                                     }
 
                                     stage.IsRun = true;
@@ -173,6 +184,8 @@ public class ApiService
                 var propertiesToSave = apiResponse.Results
                     .Select(dto => MapToPropertyRecord(dto))
                     .ToList();
+
+                propertiesToSave.ForEach(x => x.CampaignId = campaign.Id);
 
                 var radarIds = propertiesToSave.Select(p => p.RadarId).ToList();
 

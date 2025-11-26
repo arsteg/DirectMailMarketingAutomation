@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
-using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
-using Syncfusion.DocToPDFConverter;
-using Syncfusion.Pdf;
 using Syncfusion.Windows.Controls.RichTextBoxAdv;
 using System;
 using System.Diagnostics;
@@ -103,6 +100,7 @@ namespace MailMergeUI
         private void InsertMergeField(string fieldName)
         {
             string text = $"{{{fieldName}}}";
+            RichTextEditor.Selection.CharacterFormat.Bold = true;
             RichTextEditor.Selection.InsertText(text);
 
             // Optional: Highlight merge field like Word (blue background)
@@ -110,7 +108,7 @@ namespace MailMergeUI
            // RichTextEditor.Selection.End = RichTextEditor.Selection.Start.MoveForward(text.Length);
             //RichTextEditor.Selection.CharacterFormat.Background = System.Drawing.Color.FromArgb(200, 173, 216, 230); // Light blue
             //RichTextEditor.Selection.CharacterFormat.Foreground = System.Drawing.Color.DarkBlue;
-            RichTextEditor.Selection.CharacterFormat.Bold = true;
+            
         }
 
         private void InsertText(string text)
@@ -140,12 +138,12 @@ namespace MailMergeUI
             //ExportButton.IsEnabled = !string.IsNullOrWhiteSpace(TemplateNameTextBox.Text);
         }
 
-        private void ExportPdf_Click(object sender, RoutedEventArgs e)
+        private async void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
             var sfd = new SaveFileDialog
             {
-                Filter = "PDF Files|*.pdf",
-                FileName = $"{TemplateNameTextBox.Text.Trim()}.pdf"
+                Filter = "Word Document (*.docx)|*.docx",
+                FileName = $"{TemplateNameTextBox.Text.Trim()}.docx"
             };
 
             if (sfd.ShowDialog() != true) return;
@@ -157,26 +155,29 @@ namespace MailMergeUI
                 RichTextEditor.Save(tempDocx);  // <-- This overload accepts file path directly!
 
                 // Step 2: Load the saved .docx using Syncfusion DocIO
-                using var wordDocument = new WordDocument(tempDocx, Syncfusion.DocIO.FormatType.Automatic);
+                using var wordDocument = new WordDocument(tempDocx);
 
                 // Step 3: Convert to PDF
-                var converter = new DocToPDFConverter();
-                PdfDocument pdfDocument = converter.ConvertToPDF(wordDocument);
-
-                // Step 4: Save PDF
-                pdfDocument.Save(sfd.FileName);
-                pdfDocument.Close(true);
+                wordDocument.Save(sfd.FileName,Syncfusion.DocIO.FormatType.Automatic);
 
                 // Step 5: Open the PDF
                 Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
 
                 MessageBox.Show("PDF exported successfully!", "Success",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
+                                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                MailMerge.Data.Models.Template template = new MailMerge.Data.Models.Template
+                {
+                    Path = sfd.FileName,
+                    Name = TemplateNameTextBox.Text
+                };
+
+                await _mailMergeEngine.SaveTemplate(template);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Export failed: {ex.Message}\n\n{ex.StackTrace}", "Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -191,7 +192,7 @@ namespace MailMergeUI
                 var tempDocx = Path.GetTempPath() + "temp_merge.docx";
                 RichTextEditor.Save(tempDocx);
 
-                var outputPdf = Path.GetTempPath() + "preview.pdf";
+                var outputPdf = Path.GetTempPath() + "preview.docx";
                 await _mailMergeEngine.ExportBatch(tempDocx, records, outputPdf);
 
                 PdfWebView.Visibility = Visibility.Visible;

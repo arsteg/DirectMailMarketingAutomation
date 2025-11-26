@@ -1,6 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
@@ -8,6 +8,7 @@
     <PackageReference Include="itext" Version="9.2.0" />
     <PackageReference Include="itext.bouncy-castle-adapter" Version="9.2.0" />
     <PackageReference Include="itext.bouncy-castle-fips-adapter" Version="9.2.0" />
+    <PackageReference Include="Syncfusion.DocIO.Wpf" Version="31.2.12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MailMerge.Data\MailMerge.Data.csproj" />

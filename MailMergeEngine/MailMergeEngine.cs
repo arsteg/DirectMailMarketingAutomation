@@ -4,10 +4,15 @@ using iText.Kernel.Pdf;
 using MailMerge.Data;
 using MailMerge.Data.Helpers;
 using MailMerge.Data.Models;
+using MailMergeEngine.Helpers;
+using Syncfusion.DocIO;
+using Syncfusion.DocIO.DLS;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MailMergeEngine
@@ -81,7 +86,7 @@ namespace MailMergeEngine
             return _db.Properties.ToList();
         }
 
-        public async Task SaveTemplate(Template template)
+        public async Task SaveTemplate(MailMerge.Data.Models.Template template)
         {
             if (template == null)
                 return;
@@ -90,78 +95,114 @@ namespace MailMergeEngine
             await _db.SaveChangesAsync();
         }
 
-        public async Task<byte[]> FillTemplate(string templatePath, PropertyRecord record)
+        //public async Task<byte[]> FillTemplate(string templatePath, PropertyRecord record)
+        //{
+        //    await using var ms = new MemoryStream();
+
+        //    using (var reader = new PdfReader(templatePath))
+        //    using (var writer = new PdfWriter(ms))
+        //    using (var pdfDoc = new PdfDocument(reader, writer))
+        //    {
+        //        var form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+        //        var fields = form.GetAllFormFields();
+
+        //        void SetField(string field, string value)
+        //        {
+        //            if (fields.ContainsKey(field))
+        //                fields[field].SetValue(value ?? string.Empty);
+        //        }
+
+        //        SetField("Radar ID", record.RadarId);
+        //        SetField("Apn", record.Apn);
+        //        SetField("Type", record.Type);
+        //        SetField("Address", record.Address);
+        //        SetField("City", record.City);
+        //        SetField("State", record.State);
+        //        SetField("ZIP", record.Zip);
+        //        SetField("Owner", record.Owner);
+        //        SetField("Owner Type", record.OwnerType);
+        //        SetField("Owner Occ?", record.OwnerOcc);
+        //        SetField("Primary Name", record.PrimaryName);
+        //        SetField("Primary First", record.PrimaryFirst);
+        //        SetField("Mail Address", record.MailAddress);
+        //        SetField("Mail City", record.MailCity);
+        //        SetField("Mail State", record.MailState);
+        //        SetField("Mail ZIP", record.MailZip);
+        //        SetField("Foreclosure", record.Foreclosure);
+        //        SetField("FCL Stage", record.FclStage);
+        //        SetField("FCL Doc Type", record.FclDocType);
+        //        SetField("FCL Rec Date", record.FclRecDate);
+        //        SetField("Trustee", record.Trustee);
+        //        SetField("Trustee Phone", record.TrusteePhone);
+        //        SetField("TS Number", record.TsNumber);
+
+        //        form.FlattenFields();
+        //        pdfDoc.Close(); // Ensure full flush
+        //    }
+
+        //    return ms.ToArray();
+        //}
+
+        public async Task ExportBatch(
+     string templatePath,
+     IEnumerable<PropertyRecord> records,
+     string outputPath,
+     CancellationToken cancellationToken = default)
         {
-            await using var ms = new MemoryStream();
+            // Argument validation (Best Practice)
+            if (string.IsNullOrWhiteSpace(templatePath))
+                throw new ArgumentException("Template path cannot be null or empty.", nameof(templatePath));
 
-            using (var reader = new PdfReader(templatePath))
-            using (var writer = new PdfWriter(ms))
-            using (var pdfDoc = new PdfDocument(reader, writer))
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException("Template file does not exist.", templatePath);
+
+            if (records == null || !records.Any())
+                throw new ArgumentException("Records collection cannot be null or empty.", nameof(records));
+
+            if (string.IsNullOrWhiteSpace(outputPath))
+                throw new ArgumentException("Output path cannot be null or empty.", nameof(outputPath));
+
+            try
             {
-                var form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-                var fields = form.GetAllFormFields();
+                // Ensure output directory exists
+                var dir = Path.GetDirectoryName(outputPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
 
-                void SetField(string field, string value)
+                using var finalDoc = new WordDocument();
+                var wordService = new WordService();
+
+                foreach (var r in records)
                 {
-                    if (fields.ContainsKey(field))
-                        fields[field].SetValue(value ?? string.Empty);
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var filledBytes = await wordService.FillTemplate(templatePath, r);
+                    if (filledBytes == null || filledBytes.Length == 0)
+                        throw new InvalidOperationException("Template filling returned empty document.");
+
+                    using var filledStream = new MemoryStream(filledBytes);
+                    using var tempDoc = new WordDocument(filledStream, Syncfusion.DocIO.FormatType.Automatic);
+
+                    finalDoc.ImportContent(tempDoc, ImportOptions.KeepSourceFormatting);
                 }
 
-                SetField("Radar ID", record.RadarId);
-                SetField("Apn", record.Apn);
-                SetField("Type", record.Type);
-                SetField("Address", record.Address);
-                SetField("City", record.City);
-                SetField("State", record.State);
-                SetField("ZIP", record.Zip);
-                SetField("Owner", record.Owner);
-                SetField("Owner Type", record.OwnerType);
-                SetField("Owner Occ?", record.OwnerOcc);
-                SetField("Primary Name", record.PrimaryName);
-                SetField("Primary First", record.PrimaryFirst);
-                SetField("Mail Address", record.MailAddress);
-                SetField("Mail City", record.MailCity);
-                SetField("Mail State", record.MailState);
-                SetField("Mail ZIP", record.MailZip);
-                SetField("Foreclosure", record.Foreclosure);
-                SetField("FCL Stage", record.FclStage);
-                SetField("FCL Doc Type", record.FclDocType);
-                SetField("FCL Rec Date", record.FclRecDate);
-                SetField("Trustee", record.Trustee);
-                SetField("Trustee Phone", record.TrusteePhone);
-                SetField("TS Number", record.TsNumber);
-
-                form.FlattenFields();
-                pdfDoc.Close(); // Ensure full flush
+                // Save output
+                using var outputStream = File.Create(outputPath);
+                finalDoc.Save(outputStream, FormatType.Docx);
             }
-
-            return ms.ToArray();
-        }
-
-        public async Task ExportBatch(string templatePath, IEnumerable<PropertyRecord> records, string outputPath)
-        {
-            // Always ensure directory exists
-            var dir = Path.GetDirectoryName(outputPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            await using var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            using var writer = new PdfWriter(fs);
-            using var pdfDoc = new PdfDocument(writer);
-
-            pdfDoc.InitializeOutlines();
-
-            foreach (var r in records)
+            catch (OperationCanceledException)
             {
-                var filled = await FillTemplate(templatePath, r);
-                using var filledStream = new MemoryStream(filled);
-                using var filledDoc = new PdfDocument(new PdfReader(filledStream));
-                filledDoc.CopyPagesTo(1, filledDoc.GetNumberOfPages(), pdfDoc);
+                // Important to rethrow cancellation
+                throw;
             }
-
-            pdfDoc.Close(); // ✅ Explicit close to flush data
-            await fs.FlushAsync(); // ✅ Ensures stream actually written
+            catch (Exception ex)
+            {
+                // TODO: plug your logger here
+                // _logger.LogError(ex, "Failed to export batch to outputPath: {OutputPath}", outputPath);
+                throw new ApplicationException($"Failed to export batch document to: {outputPath}", ex);
+            }
         }
+
 
         public bool ValidateUser(string user, string password)
         {

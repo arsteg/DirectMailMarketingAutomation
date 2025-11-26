@@ -38,7 +38,7 @@ namespace MailMergeUI.Helpers
                     Criteria = new List<SearchCriteriaItem>
                 {
                     new SearchCriteriaItem("State", State ?? string.Empty),
-                    new SearchCriteriaItem("City", City ?? string.Empty),
+                    new SearchCriteriaItem("City", City.Split(",")),
                     new SearchCriteriaItem("inForeclosure", "1"),
                     new SearchCriteriaItem("ForeclosureStage", "Preforeclosure", "Auction"),
                     new SearchCriteriaItem("ForeclosureRecDate", "Last Week")

@@ -2,21 +2,15 @@
 using MailMerge.Data.Models;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
-using PdfiumViewer;
+using Syncfusion.DocIO.DLS;
+using Syncfusion.DocToPDFConverter;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Printing;
 using System.IO;
-using System.Linq;
-using System.Runtime.Intrinsics.Arm;
 using System.Windows;
-using System.Windows.Automation.Peers;
-using System.Windows.Automation.Provider;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace MailMergeUI
 {
@@ -28,7 +22,7 @@ namespace MailMergeUI
         private List<PropertyRecord> records = new();
         private MailMergeEngine.MailMergeEngine engine;
         private bool isDarkMode = false;
-        private string lastTempPdfPath = null; // store last preview temp file to clean up later
+        private string lastTempPdfPath = string.Empty; // store last preview temp file to clean up later
         private readonly MailMergeDbContext _dbContext;
 
         public MailMergeWindow(MailMergeDbContext dbContext)
@@ -52,7 +46,7 @@ namespace MailMergeUI
 
         private async void btnLoadTemplate_Click(object sender, RoutedEventArgs e)
         {
-            var ofd = new OpenFileDialog() { Filter = "PDF Files|*.pdf" };
+            var ofd = new OpenFileDialog() { Filter = "Word Documents|*.docx|All Files|*.*" };
             if (ofd.ShowDialog() == true)
             {
                 templatePath = ofd.FileName;
@@ -68,8 +62,16 @@ namespace MailMergeUI
                 var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
                 await PdfWebView.EnsureCoreWebView2Async(env);
 
+                WordDocument wordDocument = new WordDocument(ofd.FileName,Syncfusion.DocIO.FormatType.Automatic);
+                var converter = new DocToPDFConverter();
+                var pdfDocument = converter.ConvertToPDF(wordDocument);
+
+                string tempFile = Path.Combine(Path.GetTempPath(), $"mailmerge_preview_{Guid.NewGuid()}.pdf");
+                pdfDocument.Save(tempFile);
+                pdfDocument.Close(true);
+
                 // navigate to the temp file
-                PdfWebView.CoreWebView2.Navigate(new Uri(templatePath).AbsoluteUri);
+                PdfWebView.CoreWebView2.Navigate(new Uri(tempFile).AbsoluteUri);
                 Log($"Template loaded: {templatePath}");
             }
         }
@@ -168,10 +170,16 @@ namespace MailMergeUI
                 ShowLoader();
 
                 // write to a unique temp file`
-                string tempFile = Path.Combine(Path.GetTempPath(), $"mailmerge_preview_{Guid.NewGuid()}.pdf");
+                string wordTempFile = Path.Combine(Path.GetTempPath(), $"mailmerge_preview_{Guid.NewGuid()}.docx");
 
-                engine.ExportBatch(templatePath, records, tempFile);
-                
+                await engine.ExportBatch(templatePath, records, wordTempFile);
+                WordDocument wordDocument = new WordDocument(wordTempFile, Syncfusion.DocIO.FormatType.Automatic);
+                var converter = new DocToPDFConverter();
+                var pdfDocument = converter.ConvertToPDF(wordDocument);
+
+                string tempFile = Path.Combine(Path.GetTempPath(), $"mailmerge_preview_{Guid.NewGuid()}.pdf");
+                pdfDocument.Save(tempFile);
+                pdfDocument.Close(true);
 
                 // Keep track so we can optionally delete later
                 lastTempPdfPath = tempFile;
@@ -229,10 +237,10 @@ namespace MailMergeUI
                 // Let user choose where to save the PDF
                 var saveDialog = new SaveFileDialog
                 {
-                    Title = "Save PDF File",
-                    Filter = "PDF Document (*.pdf)|*.pdf",
-                    FileName = "merged_batch_sample.pdf", // default name
-                    DefaultExt = ".pdf"
+                    Title = "Save Word Document",
+                    Filter = "Word Document (*.docx)|*.docx",
+                    FileName = "merged_batch_sample.docx", // default name
+                    DefaultExt = ".docx"
                 };
 
                 bool? result = saveDialog.ShowDialog();

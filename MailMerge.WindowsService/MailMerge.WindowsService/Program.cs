@@ -40,10 +40,12 @@
 using CliWrap;
 using ConsoleApp1;
 using MailMerge.Data;
+using MailMerge.WindowsService.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using MailMerge.WindowsService.Utils;
+using Syncfusion.Licensing;
+using System.Configuration;
 
 const string ServiceName = "Cache Background Service";
 
@@ -88,7 +90,20 @@ if (args is { Length: 1 })
     return;
 }
 
+
 var builder = Host.CreateApplicationBuilder(args);
+
+// Read Syncfusion license
+string? licenseKey = System.Configuration.ConfigurationManager.AppSettings["SyncfusionLicense"];
+
+if (!string.IsNullOrWhiteSpace(licenseKey))
+{
+    SyncfusionLicenseProvider.RegisterLicense(licenseKey);
+}
+else
+{
+    Console.WriteLine("⚠ Syncfusion License Key not found in appsettings.json");
+}
 builder.Services.AddWindowsService(options =>
 {
     options.ServiceName = "Cache Background Service";
