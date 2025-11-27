@@ -92,8 +92,8 @@ BorderBrush="{DynamicResource DividerColor}"
 FontFamily="Consolas"
 FontSize="13"
 />
-                            
-                            <TextBlock Text="City:" Grid.Row="1" Grid.Column="0"
+
+                            <TextBlock Text="Cities (e.g., Dallas, Austin, Houston)" Grid.Row="1" Grid.Column="0"
                                        VerticalAlignment="Top"
                                        Foreground="{DynamicResource TextDark}"
                                        Margin="0,8,0,0"/>
