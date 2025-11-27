@@ -163,7 +163,7 @@ namespace MailMergeUI
                 // Step 5: Open the PDF
                 Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
 
-                MessageBox.Show("PDF exported successfully!", "Success",
+                MessageBox.Show("Template exported successfully!", "Success",
                                     MessageBoxButton.OK, MessageBoxImage.Information);
 
                 MailMerge.Data.Models.Template template = new MailMerge.Data.Models.Template

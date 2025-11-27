@@ -61,7 +61,7 @@ namespace MailMergeUI
             Services = _appHost.Services;
 
             // Register Syncfusion license from appsettings
-            string licenseKey = _appHost.Services.GetRequiredService<IConfiguration>()["SyncfusionLicense"];
+            string? licenseKey = _appHost.Services.GetRequiredService<IConfiguration>()["SyncfusionLicense"];
 
             if (!string.IsNullOrWhiteSpace(licenseKey))
             {
