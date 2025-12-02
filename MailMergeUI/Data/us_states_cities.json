@@ -3,7 +3,7 @@
   "Alaska": [ "Anchorage", "Fairbanks", "Juneau", "Sitka", "Ketchikan" ],
   "Arizona": [ "Phoenix", "Tucson", "Mesa", "Chandler", "Scottsdale" ],
   "Arkansas": [ "Little Rock", "Fort Smith", "Fayetteville", "Springdale", "Jonesboro" ],
-  "California": [ "Los Angeles", "San Francisco", "San Diego", "Sacramento", "Fresno" ],
+  "CA": [ "Los Angeles", "San Francisco", "San Diego", "Sacramento", "Fresno" ],
   "Colorado": [ "Denver", "Colorado Springs", "Aurora", "Fort Collins", "Lakewood" ],
   "Connecticut": [ "Bridgeport", "New Haven", "Hartford", "Stamford", "Waterbury" ],
   "Delaware": [ "Wilmington", "Dover", "Newark", "Middletown", "Smyrna" ],

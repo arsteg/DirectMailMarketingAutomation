@@ -72,7 +72,7 @@ namespace MailMergeUI.Helpers
                     c.name.Equals("City", StringComparison.OrdinalIgnoreCase));
 
                 string state = stateItem?.value?.FirstOrDefault() ?? string.Empty;
-                string city = cityItem?.value?.FirstOrDefault() ?? string.Empty;
+                string city = string.Join(",", cityItem.value);
 
                 return (state, city);
             }
