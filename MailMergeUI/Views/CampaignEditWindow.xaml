@@ -39,9 +39,7 @@
                     <TextBox Text="{Binding Campaign.Name}"
                              Height="38"
                              Padding="8"
-                             BorderBrush="{DynamicResource DividerColor}"
-                             Background="{DynamicResource CardBackgroundLight}"
-                             Foreground="{DynamicResource TextDark}"
+                             BorderBrush="{DynamicResource DividerColor}"                           
                              BorderThickness="1"
                              FontSize="14"/>
                 </StackPanel>
@@ -67,6 +65,7 @@
                                 <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -184,9 +183,24 @@ FontSize="13" MinWidth="200"/>
   Style="{StaticResource ToolbarButton}"/>
                                 
                             </StackPanel>
-                            
-                            
-                          
+
+                            <!-- Printer -->
+                            <TextBlock Text="Printer:" Grid.Row="6" Grid.Column="0"
+           VerticalAlignment="Center"
+           Foreground="{DynamicResource TextDark}"
+           Margin="0,10,0,0"/>
+                            <StackPanel Grid.Row="6" Grid.Column="1" 
+            Grid.ColumnSpan="2" 
+            Orientation="Horizontal">
+                                <ComboBox Name="cmbPrinters" 
+          Height="32"
+          MinWidth="200"
+          Margin="8,4"
+          Style="{DynamicResource ModernComboBox}"
+          SelectedItem="{Binding SelectedPrinter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+
+
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -236,6 +250,7 @@ FontSize="13" MinWidth="200"/>
                                             <!-- Stage Name -->
                                             <TextBlock Text="Stage Name:" Grid.Row="0" Grid.Column="0"
                                                        VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextDark}"
                                                        Margin="0,0,0,8"/>
                                             <TextBox Text="{Binding StageName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                      Grid.Row="0" Grid.Column="1"
@@ -245,7 +260,7 @@ FontSize="13" MinWidth="200"/>
 
                                             <!-- Template -->
                                             <TextBlock Text="Template:" Grid.Row="1" Grid.Column="0"
-                                                       VerticalAlignment="Center"
+                                                       VerticalAlignment="Center" Foreground="{DynamicResource TextDark}"
                                                        Margin="0,0,0,8"/>
                                             <ComboBox ItemsSource="{Binding DataContext.Templates, RelativeSource={RelativeSource AncestorType=Window}}"
                                                       DisplayMemberPath="Name"
@@ -256,7 +271,7 @@ FontSize="13" MinWidth="200"/>
                                                       Margin="6,0,0,8"/>
 
                                             <!-- Delay -->
-                                            <TextBlock Text="Delay (days):" Grid.Row="2" Grid.Column="0"
+                                            <TextBlock Text="Delay (days):" Grid.Row="2" Grid.Column="0" Foreground="{DynamicResource TextDark}"
                                                        VerticalAlignment="Center"/>
                                             <TextBox Text="{Binding DelayDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
         
@@ -273,7 +288,7 @@ FontSize="13" MinWidth="200"/>
                                                     CommandParameter="{Binding}"
                                                     Grid.Row="0" Grid.RowSpan="3" Grid.Column="2"
                                                     Width="80"
-                                                    Height="32"
+                                                    Height="36"
                                                     Margin="15,0,0,0"
                                                     Style="{StaticResource ToolbarButton}"/>
                                         </Grid>

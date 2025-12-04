@@ -16,7 +16,7 @@ namespace MailMergeUI
     {
         private readonly MailMergeEngine.MailMergeEngine _mailMergeEngine;
         private SfRichTextBoxAdv _richTextEditor;
-
+        private string _currentDocumentPath;
         public PdfTemplateCreator()
         {
             InitializeComponent();
@@ -76,6 +76,7 @@ namespace MailMergeUI
             {
                 try
                 {
+                    _currentDocumentPath = dlg.FileName;
                     RichTextEditor.Load(dlg.FileName);
                     ExportButton.IsEnabled = true;
                     StatusText.Text = "Loaded: " + Path.GetFileName(dlg.FileName);
@@ -140,6 +141,23 @@ namespace MailMergeUI
 
         private async void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
+            // Save source document if checkbox is checked
+            if (SaveSourceCheckBox.IsChecked == true && !string.IsNullOrEmpty(_currentDocumentPath))
+            {
+                try
+                {
+                    // Save the edited document back to the original location (override)
+                    RichTextEditor.Save(_currentDocumentPath);
+                    StatusText.Text = "Source saved: " + Path.GetFileName(_currentDocumentPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving source document: {ex.Message}", "Save Error",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                   
+                }
+            }
+
             var sfd = new SaveFileDialog
             {
                 Filter = "Word Document (*.docx)|*.docx",
@@ -273,14 +291,16 @@ namespace MailMergeUI
         {
             try
             {
-                if (FontSizeComboBox.SelectedItem != null)
+                // Avoid crash when editor is not yet created
+                if (_richTextEditor == null)
+                    return;
+
+                if (FontSizeComboBox.SelectedItem is ComboBoxItem item &&
+                    double.TryParse(item.Content.ToString(), out double fontSize))
                 {
-                    if (double.TryParse(FontSizeComboBox.SelectedValue.ToString().Split(":")[0], out double fontSize))
-                    {
-                        _richTextEditor.Selection.CharacterFormat.FontSize =  fontSize;
-                        _richTextEditor.Focus();
-                    }
-                }
+                    _richTextEditor.Selection.CharacterFormat.FontSize = fontSize;
+                    _richTextEditor.Focus();
+                }           
             }
             catch (Exception ex)
             {
@@ -415,7 +435,27 @@ namespace MailMergeUI
         {
             try
             {
-                //_richTextEditor.ApplyBullets(FormatType.Docx, ListStyle.Disc);
+                // Create a list with bullet style
+                ListAdv listAdv = new ListAdv();
+                AbstractListAdv abstractList = new AbstractListAdv();
+
+                ListLevelAdv listLevel = new ListLevelAdv();
+                listLevel.ListLevelPattern = ListLevelPattern.Bullet;
+                listLevel.NumberFormat = "●";
+                listLevel.FollowCharacter = (Syncfusion.Windows.Controls.RichTextBoxAdv.FollowCharacterType)Syncfusion.DocIO.DLS.FollowCharacterType.Tab;
+                listLevel.StartAt = 1;
+                listLevel.RestartLevel = 0;
+                abstractList.Levels.Add(listLevel);
+                listAdv.AbstractList = abstractList;
+
+                // Add to document
+                _richTextEditor.Document.AbstractLists.Add(abstractList);
+                _richTextEditor.Document.Lists.Add(listAdv);
+
+                // Apply to selection using SetList method
+                _richTextEditor.Selection.ParagraphFormat.SetList(listAdv);
+                _richTextEditor.Selection.ParagraphFormat.ListLevelNumber = 0;
+
                 _richTextEditor.Focus();
             }
             catch (Exception ex)
@@ -428,7 +468,28 @@ namespace MailMergeUI
         {
             try
             {
-                //_richTextEditor.ApplyNumbering(FormatType.Docx, ListStyle.Decimal);
+      
+                // Create a list with numbering style
+                ListAdv listAdv = new ListAdv();
+                AbstractListAdv abstractList = new AbstractListAdv();
+
+                ListLevelAdv listLevel = new ListLevelAdv();
+                listLevel.ListLevelPattern = ListLevelPattern.Arabic; // For 1, 2, 3...
+                listLevel.NumberFormat = "%1."; // Format: 1. 2. 3.
+                listLevel.FollowCharacter = (Syncfusion.Windows.Controls.RichTextBoxAdv.FollowCharacterType)Syncfusion.DocIO.DLS.FollowCharacterType.Tab;
+                listLevel.StartAt = 1;
+                listLevel.RestartLevel = 0;
+
+                abstractList.Levels.Add(listLevel);
+                listAdv.AbstractList = abstractList;
+
+                // Add to document
+                _richTextEditor.Document.AbstractLists.Add(abstractList);
+                _richTextEditor.Document.Lists.Add(listAdv);
+
+                // Apply to selection using SetList method
+                _richTextEditor.Selection.ParagraphFormat.SetList(listAdv);
+                _richTextEditor.Selection.ParagraphFormat.ListLevelNumber = 0;
                 _richTextEditor.Focus();
             }
             catch (Exception ex)

@@ -181,6 +181,16 @@ namespace MailMergeUI.ViewModels
 
         public event Action OnSaved;
 
+        private string _selectedPrinter;
+        public string SelectedPrinter
+        {
+            get => _selectedPrinter;
+            set
+            {
+                _selectedPrinter = value;
+                OnPropertyChanged();
+            }
+        }
         public CampaignEditViewModel(Campaign? campaign, CampaignService service,MailMergeDbContext dbContext)
         {
             try {
@@ -216,7 +226,8 @@ namespace MailMergeUI.ViewModels
             })
     );
                     OutputPath = campaign.OutputPath;
-
+                    // Load saved printer
+                    SelectedPrinter = campaign.Printer ?? SelectedPrinter;
                     (this.State, this.City) = SearchCriteriaHelper.GetStateAndCityFromJson(campaign.LeadSource.FiltersJson);
 
                 }
@@ -367,7 +378,10 @@ namespace MailMergeUI.ViewModels
                 //Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
                 
                 Campaign.LeadSource.DaysOfWeek = DayCheckBoxes.Where(x=>x.IsChecked == true).Select(x=>x.DisplayName).ToList();
-                
+               
+                // Save printer from ViewModel property (NOT from UI element)
+                Campaign.Printer = SelectedPrinter ?? string.Empty;
+
                 if (Campaign.Id == 0)
                 {
                     _service.Campaigns.Add(Campaign);
@@ -380,6 +394,7 @@ namespace MailMergeUI.ViewModels
                         existing.Name = Campaign.Name;
                         existing.LeadSource = Campaign.LeadSource;
                         existing.Stages = Campaign.Stages;
+                        existing.Printer = Campaign.Printer;
                     }
                 }
                 _service.SaveCampaign(Campaign); // This must exist in your service

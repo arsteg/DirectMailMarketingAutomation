@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Serilog;
+using System.Windows;
 
 namespace MailMergeUI.ViewModels
 {
@@ -105,9 +106,17 @@ namespace MailMergeUI.ViewModels
 
         private async Task LoadPendingCountAsync()
         {
-            Status = "Searching leads...";
-            PendingLetters = await _api.SearchLeadsAsync(ActiveCampaign?.LeadSource.FiltersJson ?? "");
-            Status = $"{PendingLetters} letters pending today.";
+            try
+            {
+                Status = "Searching leads...";
+                PendingLetters = await _api.SearchLeadsAsync(ActiveCampaign?.LeadSource.FiltersJson ?? "");
+                Status = $"{PendingLetters} letters pending today.";
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+           
         }
 
         private async Task RefreshLeadsAsync()

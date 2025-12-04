@@ -20,6 +20,7 @@ namespace MailMerge.Data.Models
         public PrinterSettings LetterPrinter { get; set; } = new();
         public PrinterSettings EnvelopePrinter { get; set; } = new();
         public bool IsActive { get; set; }
+        public string Printer { get; set; }
     }
 
     public class FollowUpStage

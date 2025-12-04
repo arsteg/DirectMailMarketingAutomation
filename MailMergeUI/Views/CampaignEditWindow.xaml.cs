@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Serilog;
+using System.IO;
 
 namespace MailMergeUI.Views
 {
@@ -26,7 +27,19 @@ namespace MailMergeUI.Views
         {
             InitializeComponent();
             this.DataContext = viewModel;
-
+            LoadPrinters();
+            // Then set the selected printer from ViewModel
+            if (!string.IsNullOrEmpty(viewModel.SelectedPrinter) && cmbPrinters.Items.Contains(viewModel.SelectedPrinter))
+            {
+                cmbPrinters.SelectedItem = viewModel.SelectedPrinter;
+            }
+            else if (cmbPrinters.Items.Count > 0)
+            {
+                // Set first printer if no printer is selected
+                cmbPrinters.SelectedIndex = 0;
+                // Update ViewModel with the selected printer
+                viewModel.SelectedPrinter = cmbPrinters.SelectedItem?.ToString() ?? string.Empty;
+            }
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -96,6 +109,16 @@ namespace MailMergeUI.Views
                 }
 
                 e.Handled = true;
+            }
+        }
+
+        private void LoadPrinters()
+        {
+            cmbPrinters.Items.Clear();
+
+            foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
+            {
+                cmbPrinters.Items.Add(printer);
             }
         }
     }

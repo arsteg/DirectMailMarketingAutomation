@@ -73,6 +73,7 @@ namespace MailMergeUI.Services
                     existing.LetterPrinter = data.LetterPrinter;
                     existing.EnvelopePrinter = data.EnvelopePrinter;
                     existing.IsActive = data.IsActive;
+                    existing.Printer = data.Printer;
                 }
                 else
                 {
