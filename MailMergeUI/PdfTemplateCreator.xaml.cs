@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using Syncfusion.DocIO.DLS;
 using Syncfusion.Windows.Controls.RichTextBoxAdv;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -179,7 +180,16 @@ namespace MailMergeUI
                 wordDocument.Save(sfd.FileName,Syncfusion.DocIO.FormatType.Automatic);
 
                 // Step 5: Open the PDF
-                Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                try
+                {
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+                catch (Win32Exception)
+                {
+                    // Open folder if file can't be opened
+                  //  Process.Start("explorer.exe", $"/select,\"{sfd.FileName}\"");
+                }
+
 
                 MessageBox.Show("Template exported successfully!", "Success",
                                     MessageBoxButton.OK, MessageBoxImage.Information);

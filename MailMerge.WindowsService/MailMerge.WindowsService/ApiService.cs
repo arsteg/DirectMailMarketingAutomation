@@ -11,12 +11,13 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Serilog;
-
+using Syncfusion.DocIO.DLS;
+using Syncfusion.DocToPDFConverter;
 public class ApiService
 {
     private readonly MailMergeEngine.MailMergeEngine _engine;
     private readonly MailMergeDbContext _context;
-
+    private string lastTempPdfPath = string.Empty; // store last preview temp file to clean up later
     public ApiService(MailMergeEngine.MailMergeEngine engine,MailMergeDbContext dbContext)
     {
         _context = dbContext;
@@ -53,8 +54,8 @@ public class ApiService
                 var scheduleType = campaign.LeadSource.Type;
                 var runAt = campaign.LeadSource.RunAt; // TimeSpan (e.g. 00:00:00)
                 var daysOfWeek = campaign.LeadSource.DaysOfWeek; // List<string>
-
-                if (scheduleType == ScheduleType.Daily)
+                string? selectedPrinter = campaign.Printer.ToString();
+                    if (scheduleType == ScheduleType.Daily)
                 {
                     // Compare only the time part of current DateTime with the TimeSpan
                     var nowTime = DateTime.Now;
@@ -79,7 +80,65 @@ public class ApiService
                                                 Directory.CreateDirectory(outputPath);
                                             }
                                             if (templatePath != null)
-                                                await _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
+                                            {
+                                                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+
+                                                await _engine.ExportBatch(templatePath, records, outputFileName);
+
+                                                // Verify the file was created
+                                                if (!File.Exists(outputFileName))
+                                                {
+                                                    Log.Error($"Failed to generate document: {outputFileName}");
+                                                    return;
+                                                }
+
+                                                if (!string.IsNullOrWhiteSpace(selectedPrinter))
+                                                {
+                                                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+                                                    bool printerExists = false;
+                                                    foreach (string printer in printers)
+                                                    {
+                                                        if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            printerExists = true;
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if (printerExists)
+                                                    {
+                                                        // Convert DOCX to PDF first, then print
+                                                        string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+
+
+                                                        WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
+                                                        var converter = new DocToPDFConverter();
+                                                        var pdfDocument = converter.ConvertToPDF(wordDocument);
+
+                                                        pdfDocument.Save(pdfPath);
+                                                        pdfDocument.Close(true);
+
+                                                        if (File.Exists(pdfPath))
+                                                        {
+                                                            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
+                                                            using (var printDoc = pdfDoc.CreatePrintDocument())
+                                                            {
+                                                                printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                                                                printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                                                printDoc.Print();
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    Log.Information($"No printer configured for campaign '{campaign.Name}'");
+                                                }
+                                            }
                                         }
                                     }
                                     catch (Exception)
@@ -120,8 +179,66 @@ public class ApiService
                                             Directory.CreateDirectory(outputPath);
                                         }
                                             if (templatePath != null)
-                                                await _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
-                                    }
+                                            {
+                                                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+
+                                                // Export the batch with the timestamped filename
+                                                await _engine.ExportBatch(templatePath, records, outputFileName);
+
+                                                // Verify the file was created
+                                                if (!File.Exists(outputFileName))
+                                                {
+                                                    Log.Error($"Failed to generate document: {outputFileName}");
+                                                    return;
+                                                }
+
+                                                if (!string.IsNullOrWhiteSpace(selectedPrinter))
+                                                {
+                                                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+                                                    bool printerExists = false;
+                                                    foreach (string printer in printers)
+                                                    {
+                                                        if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            printerExists = true;
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if (printerExists)
+                                                    {
+                                                        // Convert DOCX to PDF first, then print
+                                                        string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+
+                                                      
+                                                        WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
+                                                        var converter = new DocToPDFConverter();
+                                                        var pdfDocument = converter.ConvertToPDF(wordDocument);
+                                                        pdfDocument.Save(pdfPath);
+                                                        pdfDocument.Close(true);
+
+                                                        if (File.Exists(pdfPath))
+                                                        {
+                                                            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
+                                                            using (var printDoc = pdfDoc.CreatePrintDocument())
+                                                            {
+                                                                printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                                                                printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                                                printDoc.Print();
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    Log.Information($"No printer configured for campaign '{campaign.Name}'");
+                                                }
+                                            }
+                                        }
 
                                     stage.IsRun = true;
                                 }
@@ -268,4 +385,95 @@ public class ApiService
             TsNumber = dto.TrusteeSaleNum ?? string.Empty
         };
     }
+
+    private async Task<bool> PrintDocumentViaPdf(string docxPath, string printerName)
+    {
+        string pdfPath = string.Empty;
+
+        try
+        {
+            if (!File.Exists(docxPath))
+            {
+                Log.Error($"File not found: {docxPath}");
+                return false;
+            }
+
+            // Verify printer exists
+            var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+            bool printerExists = false;
+            foreach (string printer in printers)
+            {
+                if (printer.Equals(printerName, StringComparison.OrdinalIgnoreCase))
+                {
+                    printerExists = true;
+                    break;
+                }
+            }
+
+            if (!printerExists)
+            {
+                Log.Error($"Printer '{printerName}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
+                return false;
+            }
+
+            // ✅ Step 1: Convert DOCX to PDF
+            pdfPath = Path.ChangeExtension(docxPath, ".pdf");
+
+            await Task.Run(() =>
+            {
+                WordDocument wordDocument = new WordDocument(docxPath, Syncfusion.DocIO.FormatType.Automatic);
+                var converter = new DocToPDFConverter();
+                var pdfDocument = converter.ConvertToPDF(wordDocument);
+
+                string tempFile = Path.Combine(Path.GetTempPath(), $"mailmerge_preview_{Guid.NewGuid()}.pdf");
+                pdfDocument.Save(tempFile);
+                pdfDocument.Close(true);
+
+                // Keep track so we can optionally delete later
+                lastTempPdfPath = tempFile;
+            });
+
+            Log.Information($"PDF created: {pdfPath}");
+
+            // ✅ Step 2: Print PDF using PdfiumViewer
+            await Task.Run(() =>
+            {
+                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
+                using (var printDoc = pdfDoc.CreatePrintDocument())
+                {
+                    printDoc.DocumentName = $"{docxPath}";
+                    printDoc.PrinterSettings.PrinterName = printerName;
+                    printDoc.Print();
+                }
+            });
+
+            Log.Information($"Document sent to printer: {printerName}");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Error printing document '{Path.GetFileName(docxPath)}' to '{printerName}': {ex.Message}");
+            return false;
+        }
+        finally
+        {
+            // Delete temporary PDF file after printing
+                   
+            try
+            {
+                if (!string.IsNullOrEmpty(pdfPath) && File.Exists(pdfPath))
+                {
+                    File.Delete(pdfPath);
+                    Log.Information($"Temporary PDF deleted: {pdfPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"Could not delete temporary PDF: {ex.Message}");
+            }
+            
+        }
+    }
+
 }
