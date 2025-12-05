@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MailMerge.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+849e6be883727b6b368d2f576657272a225cf523")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bbfae4bcb507d54b23b59cf818bac1cb817d92c2")]
 [assembly: System.Reflection.AssemblyProductAttribute("MailMerge.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MailMerge.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

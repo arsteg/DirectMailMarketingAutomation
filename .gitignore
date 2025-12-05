@@ -1,7 +1,7 @@
-# .NET 8 Solution with multiple projects (WPF + libraries + tests) – 2025
-# Put this file in the solution root (same level as .sln)
+# .NET 8 Solution – Multi-project WPF (2025)
+# Put in solution root (same level as .sln)
 
-## Build results – covers ALL projects in subfolders
+## Build artifacts – covers every project in any subfolder
 **/bin/
 **/obj/
 **/x64/
@@ -9,12 +9,12 @@
 **/ARM/
 **/ARM64/
 
-# Publish & artifacts
+## Publish / artifacts
 **/artifacts/
 **/publish/
 **/PublishProfiles/
 
-## Visual Studio / Rider / VS Code
+## IDE files
 *.suo
 *.user
 *.userosscache
@@ -26,12 +26,10 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
-# JetBrains Rider
 .idea/
 *.iml
 
-# Generated WPF files (in every project that has XAML)
+## Generated XAML files
 **/*.g.cs
 **/*.g.i.cs
 **/GeneratedInternalTypeHelper.g.cs
@@ -40,12 +38,9 @@
 packages/
 *.nuget.props
 *.nuget.targets
-# Ignore NuGet cache and config if you don’t commit them
 NuGet.Config
-# But keep if you want to commit a shared one
-# !NuGet.Config
 
-## .NET tools & temp files
+## .NET temp files
 *.lock.json
 project.assets.json
 project.fragment.lock.json
@@ -55,12 +50,7 @@ TestResults/
 TestResult*/
 *.trx
 
-## Local secrets & settings
-secrets.json
-appsettings.local.json
-local.settings.json
-
-## MSIX / App packaging (WPF with Windows App SDK or ClickOnce)
+## Packaging
 *.msix
 *.msixbundle
 *.appx
@@ -68,21 +58,21 @@ local.settings.json
 *.cer
 Package.StoreAssociation.xml
 
-## Logs & diagnostics
+## Secrets & logs
+secrets.json
+appsettings.local.json
+local.settings.json
 *.log
 logs/
-*.Diagnostics/
 
-## macOS / Windows junk
+## OS junk
 .DS_Store
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-## Temporary files
+## Temp
 *~
 *.tmp
 *.temp
 *.cache
-
-# End of file
