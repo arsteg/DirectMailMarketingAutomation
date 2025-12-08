@@ -54,6 +54,7 @@ namespace MailMergeUI
                     services.AddTransient<SettingsWindow>();
                     services.AddTransient<MailMergeWindow>();
                     services.AddTransient<TemplateWindow>();
+                    services.AddTransient<DashboardService>();
                 })
                 .Build();
 

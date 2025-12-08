@@ -19,7 +19,7 @@ namespace MailMergeUI.ViewModels
     public class MainWindowViewModel : BaseViewModel
     {
         private object _currentView;
-        private readonly ApiService _api = new();
+        private readonly DashboardService _dashboardService;
         private readonly PrinterService _printer = new();
         private readonly LogService _log = new();
         private readonly MailMergeDbContext _dbContext;
@@ -75,6 +75,7 @@ namespace MailMergeUI.ViewModels
 
         public MainWindowViewModel(MailMergeDbContext dbContext)
         {
+            _dashboardService = new DashboardService(dbContext);
             _dbContext = dbContext;
             LoadData();
            
@@ -117,7 +118,13 @@ namespace MailMergeUI.ViewModels
             try
             {
                 Status = "Searching leads...";
-                PendingLetters = await _api.SearchLeadsAsync(ActiveCampaign?.LeadSource.FiltersJson ?? "");
+                PendingLetters = await _dashboardService.GetPendingLettersTodayAsync();
+
+                PendingLetters = await _dashboardService.GetPendingLettersTodayAsync();
+                var DueToday = await _dashboardService.GetDueLettersTodayAsync();
+                var PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync();
+                var PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync();
+
                 Status = $"{PendingLetters} letters pending today.";
             }
             catch(Exception ex)

@@ -100,6 +100,12 @@ namespace MailMerge.Data
                 e.HasIndex(p => new { p.Address, p.City, p.State }).HasDatabaseName("IX_Properties_Address");
             });
 
+            modelBuilder.Entity<PrintHistory>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.PrintedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
         }
 
         public DbSet<User> Users { get; set; }
@@ -109,5 +115,7 @@ namespace MailMerge.Data
         public DbSet<PropertyRecord> Properties { get; set; }
 
         public DbSet<Campaign> Campaigns { get; set; }
+
+        public DbSet<PrintHistory> PrintHistory { get; set; }
     }
 }

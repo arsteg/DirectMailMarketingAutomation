@@ -192,6 +192,8 @@ namespace MailMergeEngine
                     using var tempDoc = new WordDocument(filledStream, Syncfusion.DocIO.FormatType.Automatic);
 
                     finalDoc.ImportContent(tempDoc, ImportOptions.KeepSourceFormatting);
+                    //ToDo: Add record to 
+                    //AddRecordToPrintHistory(r.Id, campaign, stage, "", "");
                 }
 
                 // Save output
@@ -217,6 +219,19 @@ namespace MailMergeEngine
             var hashedPassword = PasswordHelper.HashPassword(password);
             var record = _db.Users.FirstOrDefault(x => x.Email == user && x.Password == hashedPassword);
             return record != null;
+        }
+
+        private async Task AddRecordToPrintHistory(int propertyId, Campaign campaign, FollowUpStage stage, string selectedPrinter, string pdfPath)
+        {
+            _db.PrintHistory.Add(new PrintHistory
+            {
+                PropertyId = propertyId,
+                CampaignId = campaign.Id,
+                StageId = stage.Id,
+                PrinterName = selectedPrinter,
+                FilePath = pdfPath
+            });
+            await _db.SaveChangesAsync();
         }
     }
 }
