@@ -76,6 +76,25 @@ namespace MailMergeUI
 
         protected override async void OnStartup(StartupEventArgs e)
         {
+            // Configure logger first
+            Log.Logger = LogHelper.Configure();
+            Log.Information("=== Application started ===");
+
+            // Global exception handling
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            {
+                var ex = args.ExceptionObject as Exception;
+                Log.Fatal(ex, "AppDomain Unhandled exception");
+                MessageBox.Show($"Fatality: {ex?.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            };
+
+            DispatcherUnhandledException += (s, args) =>
+            {
+                Log.Fatal(args.Exception, "Dispatcher Unhandled exception");
+                MessageBox.Show($"An unexpected error occurred: {args.Exception.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                args.Handled = true; // Prevent crash if possible
+            };
+
             await _appHost!.StartAsync();
 
             ThemeManager.InitializeTheme();
@@ -88,15 +107,6 @@ namespace MailMergeUI
             startupForm.Show();
 
             base.OnStartup(e);
-
-            // Configure once at startup
-            Log.Logger = LogHelper.Configure();
-
-            Log.Information("=== Application started ===");
-
-            // Optional: Global exception handling
-            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
-                Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception");
         }
 
         protected override async void OnExit(ExitEventArgs e)

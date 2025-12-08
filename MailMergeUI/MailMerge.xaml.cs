@@ -96,6 +96,7 @@ namespace MailMergeUI
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Error loading CSV: {Path}", csvPath);
                 Log($"ERROR: {ex.Message}");
             }
             finally
@@ -135,12 +136,14 @@ namespace MailMergeUI
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Printing failed");
                 txtStatus.Text = $"Printing failed: {ex.Message}\n";
             }
         }
 
         private void Log(string msg)
         {
+            Serilog.Log.Debug("[UI Log] {Message}", msg);
             txtStatus.Text = txtStatus.Text + Environment.NewLine + Environment.NewLine + msg;
         }
 
@@ -214,6 +217,7 @@ namespace MailMergeUI
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Error showing preview");
                 Log($"ERROR: {ex.Message}");
             }
             finally
@@ -260,6 +264,7 @@ namespace MailMergeUI
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Error exporting batch");
                 Log($"ERROR: {ex.Message}");
             }
             finally

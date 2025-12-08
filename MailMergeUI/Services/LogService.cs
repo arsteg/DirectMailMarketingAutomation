@@ -10,17 +10,18 @@ namespace MailMergeUI.Services
 {
     public class LogService
     {
-        private readonly string _logPath = "mailmax_log.txt";
-
         public void Log(string message)
         {
-            var entry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}{Environment.NewLine}";
-            File.AppendAllText(_logPath, entry);
+            Serilog.Log.Information(message);
         }
 
         public string ReadLog()
         {
-            return File.Exists(_logPath) ? File.ReadAllText(_logPath) : "No log entries.";
+            // Note: Reading the active log file might be tricky due to file locks.
+            // For now, we'll return a placeholder or implement a safer read mechanism if needed.
+            // Since we switched to Serilog, manually reading "mailmax_log.txt" is no longer relevant.
+            // We could point to the logs folder or read the latest log file if really needed.
+            return "Logs are now handled by Serilog. Check the 'Logs' folder.";
         }
     }
 }

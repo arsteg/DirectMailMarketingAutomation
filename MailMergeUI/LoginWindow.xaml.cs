@@ -34,11 +34,19 @@ namespace MailMergeUI
 
         private void LoginWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            if (Properties.Settings.Default.RememberMe)
+            try
             {
-                DashboardWindow dashboard = new DashboardWindow(_dbContext);
-                dashboard.Show();
-                this.Close();
+                if (Properties.Settings.Default.RememberMe)
+                {
+                    Serilog.Log.Information("Auto-login enabled for user: {Username}", Properties.Settings.Default.Username);
+                    DashboardWindow dashboard = new DashboardWindow(_dbContext);
+                    dashboard.Show();
+                    this.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Error during auto-login");
             }
         }
 
@@ -48,11 +56,14 @@ namespace MailMergeUI
             {
                 var userName = txtUsername.Text;
                 var password = txtPassword.Password;
+                
+                Serilog.Log.Debug("Attempting login for user: {Username}", userName);
 
                 var isValidated = _engine.ValidateUser(userName,password);
 
                 if (isValidated)
                 {
+                    Serilog.Log.Information("Login successful for user: {Username}", userName);
                     if (chkRememberMe.IsChecked == true)
                     {
                         Properties.Settings.Default.Username = txtUsername.Text;
@@ -66,12 +77,14 @@ namespace MailMergeUI
                 }
                 else
                 {
+                    Serilog.Log.Warning("Login failed for user: {Username}", userName);
                     txtStatus.Text = "Invalid username or password!";
                     txtStatus.Foreground = Brushes.Red;
                 }
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Error during login process");
                 txtStatus.Text = $"Error Occured ! {ex.Message}";
                 txtStatus.Foreground = Brushes.Red;
             }

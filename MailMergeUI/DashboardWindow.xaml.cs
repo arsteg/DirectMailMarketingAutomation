@@ -1,6 +1,7 @@
 ﻿using MailMerge.Data;
 using MailMergeUI.ViewModels;
 using MailMergeUI.Views;
+using System;
 using System.Windows;
 using System.Windows.Input;
 
@@ -24,18 +25,34 @@ namespace MailMergeUI
 
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
         {
-            MailMergeWindow main = new MailMergeWindow(_dbContext);
-            main.WindowState = this.WindowState;
-            main.Show();
-            this.Close();
+            try
+            {
+                MailMergeWindow main = new MailMergeWindow(_dbContext);
+                main.WindowState = this.WindowState;
+                main.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Failed to open MailMergeWindow");
+                MessageBox.Show($"Error opening Mail Merge: {ex.Message}", "Error");
+            }
         }
 
         private void OpenSettings_Click(object sender, RoutedEventArgs e)
         {
-            SettingsWindow settings = new SettingsWindow(_dbContext);
-            settings.WindowState = this.WindowState;
-            settings.Show();
-            this.Close();
+            try
+            {
+                SettingsWindow settings = new SettingsWindow(_dbContext);
+                settings.WindowState = this.WindowState;
+                settings.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Failed to open SettingsWindow");
+                MessageBox.Show($"Error opening Settings: {ex.Message}", "Error");
+            }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

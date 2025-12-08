@@ -34,37 +34,79 @@ namespace MailMergeUI.Services
 
         public void DeleteCampaign(Campaign c)
         {
-            var campaign = _db.Campaigns.Where(x => x.Id == c.Id).FirstOrDefault();
-            if(campaign != null)
+            try
             {
-                _db.Campaigns.Remove(campaign);
-                _db.SaveChanges();
-            }           
+                var campaign = _db.Campaigns.FirstOrDefault(x => x.Id == c.Id);
+                if (campaign != null)
+                {
+                    _db.Campaigns.Remove(campaign);
+                    _db.SaveChanges();
+                    Log.Information("Deleted campaign: {CampaignName} ({Id})", c.Name, c.Id);
+                }
+                else
+                {
+                    Log.Warning("Attempted to delete non-existent campaign: {Id}", c.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error deleting campaign: {Id}", c.Id);
+            }
         }
 
         private void LoadAll()
         {
-            Campaigns = LoadCampaign() ?? new();
-            Templates = Load<List<LetterTemplate>>("templates.json") ?? new();
+            try
+            {
+                Campaigns = LoadCampaign() ?? new();
+                Templates = Load<List<LetterTemplate>>("templates.json") ?? new();
+                Log.Debug("Loaded {CampaignCount} campaigns and {TemplateCount} templates", Campaigns.Count, Templates.Count);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error loading initial data in CampaignService");
+                Campaigns = new();
+                Templates = new();
+            }
         }
 
         private T? Load<T>(string path)
         {
-            if (!File.Exists(path)) return default;
-            var json = File.ReadAllText(path);
-            return JsonSerializer.Deserialize<T>(json, _options);
+            try
+            {
+                if (!File.Exists(path)) 
+                {
+                    Log.Debug("File not found for loading: {Path}", path);
+                    return default;
+                }
+                var json = File.ReadAllText(path);
+                return JsonSerializer.Deserialize<T>(json, _options);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error loading JSON from {Path}", path);
+                return default;
+            }
         }
 
         private List<Campaign> LoadCampaign()
         {
-            return _db.Campaigns.ToList();
+            try
+            {
+                return _db.Campaigns.ToList();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error loading campaigns from DB");
+                return null;
+            }
         }
 
         private void Save(Campaign data)
         {
             try
             {
-                var existing = _db.Campaigns.Where(x => x.Id ==data.Id).FirstOrDefault();
+                var existing = _db.Campaigns.FirstOrDefault(x => x.Id == data.Id);
                 if (existing != null)
                 {
                     existing.Name = data.Name;
@@ -74,26 +116,33 @@ namespace MailMergeUI.Services
                     existing.EnvelopePrinter = data.EnvelopePrinter;
                     existing.IsActive = data.IsActive;
                     existing.Printer = data.Printer;
+                    Log.Information("Updated campaign: {Name} ({Id})", data.Name, data.Id);
                 }
                 else
                 {
                     _db.Campaigns.Add(data);
+                    Log.Information("Added new campaign: {Name} ({Id})", data.Name, data.Id);
                 }
                 _db.SaveChanges();
-
             }
             catch (Exception ex)
             {
-                //do nothing
-                Log.Error(ex, "Error saving campaign");
+                Log.Error(ex, "Error saving campaign: {Name}", data.Name);
             }
-
         }
 
         private void SaveTemplate<T>(string path, T data)
         {
-            var json = JsonSerializer.Serialize(data, _options);
-            File.WriteAllText(path, json);
+            try
+            {
+                var json = JsonSerializer.Serialize(data, _options);
+                File.WriteAllText(path, json);
+                Log.Information("Saved template data to {Path}", path);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error saving template to {Path}", path);
+            }
         }
     }
 }

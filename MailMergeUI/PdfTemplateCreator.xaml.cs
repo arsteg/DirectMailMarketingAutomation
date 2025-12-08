@@ -84,6 +84,7 @@ namespace MailMergeUI
                 }
                 catch (Exception ex)
                 {
+                    Serilog.Log.Error(ex, "Error loading Word document: {Path}", dlg.FileName);
                     MessageBox.Show("Error loading file: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -153,9 +154,9 @@ namespace MailMergeUI
                 }
                 catch (Exception ex)
                 {
+                    Serilog.Log.Warning(ex, "Error saving source document: {Path}", _currentDocumentPath);
                     MessageBox.Show($"Error saving source document: {ex.Message}", "Save Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
-                   
                 }
             }
 
@@ -204,6 +205,7 @@ namespace MailMergeUI
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Export failed for template: {Name}", TemplateNameTextBox.Text);
                 MessageBox.Show($"Export failed: {ex.Message}\n\n{ex.StackTrace}", "Error",
                                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -232,6 +234,7 @@ namespace MailMergeUI
             }
             catch (Exception ex)
             {
+                Serilog.Log.Error(ex, "Preview failed for CSV: {Path}", ofd.FileName);
                 MessageBox.Show("Preview failed: " + ex.Message);
             }
         }

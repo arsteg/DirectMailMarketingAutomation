@@ -18,6 +18,7 @@ public class ApiService
     private readonly MailMergeEngine.MailMergeEngine _engine;
     private readonly MailMergeDbContext _context;
     private string lastTempPdfPath = string.Empty; // store last preview temp file to clean up later
+
     public ApiService(MailMergeEngine.MailMergeEngine engine,MailMergeDbContext dbContext)
     {
         _context = dbContext;
@@ -35,46 +36,58 @@ public class ApiService
     public async Task PostAndSavePropertyRecordsAsync()
     {
         try { 
-        string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
-        string url = "https://api.propertyradar.com/v1/properties";
-        string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
-        string rawQueryParams = $"?Purchase=1&Fields={RequestedFields}";
-        var _httpClient = new HttpClient();
-        //await context.Database.EnsureCreatedAsync();
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-
-        if (_context.Campaigns.Any())
-        {
-            var campaigns = _context.Campaigns.ToList();
-            foreach (var campaign in campaigns)
+            string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
+            string url = "https://api.propertyradar.com/v1/properties";
+            string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
+            
+            if (string.IsNullOrEmpty(bearerToken))
             {
-                if (campaign == null || campaign.LeadSource == null)
-                    continue;
+                Log.Warning("API Key missing in configuration.");
+            }
 
-                var scheduleType = campaign.LeadSource.Type;
-                var runAt = campaign.LeadSource.RunAt; // TimeSpan (e.g. 00:00:00)
-                var daysOfWeek = campaign.LeadSource.DaysOfWeek; // List<string>
-                string? selectedPrinter = campaign.Printer.ToString();
-                    if (scheduleType == ScheduleType.Daily)
+            string rawQueryParams = $"?Purchase=1&Fields={RequestedFields}";
+            var _httpClient = new HttpClient();
+            //await context.Database.EnsureCreatedAsync();
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+            if (_context.Campaigns.Any())
+            {
+                var campaigns = _context.Campaigns.ToList();
+                Log.Information("Found {Count} campaigns to process.", campaigns.Count);
+
+                foreach (var campaign in campaigns)
                 {
-                    // Compare only the time part of current DateTime with the TimeSpan
-                    var nowTime = DateTime.Now;
+                    if (campaign == null || campaign.LeadSource == null)
+                        continue;
 
-                    if (nowTime.TimeOfDay >= runAt)
+                    var scheduleType = campaign.LeadSource.Type;
+                    var runAt = campaign.LeadSource.RunAt; // TimeSpan (e.g. 00:00:00)
+                    var daysOfWeek = campaign.LeadSource.DaysOfWeek; // List<string>
+                    string? selectedPrinter = campaign.Printer.ToString();
+                    
+                    if (scheduleType == ScheduleType.Daily)
                     {
-                        // ✅ Run your scheduled code for daily schedule
-                        await RunCampaign(_context,_httpClient,campaign,url,rawQueryParams,bearerToken);
-                        foreach (var stage in campaign.Stages)
+                        var nowTime = DateTime.Now;
+
+                        if (nowTime.TimeOfDay >= runAt)
                         {
-                            if (!stage.IsRun)
+                            Log.Information("Running Daily Campaign: {Name}", campaign.Name);
+                            // ✅ Run your scheduled code for daily schedule
+                            await RunCampaign(_context,_httpClient,campaign,url,rawQueryParams,bearerToken);
+                            
+                            foreach (var stage in campaign.Stages)
                             {
+                                if (!stage.IsRun)
+                                {
                                     try
                                     {
                                         if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                         {
+                                            Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
                                             var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
                                             var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
                                             var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                            
                                             if (!Directory.Exists(outputPath))
                                             {
                                                 Directory.CreateDirectory(outputPath);
@@ -110,7 +123,6 @@ public class ApiService
                                                         // Convert DOCX to PDF first, then print
                                                         string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
 
-
                                                         WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
                                                         var converter = new DocToPDFConverter();
                                                         var pdfDocument = converter.ConvertToPDF(wordDocument);
@@ -126,6 +138,7 @@ public class ApiService
                                                                 printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
                                                                 printDoc.PrinterSettings.PrinterName = selectedPrinter;
                                                                 printDoc.Print();
+                                                                Log.Information("Printed document to {Printer}", selectedPrinter);
                                                             }
                                                         }
                                                     }
@@ -141,123 +154,125 @@ public class ApiService
                                             }
                                         }
                                     }
-                                    catch (Exception)
+                                    catch (Exception ex)
                                     {
-
-                                        throw;
+                                        Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}", stage.StageName, campaign.Name);
+                                        // throw; // Don't crash the loop
                                     }
                                 
-
-                                stage.IsRun = true;
+                                    stage.IsRun = true;
+                                }
                             }
                         }
-                        
                     }
-                }
-                else if (scheduleType == ScheduleType.None)
-                {
-                    // Example: daysOfWeek = ["Monday", "Wednesday", "Friday"]
-                    var today = DateTime.Now.DayOfWeek.ToString(); // e.g. "Monday"
-
-                    if (daysOfWeek != null && daysOfWeek.Contains(today, StringComparer.OrdinalIgnoreCase))
+                    else if (scheduleType == ScheduleType.None)
                     {
-                        // ✅ Run your scheduled code for specific days
-                        if (DateTime.Now.TimeOfDay >= runAt)
+                        // Example: daysOfWeek = ["Monday", "Wednesday", "Friday"]
+                        var today = DateTime.Now.DayOfWeek.ToString(); // e.g. "Monday"
+
+                        if (daysOfWeek != null && daysOfWeek.Contains(today, StringComparer.OrdinalIgnoreCase))
                         {
-                            await RunCampaign(_context,_httpClient,campaign, url, rawQueryParams, bearerToken);
-                            foreach (var stage in campaign.Stages)
+                            if (DateTime.Now.TimeOfDay >= runAt)
                             {
-                                if (!stage.IsRun)
+                                Log.Information("Running Scheduled Campaign: {Name} on {Day}", campaign.Name, today);
+                                // ✅ Run your scheduled code for specific days
+                                await RunCampaign(_context,_httpClient,campaign, url, rawQueryParams, bearerToken);
+                                foreach (var stage in campaign.Stages)
                                 {
-                                    if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                    if (!stage.IsRun)
                                     {
-                                        var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
-                                        var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
-                                        var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
-                                        if (!Directory.Exists(outputPath))
+                                        if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                         {
-                                            Directory.CreateDirectory(outputPath);
-                                        }
-                                            if (templatePath != null)
+                                            var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
+                                            var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
+                                            var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                            if (!Directory.Exists(outputPath))
                                             {
-                                                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
-
-                                                // Export the batch with the timestamped filename
-                                                await _engine.ExportBatch(templatePath, records, outputFileName);
-
-                                                // Verify the file was created
-                                                if (!File.Exists(outputFileName))
+                                                Directory.CreateDirectory(outputPath);
+                                            }
+                                                if (templatePath != null)
                                                 {
-                                                    Log.Error($"Failed to generate document: {outputFileName}");
-                                                    return;
-                                                }
+                                                    string outputFileName = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
 
-                                                if (!string.IsNullOrWhiteSpace(selectedPrinter))
-                                                {
-                                                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
-                                                    bool printerExists = false;
-                                                    foreach (string printer in printers)
+                                                    // Export the batch with the timestamped filename
+                                                    await _engine.ExportBatch(templatePath, records, outputFileName);
+
+                                                    // Verify the file was created
+                                                    if (!File.Exists(outputFileName))
                                                     {
-                                                        if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
-                                                        {
-                                                            printerExists = true;
-                                                            break;
-                                                        }
+                                                        Log.Error($"Failed to generate document: {outputFileName}");
+                                                        return;
                                                     }
 
-                                                    if (printerExists)
+                                                    if (!string.IsNullOrWhiteSpace(selectedPrinter))
                                                     {
-                                                        // Convert DOCX to PDF first, then print
-                                                        string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
-
-                                                      
-                                                        WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
-                                                        var converter = new DocToPDFConverter();
-                                                        var pdfDocument = converter.ConvertToPDF(wordDocument);
-                                                        pdfDocument.Save(pdfPath);
-                                                        pdfDocument.Close(true);
-
-                                                        if (File.Exists(pdfPath))
+                                                        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+                                                        bool printerExists = false;
+                                                        foreach (string printer in printers)
                                                         {
-                                                            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
-                                                            using (var printDoc = pdfDoc.CreatePrintDocument())
+                                                            if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
                                                             {
-                                                                printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
-                                                                printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                                                printDoc.Print();
+                                                                printerExists = true;
+                                                                break;
                                                             }
+                                                        }
+
+                                                        if (printerExists)
+                                                        {
+                                                            // Convert DOCX to PDF first, then print
+                                                            string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+
+                                                          
+                                                            WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
+                                                            var converter = new DocToPDFConverter();
+                                                            var pdfDocument = converter.ConvertToPDF(wordDocument);
+                                                            pdfDocument.Save(pdfPath);
+                                                            pdfDocument.Close(true);
+
+                                                            if (File.Exists(pdfPath))
+                                                            {
+                                                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
+                                                                using (var printDoc = pdfDoc.CreatePrintDocument())
+                                                                {
+                                                                    printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                                                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                                                    printDoc.Print();
+                                                                    Log.Information("Printed document to {Printer}", selectedPrinter);
+                                                                }
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
                                                         }
                                                     }
                                                     else
                                                     {
-                                                        Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
+                                                        Log.Information($"No printer configured for campaign '{campaign.Name}'");
                                                     }
                                                 }
-                                                else
-                                                {
-                                                    Log.Information($"No printer configured for campaign '{campaign.Name}'");
-                                                }
                                             }
-                                        }
 
-                                    stage.IsRun = true;
+                                        stage.IsRun = true;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-        //Console.WriteLine($"\nCompleted fetching all records. Total saved: {totalRecordsSaved} / {totalResults}.");
-        //return totalRecordsSaved;
+            else
+            {
+               Log.Information("No campaigns found in database."); 
+            }
         }
         catch (Exception ex)
         {
-            Log.Error($"Error in PostAndSavePropertyRecordsAsync: {ex.Message}");
+            Log.Error(ex, "Error in PostAndSavePropertyRecordsAsync");
         }
     }
 
-    private async Task RunCampaign(MailMergeDbContext _context, HttpClient _httpClient, Campaign campaign, string url, string rawQueryParams, string bearerToken)
+    private async Task RunCampaign(MailMergeDbContext _context, HttpClient _httpClient, Campaign campaign, string url, string rawQueryParams, string? bearerToken)
     {
         try
         {
@@ -270,7 +285,7 @@ public class ApiService
             {
                 // Build URL with pagination
                 var pagedUrl = $"{url}{rawQueryParams}&Start={start}";
-                Console.WriteLine($"\nFetching records starting from {start}...");
+                Log.Debug("Fetching records starting from {Start}", start);
 
                 // Serialize request body
                 var jsonContent = campaign.LeadSource.FiltersJson;
@@ -281,7 +296,7 @@ public class ApiService
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"\n--- API Call Failed at start={start}. Status: {response.StatusCode} ---\nDetails: {errorContent}");
+                    Log.Error("API Call Failed at start={Start}. Status: {StatusCode}. Details: {Details}", start, response.StatusCode, errorContent);
                     break;
                 }
 
@@ -291,7 +306,7 @@ public class ApiService
 
                 if (apiResponse?.Results == null || !apiResponse.Results.Any())
                 {
-                    Console.WriteLine("\nNo results found for this batch.");
+                    Log.Information("No results found for batch starting at {Start}", start);
                     break;
                 }
 
@@ -320,22 +335,22 @@ public class ApiService
                 // ✅ Update CampaignId for all existing records
                 foreach (var existing in existingRecords)
                 {
-                    existing.CampaignId = campaign.Id; // <-- use your new campaignId variable here
+                    existing.CampaignId = campaign.Id;
                 }
 
                 // ✅ Add new records
                 if (newProperties.Any())
                 {
                     await _context.Properties.AddRangeAsync(newProperties);
-                    // ✅ Save all changes (updates + inserts)
                     int saved = await _context.SaveChangesAsync();
+                    Log.Information("Saved {Count} new properties.", saved);
                 }
                 else
                 {
-                    Console.WriteLine($"No new records to insert for batch starting {start}.");
+                    Log.Debug("No new records to insert for batch starting {Start}.", start);
                 }
                 await _context.SaveChangesAsync();
-                // Check if more results remain
+                
                 start += batchSize;
                 moreData = start < totalResults;
 
