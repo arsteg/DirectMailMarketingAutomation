@@ -180,17 +180,17 @@
                 <TextBlock Text="Format:" VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource TextDark}" FontWeight="Bold" Margin="0,0,8,0"/>
 
                 <!-- Bold -->
-                <ToggleButton x:Name="BoldButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Bold (Ctrl+B)" Click="Bold_Click" >
-                    <TextBlock Text="B" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
+                <ToggleButton x:Name="BoldButton" Style="{StaticResource FormatToggleStyle}" Background="{StaticResource CardBackgroundLight}" Foreground="{StaticResource TextDark}" ToolTip="Bold (Ctrl+B)" Click="Bold_Click" >
+                    <TextBlock Text="B" FontSize="15" FontWeight="Bold"   Foreground="{StaticResource TextDark}"/>
                 </ToggleButton>
 
                 <!-- Italic -->
-                <ToggleButton x:Name="ItalicButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Italic (Ctrl+I)" Click="Italic_Click">
+                <ToggleButton x:Name="ItalicButton" Style="{StaticResource FormatToggleStyle}" Background="{StaticResource CardBackgroundLight}" Foreground="{StaticResource TextDark}" ToolTip="Italic (Ctrl+I)" Click="Italic_Click">
                     <TextBlock Text="I" FontSize="15" FontStyle="Italic" Foreground="{StaticResource TextDark}"/>
                 </ToggleButton>
 
                 <!-- Underline -->
-                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Underline (Ctrl+U)" Click="Underline_Click">
+                <ToggleButton x:Name="UnderlineButton" Style="{StaticResource FormatToggleStyle}" Background="{StaticResource CardBackgroundLight}" Foreground="{StaticResource TextDark}" ToolTip="Underline (Ctrl+U)" Click="Underline_Click">
                     <TextBlock Text="U" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextDark}"/>
                 </ToggleButton>
 
@@ -226,12 +226,12 @@
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Text Color -->
-                <ToggleButton x:Name="TextColorButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Text color" Click="TextColor_Click">
+                <ToggleButton x:Name="TextColorButton" Style="{StaticResource FormatToggleStyle}" Background="{StaticResource CardBackgroundLight}" Foreground="{StaticResource TextDark}" ToolTip="Text color" Click="TextColor_Click">
                     <TextBlock Text="🎨" FontSize="18" Foreground="{StaticResource TextDark}"/>
                 </ToggleButton>
 
                 <!-- Highlight -->
-                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" ToolTip="Highlight" Click="HighlightColor_Click">
+                <ToggleButton x:Name="HighlightButton" Style="{StaticResource FormatToggleStyle}" Background="{StaticResource CardBackgroundLight}" Foreground="{StaticResource TextDark}" ToolTip="Highlight" Click="HighlightColor_Click">
                     <TextBlock Text="🖍️" FontSize="18" Foreground="{StaticResource TextDark}"/>
                 </ToggleButton>
 

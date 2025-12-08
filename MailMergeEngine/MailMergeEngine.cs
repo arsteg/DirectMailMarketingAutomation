@@ -5,6 +5,7 @@ using MailMerge.Data;
 using MailMerge.Data.Helpers;
 using MailMerge.Data.Models;
 using MailMergeEngine.Helpers;
+using Serilog;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
 using System;
@@ -90,9 +91,16 @@ namespace MailMergeEngine
         {
             if (template == null)
                 return;
+            try
+            {
+                _db.Templates.Add(template);
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error saving Template");
+            }
 
-            _db.Templates.Add(template);
-            await _db.SaveChangesAsync();
         }
 
         //public async Task<byte[]> FillTemplate(string templatePath, PropertyRecord record)

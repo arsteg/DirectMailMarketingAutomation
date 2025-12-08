@@ -96,12 +96,20 @@ namespace MailMergeUI.ViewModels
 
         private void LoadData()
         {
-            var campaignList = _dbContext.Campaigns.ToList();
-            foreach(var campaign in campaignList)
+            try
             {
-                Campaigns.Add(campaign);
+                var campaignList = _dbContext.Campaigns.ToList();
+            foreach(var campaign in campaignList)
+                {
+                    Campaigns.Add(campaign);
+                }
+                ActiveCampaign = Campaigns.Any() ? Campaigns.FirstOrDefault() : new Campaign();
             }
-            ActiveCampaign = Campaigns.Any() ? Campaigns.FirstOrDefault() : new Campaign();
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in LoadData for Campaign");
+            }
+    
         }
 
         private async Task LoadPendingCountAsync()
@@ -121,8 +129,17 @@ namespace MailMergeUI.ViewModels
 
         private async Task RefreshLeadsAsync()
         {
-            await LoadPendingCountAsync();
-            _log.Log($"Refreshed leads for campaign: {ActiveCampaign.Name}");
+            try
+            {
+                await LoadPendingCountAsync();
+                _log.Log($"Refreshed leads for campaign: {ActiveCampaign.Name}");
+            }
+            catch (Exception ex)
+            {
+            
+                Log.Error(ex, "Error in Refreshed leads for campaign");
+            }
+
         }
 
         private async Task PrintTodayAsync()
@@ -131,24 +148,31 @@ namespace MailMergeUI.ViewModels
 
             Status = "Printing...";
             bool success = true;
-
-            // Simulate printing each letter
-            for (int i = 0; i < Math.Min(PendingLetters, 10); i++)
+            try
             {
-                var settings = ActiveCampaign.LetterPrinter;
-                if (settings.IsAutomatic)
+                // Simulate printing each letter
+                for (int i = 0; i < Math.Min(PendingLetters, 10); i++)
                 {
-                    success &= await _printer.PrintAsync(settings.SelectedPrinter, $"Letter {i + 1}");
+                    var settings = ActiveCampaign.LetterPrinter;
+                    if (settings.IsAutomatic)
+                    {
+                        success &= await _printer.PrintAsync(settings.SelectedPrinter, $"Letter {i + 1}");
+                    }
+                    else
+                    {
+                        await _printer.SavePdfAsync(settings.OutputDirectory, $"Letter_{i + 1}.pdf");
+                    }
                 }
-                else
-                {
-                    await _printer.SavePdfAsync(settings.OutputDirectory, $"Letter_{i + 1}.pdf");
-                }
+
+                Status = success ? "Print job completed." : "Some print jobs failed.";
+                _log.Log(success ? "Print batch succeeded." : "Print batch had errors.");
+                PendingLetters = 0;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error Print jobs failed.");
             }
 
-            Status = success ? "Print job completed." : "Some print jobs failed.";
-            _log.Log(success ? "Print batch succeeded." : "Print batch had errors.");
-            PendingLetters = 0;
         }
 
     }

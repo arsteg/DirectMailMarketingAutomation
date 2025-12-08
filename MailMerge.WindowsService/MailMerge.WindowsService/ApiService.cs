@@ -105,7 +105,7 @@ public class ApiService
                                                     return;
                                                 }
 
-                                                if (!string.IsNullOrWhiteSpace(selectedPrinter))
+                                                if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
                                                 {
                                                     var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
                                                     bool printerExists = false;
@@ -204,9 +204,9 @@ public class ApiService
                                                         return;
                                                     }
 
-                                                    if (!string.IsNullOrWhiteSpace(selectedPrinter))
-                                                    {
-                                                        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+                                                if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
+                                                {
+                                                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
                                                         bool printerExists = false;
                                                         foreach (string printer in printers)
                                                         {

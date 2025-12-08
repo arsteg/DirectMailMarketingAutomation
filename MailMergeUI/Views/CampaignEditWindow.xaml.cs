@@ -116,6 +116,9 @@ namespace MailMergeUI.Views
         {
             cmbPrinters.Items.Clear();
 
+            // Add the placeholder option
+            cmbPrinters.Items.Add("Select Printer");
+
             foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
             {
                 cmbPrinters.Items.Add(printer);

@@ -128,29 +128,46 @@ namespace MailMergeUI.ViewModels
 
         private void OpenEdit(Campaign? campaign)
         {
-            var vm = new CampaignEditViewModel(campaign, _service,_dbContext);   // 2 parameters only
-            vm.OnSaved += () => LoadCampaigns();                     // parameter-less
-            var window = new CampaignEditWindow(vm);
-            var mainWindow = Application.Current.MainWindow;
-            if (mainWindow != null)
+            try
             {
-                window.WindowState = mainWindow.WindowState;
+                var vm = new CampaignEditViewModel(campaign, _service, _dbContext);   // 2 parameters only
+                vm.OnSaved += () => LoadCampaigns();                     // parameter-less
+                var window = new CampaignEditWindow(vm);
+                var mainWindow = Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    window.WindowState = mainWindow.WindowState;
 
-                // Optional: position on top of main window
-                window.Owner = mainWindow;
-                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                    // Optional: position on top of main window
+                    window.Owner = mainWindow;
+                    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
+                window.Show();
             }
-            window.Show();
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error OpenEdit");
+                MessageBox.Show("Error OpenEdit campaigns: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
         }
 
         private void Delete(Campaign campaign)
         {
-            if (MessageBox.Show($"Delete campaign '{campaign.Name}'?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            try
             {
-                _service.Campaigns.Remove(campaign);
-                _service.DeleteCampaign(campaign);
-                LoadCampaigns();
+                if (MessageBox.Show($"Delete campaign '{campaign.Name}'?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    _service.Campaigns.Remove(campaign);
+                    _service.DeleteCampaign(campaign);
+                    LoadCampaigns();
+                }
             }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in Delete campaign");
+            }
+
         }
 
         private void GoToNextPage()

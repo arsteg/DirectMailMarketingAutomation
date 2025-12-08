@@ -8,6 +8,7 @@
     <PackageReference Include="itext" Version="9.2.0" />
     <PackageReference Include="itext.bouncy-castle-adapter" Version="9.2.0" />
     <PackageReference Include="itext.bouncy-castle-fips-adapter" Version="9.2.0" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Syncfusion.DocIO.Wpf" Version="31.2.12" />
   </ItemGroup>
   <ItemGroup>

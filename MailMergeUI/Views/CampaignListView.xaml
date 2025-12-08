@@ -94,7 +94,8 @@
                             <Setter Property="ToolTip" Value="Click Edit to modify this campaign"/>
                             <Style.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#F5F9FF"/>
+                                    <Setter Property="Background" Value="{DynamicResource DividerColor}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
                                 </Trigger>
                             </Style.Triggers>
                         </Style>
