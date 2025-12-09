@@ -52,6 +52,29 @@ namespace MailMergeUI.ViewModels
             set { _status = value; OnPropertyChanged(); }
         }
 
+        private int _dueToday;
+        public int DueToday
+        {
+            get => _dueToday;
+            set{ _dueToday = value; OnPropertyChanged(); }
+
+        }
+
+        private int _printedToday;
+        public int PrintedToday
+        {
+            get => _printedToday;
+            set { _printedToday = value; OnPropertyChanged(); }
+        }
+
+        private int _printedThisMonth;
+        public int PrintedThisMonth
+        {
+            get => _printedThisMonth;
+            set { _printedThisMonth = value; OnPropertyChanged(); }
+
+        }
+
         public ICommand PrintTodayCommand { get; }
         public ICommand RefreshLeadsCommand { get; }
 
@@ -120,10 +143,9 @@ namespace MailMergeUI.ViewModels
                 Status = "Searching leads...";
                 PendingLetters = await _dashboardService.GetPendingLettersTodayAsync();
 
-                PendingLetters = await _dashboardService.GetPendingLettersTodayAsync();
-                var DueToday = await _dashboardService.GetDueLettersTodayAsync();
-                var PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync();
-                var PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync();
+               DueToday = await _dashboardService.GetDueLettersTodayAsync();
+               PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync();
+               PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync();
 
                 Status = $"{PendingLetters} letters pending today.";
             }
