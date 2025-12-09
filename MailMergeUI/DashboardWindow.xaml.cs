@@ -26,7 +26,7 @@ namespace MailMergeUI
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
         {
             try
-            {
+            {                
                 MailMergeWindow main = new MailMergeWindow(_dbContext);
                 main.WindowState = this.WindowState;
                 main.Show();
@@ -73,7 +73,7 @@ namespace MailMergeUI
 
         private void btnTemplate_Click(object sender, RoutedEventArgs e)
         {
-            TemplateWindow template = new TemplateWindow(_dbContext);
+            TemplateListView template = new TemplateListView(_dbContext);
             template.WindowState = this.WindowState;
             template.Show();
             this.Close();
@@ -101,6 +101,20 @@ namespace MailMergeUI
             campaignListView.WindowStartupLocation = this.WindowStartupLocation;
             campaignListView.Show();
             this.Close();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void btnPrintHistory_Click(object sender, RoutedEventArgs e)
+        {
+            PrintHistoryReportWindow campaignListView = new PrintHistoryReportWindow(this._dbContext);
+            campaignListView.WindowState = this.WindowState;
+            campaignListView.WindowStartupLocation = this.WindowStartupLocation;
+            campaignListView.Show();
+         
         }
     }
 }
