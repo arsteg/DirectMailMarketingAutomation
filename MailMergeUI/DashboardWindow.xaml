@@ -44,7 +44,7 @@
                 </Border>
 
                 <Button Content=" Mail Merge" Style="{DynamicResource MailMergeButtonStyle}" Click="OpenMainWindow_Click"/>
-                <Button Content=" Template Creator" Style="{DynamicResource MailMergeButtonStyle}" Click="btnTemplate_Click"/>
+                <Button Content=" Templates" Style="{DynamicResource MailMergeButtonStyle}" Click="btnTemplate_Click"/>
                 <Button Content=" Settings" Style="{DynamicResource MailMergeButtonStyle}" Click="OpenSettings_Click"/>
 
               
@@ -198,14 +198,14 @@ BorderBrush="Transparent"/>
                                        FontWeight="SemiBold"
                                        Foreground="{StaticResource TextDark}"
                                        Margin="0,0,0,10"/>
-                            <Button Content="View Reports" 
+                            <Button x:Name="btnPrintHistory" Content="View Reports" 
                                     Height="35"
                                     Width="120"
                                     HorizontalAlignment="Left"
                                     Background="{StaticResource PrimaryGradient}"
                                     Foreground="White"
                                     BorderBrush="Transparent"
-                                    Cursor="Hand"/>
+                                    Cursor="Hand" Click="btnPrintHistory_Click"/>
                         </StackPanel>
                     </Border>
                 </UniformGrid>

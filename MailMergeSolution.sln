@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.0.0
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailMergeEngine", "MailMergeEngine\MailMergeEngine.csproj", "{AAAA1111-2222-3333-4444-555555555555}"
 EndProject
@@ -30,7 +30,8 @@ Global
 		{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CD4CFBF-6F7B-457C-9F4F-1EBCA7D0A8A2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}.Debug|Any CPU.ActiveCfg = Debug
+		{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}.Debug|Any CPU.ActiveCfg = Release
+		{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}.Debug|Any CPU.Build.0 = Release
 		{E516D4D1-E86E-444F-E4BA-6FD3537D9ECB}.Release|Any CPU.ActiveCfg = Release
 		{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{185C1D6A-8196-28A1-A33B-B3A455F1FE0F}.Debug|Any CPU.Build.0 = Debug|Any CPU

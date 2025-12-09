@@ -143,12 +143,11 @@ namespace MailMergeUI
 
         private async void ExportPdf_Click(object sender, RoutedEventArgs e)
         {
-            // Save source document if checkbox is checked
+            // 1. Save source document if requested
             if (SaveSourceCheckBox.IsChecked == true && !string.IsNullOrEmpty(_currentDocumentPath))
             {
                 try
                 {
-                    // Save the edited document back to the original location (override)
                     RichTextEditor.Save(_currentDocumentPath);
                     StatusText.Text = "Source saved: " + Path.GetFileName(_currentDocumentPath);
                 }
@@ -157,57 +156,77 @@ namespace MailMergeUI
                     Serilog.Log.Warning(ex, "Error saving source document: {Path}", _currentDocumentPath);
                     MessageBox.Show($"Error saving source document: {ex.Message}", "Save Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
+                    // Don't block export — user might still want to export
                 }
             }
 
+            // 2. Ask where to save the exported .docx
             var sfd = new SaveFileDialog
             {
-                Filter = "Word Document (*.docx)|*.docx",
-                FileName = $"{TemplateNameTextBox.Text.Trim()}.docx"
+                Filter = "Word Document (*.docx)|*.docx|All Files (*.*)|*.*",
+                FileName = $"{TemplateNameTextBox.Text.Trim()}.docx",
+                Title = "Export Template As..."
             };
 
-            if (sfd.ShowDialog() != true) return;
+            if (sfd.ShowDialog() != true)
+                return;
+
+            string finalDocxPath = sfd.FileName;
 
             try
             {
-                // Step 1: Save SfRichTextBoxAdv content to a temporary .docx file
-                var tempDocx = Path.Combine(Path.GetTempPath(), "template_" + Guid.NewGuid() + ".docx");
-                RichTextEditor.Save(tempDocx);  // <-- This overload accepts file path directly!
+                // Temporary file for conversion
+                string tempDocx = Path.Combine(Path.GetTempPath(), "temp_export_" + Guid.NewGuid() + ".docx");
 
-                // Step 2: Load the saved .docx using Syncfusion DocIO
-                using var wordDocument = new WordDocument(tempDocx);
+                // Save current editor content as .docx
+                RichTextEditor.Save(tempDocx);
 
-                // Step 3: Convert to PDF
-                wordDocument.Save(sfd.FileName,Syncfusion.DocIO.FormatType.Automatic);
-
-                // Step 5: Open the PDF
-                try
+                // Convert to final .docx using DocIO
+                using (var wordDocument = new WordDocument(tempDocx))
                 {
-                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
-                }
-                catch (Win32Exception)
-                {
-                    // Open folder if file can't be opened
-                  //  Process.Start("explorer.exe", $"/select,\"{sfd.FileName}\"");
+                    wordDocument.Save(finalDocxPath, Syncfusion.DocIO.FormatType.Docx);
                 }
 
+                // Clean up temp file
+                if (File.Exists(tempDocx))
+                    File.Delete(tempDocx);
 
-                MessageBox.Show("Template exported successfully!", "Success",
-                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                // Success: Open the exported file
+                //try
+                //{
+                //    Process.Start(new ProcessStartInfo(finalDocxPath) { UseShellExecute = true });
+                //}
+                //catch (Exception ex)
+                //{
+                //    Serilog.Log.Warning(ex, "Could not open exported file: {Path}", finalDocxPath);
+                //}
 
-                MailMerge.Data.Models.Template template = new MailMerge.Data.Models.Template
+                MessageBox.Show("Template exported successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Only now — after successful export — save to database
+                var template = new MailMerge.Data.Models.Template
                 {
-                    Path = sfd.FileName,
-                    Name = TemplateNameTextBox.Text
+                    Name = TemplateNameTextBox.Text.Trim(),
+                    Path = finalDocxPath
                 };
 
-                await _mailMergeEngine.SaveTemplate(template);
+                var (success, message) = await _mailMergeEngine.SaveTemplate(template);
+
+                if (success)
+                {
+                    StatusText.Text = $"Exported and saved: {template.Name}";
+                }
+                else
+                {
+                    MessageBox.Show($"Template exported, but failed to save to database:\n{message}",
+                        "Partial Success", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
                 Serilog.Log.Error(ex, "Export failed for template: {Name}", TemplateNameTextBox.Text);
-                MessageBox.Show($"Export failed: {ex.Message}\n\n{ex.StackTrace}", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Export failed: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

@@ -1,0 +1,88 @@
+﻿<Window x:Class="MailMergeUI.Views.TemplateListView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Templates" Width="900" Height="800"
+        Background="{DynamicResource BackgroundLight}">
+
+    <Border Background="{DynamicResource CardBackgroundLight}"
+            Padding="30" CornerRadius="12"
+            BorderBrush="{DynamicResource DividerColor}" BorderThickness="1"
+            Margin="30">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header with Back Button -->
+            <Border Grid.Row="0" Background="{DynamicResource HeaderBackgroundLight}"
+                    Padding="16,10" CornerRadius="8,8,0,0"
+                    BorderBrush="{DynamicResource DividerColor}" BorderThickness="0,0,0,1">
+                <Button Content="Back" HorizontalAlignment="Right"
+                        Padding="14,6" Style="{StaticResource ToolbarButton}"
+                        Click="BtnBack_Click"/>
+            </Border>
+
+            <!-- Title + Add Button -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,20,0,20">
+                <TextBlock Text="Templates" FontSize="22" FontWeight="Bold"
+                           Foreground="{DynamicResource PrimaryBlue}" VerticalAlignment="Center"/>
+                <Button Content="+ Add Template" Click="BtnAddTemplate_Click"
+                        Style="{StaticResource PrimaryButton}" Margin="20,0,0,0" Padding="20,8"/>
+            </StackPanel>
+
+            <!-- Templates List -->
+            <DataGrid Grid.Row="2" Name="dgTemplates"
+                      AutoGenerateColumns="False" CanUserAddRows="False"
+                      Background="{DynamicResource CardBackgroundLight}"
+                      RowHeight="48" GridLinesVisibility="None"
+                      SelectionMode="Single" IsReadOnly="True">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80"/>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="250"/>
+                    <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                <Setter Property="ToolTip" Value="{Binding Path}"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <!-- Delete Button Column -->
+                    <DataGridTemplateColumn Header="Action" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Delete" Tag="{Binding}"
+                                        Click="BtnDelete_Click"
+                                        Padding="16,6" Margin="4"
+                                        Background="#FF5252" Foreground="White"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="IsEnabled" Value="True"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsInUse}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="ToolTip" Value="Cannot delete: used in campaign(s)"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Status Message -->
+            <TextBlock Grid.Row="3" Name="lblStatus" Foreground="#64748B"
+                       FontSize="13" HorizontalAlignment="Center" Margin="0,15"/>
+        </Grid>
+    </Border>
+</Window>

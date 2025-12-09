@@ -1,0 +1,81 @@
+﻿<Window x:Class="MailMergeUI.Views.PrintHistoryReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print History Report" Height="700" Width="900"
+        Background="{DynamicResource BackgroundLight}">
+
+    <Border Background="{DynamicResource CardBackgroundLight}"
+            Margin="30" CornerRadius="12"
+            BorderBrush="{DynamicResource DividerColor}" BorderThickness="1"
+            Padding="30">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="{DynamicResource HeaderBackgroundLight}"
+                    Padding="16,12" CornerRadius="8,8,0,0"
+                    BorderBrush="{DynamicResource DividerColor}" BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Print History Report" FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryBlue}" VerticalAlignment="Center"/>
+                    <Button Content="Refresh" Click="BtnRefresh_Click"
+                            Style="{StaticResource ToolbarButton}" Margin="20,0"
+                            Padding="16,8"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Summary Card -->
+            <Border Grid.Row="1" Background="{DynamicResource PrimaryBlue}"
+                    CornerRadius="10" Padding="20" Margin="0,20,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Total Letters Printed" Foreground="White" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Name="lblTotal" Foreground="White" FontSize="28" FontWeight="Bold"
+                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- DataGrid -->
+            <Border Grid.Row="2" Background="{DynamicResource CardBackgroundLight}"
+                    CornerRadius="8" BorderBrush="{DynamicResource DividerColor}" BorderThickness="1">
+                <DataGrid Name="dgPrintHistory" AutoGenerateColumns="False" IsReadOnly="True"
+                          GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                          Background="Transparent" RowHeight="40" FontSize="14">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date" Binding="{Binding PrintDate, StringFormat='{}{0:dddd, MMMM dd, yyyy}'}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Letters Printed" Binding="{Binding Count}" Width="180">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryBlue}"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Footer Info -->
+            <TextBlock Grid.Row="3" Name="lblDateRange" Foreground="{DynamicResource TextMuted}"
+                       FontSize="13" HorizontalAlignment="Center" Margin="0,15"/>
+        </Grid>
+    </Border>
+</Window>

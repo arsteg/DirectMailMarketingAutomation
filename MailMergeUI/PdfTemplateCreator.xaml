@@ -147,7 +147,7 @@
         <Border Grid.Row="1" Background="{StaticResource CardBackgroundLight}"  Padding="16" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" >
                 <!-- Load Word -->
-                <Button Content="📁 Load Word" Style="{StaticResource ModernButtonStyle}" Padding="14,8" Click="LoadWord_Click" ToolTip="Load a Word document"/>
+                <Button Content="📁 Load Template" Style="{StaticResource ModernButtonStyle}" Padding="14,8" Click="LoadWord_Click" ToolTip="Load a Word Template"/>
 
                 <!-- Preview CSV -->
                 <Button Content="📊 Preview CSV" Style="{StaticResource ModernButtonStyle}" Padding="14,8" Click="LoadCSV_Click" ToolTip="Preview with CSV data"/>
@@ -163,10 +163,10 @@
                 <ComboBox x:Name="DateFieldComboBox" Width="160" Style="{StaticResource ModernComboBoxStyle}" SelectedIndex="0" SelectionChanged="DateFieldComboBox_SelectionChanged" ToolTip="Choose date format" Margin="5,0,0,0"/>
 
                 <!-- Template Name -->
-                <TextBlock Text="Template:" VerticalAlignment="Center" FontSize="12"  Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                <TextBlock Text="Template Name:" VerticalAlignment="Center" FontSize="12"  Foreground="{StaticResource TextDark}" FontWeight="SemiBold" Margin="8,0,0,0"/>
                 <TextBox x:Name="TemplateNameTextBox" Width="180" Text="My Template" Style="{StaticResource ModernTextBoxStyle}" ToolTip="Enter template name" Margin="5,0,0,0"/>
                 <!-- Save Source Checkbox -->
-                <CheckBox x:Name="SaveSourceCheckBox" Content="Save Source" VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource TextDark}" Margin="12,0,0,0" ToolTip="Save the source Word document"/>
+                <CheckBox x:Name="SaveSourceCheckBox" Content="Save Source" VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource TextDark}" IsChecked="True" IsEnabled="False" Margin="12,0,0,0" ToolTip="Save the source Word document"/>
                 <Separator Style="{StaticResource SeparatorStyle}"/>
 
                 <!-- Export PDF -->

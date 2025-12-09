@@ -5,6 +5,7 @@ using MailMerge.Data;
 using MailMerge.Data.Helpers;
 using MailMerge.Data.Models;
 using MailMergeEngine.Helpers;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
@@ -87,20 +88,32 @@ namespace MailMergeEngine
             return _db.Properties.ToList();
         }
 
-        public async Task SaveTemplate(MailMerge.Data.Models.Template template)
+        public async Task<(bool,string)> SaveTemplate(MailMerge.Data.Models.Template template)
         {
             if (template == null)
-                return;
+                return (false,"Template name is required");
+
             try
             {
+                // Check if a template with the same Name already exists (case-insensitive)
+                bool exists = await _db.Templates
+                    .AnyAsync(t => t.Name.Trim().ToLower() == template.Name.Trim().ToLower());
+
+                if (exists)
+                {
+                    Log.Warning("Attempted to add duplicate template name: {TemplateName}", template.Name);
+                    return (false, $"Attempted to add duplicate template name: {template.Name}"); // Duplicate found - not saved
+                }
+
                 _db.Templates.Add(template);
                 await _db.SaveChangesAsync();
+                return (true, "Successfully saved"); // Successfully saved
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error saving Template");
+                Log.Error(ex, "Error saving Template: {TemplateName}", template.Name);
+                return (false, $"\"Error saving Template: {template.Name}"); 
             }
-
         }
 
         //public async Task<byte[]> FillTemplate(string templatePath, PropertyRecord record)

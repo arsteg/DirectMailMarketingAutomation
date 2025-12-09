@@ -31,5 +31,11 @@
     <Compile Update="Views\CampaignListView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\PrintHistoryReportWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\TemplateListView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 </Project>
