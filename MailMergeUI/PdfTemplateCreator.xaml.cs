@@ -126,9 +126,9 @@ namespace MailMergeUI
 
             string text = DateFieldComboBox.SelectedIndex switch
             {
-                1 => DateTime.Now.Day.ToString(),
-                2 => DateTime.Now.ToString("MMMM"),
-                3 => DateTime.Now.Year.ToString(),
+                1 => " {Day}",
+                2 => " {Month}",
+                3 => " {Year}",
                 _ => ""
             };
 

@@ -64,6 +64,9 @@ namespace MailMergeEngine.Helpers
                 ReplaceField("Trustee", record.Trustee);
                 ReplaceField("Trustee Phone", record.TrusteePhone);
                 ReplaceField("TS Number", record.TsNumber);
+                ReplaceField("Day", DateTime.Now.Day.ToString());
+                ReplaceField("Month", DateTime.Now.ToString("MMMM"));
+                ReplaceField("Year", DateTime.Now.Year.ToString());
 
                 // 4. Save to MemoryStream
                 using (var outStream = new MemoryStream())
