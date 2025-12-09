@@ -136,7 +136,7 @@ namespace MailMergeUI.ViewModels
     
         }
 
-        private async Task LoadPendingCountAsync()
+        public async Task LoadPendingCountAsync()
         {
             try
             {

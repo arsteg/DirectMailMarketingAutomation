@@ -98,6 +98,19 @@ public class ApiService
 
                                                 await _engine.ExportBatch(templatePath, records, outputFileName);
 
+                                                // Convert DOCX to PDF first, then print
+   
+                                                WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
+                                                var converter = new DocToPDFConverter();
+                                                var pdfDocument = converter.ConvertToPDF(wordDocument);
+                                                pdfDocument.Save(outputFileName);
+                                                pdfDocument.Close(true);
+
+                                                foreach (var item in records)
+                                                {
+                                                    AddRecordToPrintHistory(item.Id,campaign,stage,campaign.Printer, outputFileName);
+                                                   
+                                                }
                                                 // Verify the file was created
                                                 if (!File.Exists(outputFileName))
                                                 {
@@ -105,52 +118,6 @@ public class ApiService
                                                     return;
                                                 }
 
-                                                if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
-                                                {
-                                                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
-                                                    bool printerExists = false;
-                                                    foreach (string printer in printers)
-                                                    {
-                                                        if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
-                                                        {
-                                                            printerExists = true;
-                                                            break;
-                                                        }
-                                                    }
-
-                                                    if (printerExists)
-                                                    {
-                                                        // Convert DOCX to PDF first, then print
-                                                        string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
-
-                                                        WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
-                                                        var converter = new DocToPDFConverter();
-                                                        var pdfDocument = converter.ConvertToPDF(wordDocument);
-
-                                                        pdfDocument.Save(pdfPath);
-                                                        pdfDocument.Close(true);
-
-                                                        if (File.Exists(pdfPath))
-                                                        {
-                                                            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
-                                                            using (var printDoc = pdfDoc.CreatePrintDocument())
-                                                            {
-                                                                printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
-                                                                printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                                                printDoc.Print();
-                                                                Log.Information("Printed document to {Printer}", selectedPrinter);
-                                                            }
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    Log.Information($"No printer configured for campaign '{campaign.Name}'");
-                                                }
                                             }
                                         }
                                     }
@@ -197,59 +164,27 @@ public class ApiService
                                                     // Export the batch with the timestamped filename
                                                     await _engine.ExportBatch(templatePath, records, outputFileName);
 
-                                                    // Verify the file was created
-                                                    if (!File.Exists(outputFileName))
+                                                // Convert DOCX to PDF first, then print
+
+                                                WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
+                                                var converter = new DocToPDFConverter();
+                                                var pdfDocument = converter.ConvertToPDF(wordDocument);
+                                                pdfDocument.Save(outputFileName);
+                                                pdfDocument.Close(true);
+
+                                                foreach (var item in records)
+                                                {
+                                                    AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
+
+                                                }
+                                                // Verify the file was created
+                                                if (!File.Exists(outputFileName))
                                                     {
                                                         Log.Error($"Failed to generate document: {outputFileName}");
                                                         return;
                                                     }
 
-                                                if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
-                                                {
-                                                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
-                                                        bool printerExists = false;
-                                                        foreach (string printer in printers)
-                                                        {
-                                                            if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
-                                                            {
-                                                                printerExists = true;
-                                                                break;
-                                                            }
-                                                        }
 
-                                                        if (printerExists)
-                                                        {
-                                                            // Convert DOCX to PDF first, then print
-                                                            string pdfPath = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
-
-                                                          
-                                                            WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
-                                                            var converter = new DocToPDFConverter();
-                                                            var pdfDocument = converter.ConvertToPDF(wordDocument);
-                                                            pdfDocument.Save(pdfPath);
-                                                            pdfDocument.Close(true);
-
-                                                            if (File.Exists(pdfPath))
-                                                            {
-                                                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
-                                                                using (var printDoc = pdfDoc.CreatePrintDocument())
-                                                                {
-                                                                    printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
-                                                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                                                    printDoc.Print();
-                                                                    Log.Information("Printed document to {Printer}", selectedPrinter);
-                                                                }
-                                                            }
-                                                        }
-                                                        else
-                                                        {
-                                                            Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        Log.Information($"No printer configured for campaign '{campaign.Name}'");
-                                                    }
                                                 }
                                             }
 
@@ -489,6 +424,19 @@ public class ApiService
             }
             
         }
+    }
+
+    private async Task AddRecordToPrintHistory(int propertyId, Campaign campaign, FollowUpStage stage, string selectedPrinter, string pdfPath)
+    {
+        _context.PrintHistory.Add(new PrintHistory
+        {
+            PropertyId = propertyId,
+            CampaignId = campaign.Id,
+            StageId = stage.Id,
+            PrinterName = selectedPrinter,
+            FilePath = pdfPath
+        });
+        await _context.SaveChangesAsync();
     }
 
 }

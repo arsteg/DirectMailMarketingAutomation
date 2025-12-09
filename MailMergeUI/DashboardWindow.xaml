@@ -112,7 +112,7 @@
 
                     <!-- Actions -->
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" Orientation="Horizontal">
-                        <Button Content="Print Today's Batch" Command="{Binding PrintTodayCommand}" 
+                        <Button Content="Print Today's Batch" Command="{Binding PrintTodayCommand}" Click="btnPrintTodaysBatch_Click" 
                  Width="200" Height="50" FontSize="16" Margin="10" Background="{StaticResource PrimaryGradient}"
 Foreground="White"
 BorderBrush="Transparent"/>

@@ -31,31 +31,72 @@
             </Border>
 
             <!-- Summary Card -->
-            <Border Grid.Row="1" Background="{DynamicResource PrimaryBlue}"
-                    CornerRadius="10" Padding="20" Margin="0,20,0,20">
+            <Border Grid.Row="1" Background="#2196F3"
+        CornerRadius="10" Padding="20" Margin="0,20,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Total Letters Printed" Foreground="White" FontSize="16" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="1" Name="lblTotal" Foreground="White" FontSize="28" FontWeight="Bold"
-                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <TextBlock Text="Total Letters Printed" 
+                   Foreground="#FFFFFF" 
+                   FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Name="lblTotal" 
+                   Foreground="#FFFFFF" 
+                   FontSize="28" FontWeight="Bold"
+                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
                 </Grid>
             </Border>
 
             <!-- DataGrid -->
             <Border Grid.Row="2" Background="{DynamicResource CardBackgroundLight}"
-                    CornerRadius="8" BorderBrush="{DynamicResource DividerColor}" BorderThickness="1">
+        CornerRadius="8" BorderBrush="{DynamicResource DividerColor}" BorderThickness="1">
                 <DataGrid Name="dgPrintHistory" AutoGenerateColumns="False" IsReadOnly="True"
-                          GridLinesVisibility="Horizontal" HeadersVisibility="Column"
-                          Background="Transparent" RowHeight="40" FontSize="14">
+              GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+              Background="Transparent" RowHeight="40" FontSize="14">
+                    <DataGrid.Resources>
+                        <!-- DataGrid Cell Style -->
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+                        </Style>
+
+                        <!-- DataGrid Row Style -->
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+
+                        <!-- DataGrid Column Header Style - White text in dark mode -->
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="Padding" Value="12,10"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource DividerColor}"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                        </Style>
+                    </DataGrid.Resources>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Date" Binding="{Binding PrintDate, StringFormat='{}{0:dddd, MMMM dd, yyyy}'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                     <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Margin" Value="12,0"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
@@ -72,7 +113,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
-
+            
             <!-- Footer Info -->
             <TextBlock Grid.Row="3" Name="lblDateRange" Foreground="{DynamicResource TextMuted}"
                        FontSize="13" HorizontalAlignment="Center" Margin="0,15"/>
