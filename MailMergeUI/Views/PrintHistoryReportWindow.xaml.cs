@@ -13,41 +13,39 @@ namespace MailMergeUI.Views
         public PrintHistoryReportWindow(MailMergeDbContext dbContext)
         {
             InitializeComponent();
-            _dbContext = dbContext; // Or inject via constructor
+            _dbContext = dbContext;
             Loaded += PrintHistoryReportWindow_Loaded;
         }
 
         private void PrintHistoryReportWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            SetDefaultDateRange();
             LoadPrintHistoryReport();
         }
 
-        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+        private void SetDefaultDateRange()
         {
-            LoadPrintHistoryReport();
+            var today = DateTime.Today;
+            bool isLastDayOfMonth = today.AddDays(1).Day == 1; // tomorrow is 1st of next month
+
+            DateTime fromDate = isLastDayOfMonth
+                ? new DateTime(today.Year, today.Month, 1)
+                : new DateTime(today.AddMonths(-1).Year, today.AddMonths(-1).Month, 1);
+
+            dpFromDate.SelectedDate = fromDate;
+            dpToDate.SelectedDate = today;
         }
 
         private void LoadPrintHistoryReport()
         {
-            var today = DateTime.Today;
-            DateTime startDate;
-            DateTime endDate = today;
+            if (!dpFromDate.SelectedDate.HasValue || !dpToDate.SelectedDate.HasValue)
+                return;
 
-            // Special rule: If today is the last day of the month → show only current month
-            bool isLastDayOfMonth = today.AddDays(1).Month != today.Month;
-
-            if (isLastDayOfMonth)
-            {
-                startDate = new DateTime(today.Year, today.Month, 1);
-            }
-            else
-            {
-                // Previous month start → today
-                startDate = new DateTime(today.AddMonths(-1).Year, today.AddMonths(-1).Month, 1);
-            }
+            var fromDate = dpFromDate.SelectedDate.Value.Date;
+            var toDate = dpToDate.SelectedDate.Value.Date;
 
             var data = _dbContext.PrintHistory
-                .Where(ph => ph.PrintedAt.Date >= startDate && ph.PrintedAt.Date <= endDate)
+                .Where(ph => ph.PrintedAt.Date >= fromDate && ph.PrintedAt.Date <= toDate)
                 .GroupBy(ph => ph.PrintedAt.Date)
                 .Select(g => new PrintDaySummary
                 {
@@ -60,14 +58,31 @@ namespace MailMergeUI.Views
             dgPrintHistory.ItemsSource = data;
 
             int total = data.Sum(x => x.Count);
-            lblTotal.Text = total.ToString("N0"); // e.g., 1,234
+            lblTotal.Text = total.ToString("N0");
 
-            lblDateRange.Text = $"Showing data from {startDate:MMMM dd, yyyy} to {endDate:MMMM dd, yyyy} " +
-                                (isLastDayOfMonth ? "(Current month only - last day)" : "(Previous month + current)");
+            lblDateRange.Text = $"Showing {data.Count} days from {fromDate:MMMM dd, yyyy} to {toDate:MMMM dd, yyyy} • Total: {total:N0} letters";
+        }
+
+        private void BtnRefresh_Click(object sender, RoutedEventArgs e) => LoadPrintHistoryReport();
+
+        private void BtnApplyFilter_Click(object sender, RoutedEventArgs e)
+        {
+            if (!dpFromDate.SelectedDate.HasValue || !dpToDate.SelectedDate.HasValue)
+            {
+                MessageBox.Show("Please select both From and To dates.", "Missing Date", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (dpFromDate.SelectedDate > dpToDate.SelectedDate)
+            {
+                MessageBox.Show("From Date cannot be later than To Date.", "Invalid Range", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            LoadPrintHistoryReport();
         }
     }
 
-    // Helper class for DataGrid
     public class PrintDaySummary
     {
         public DateTime PrintDate { get; set; }
