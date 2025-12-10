@@ -340,7 +340,9 @@ namespace MailMergeUI.ViewModels
         }
 
         private void Save()
-        {           
+        {
+            // Save printer from ViewModel property (NOT from UI element)
+            Campaign.Printer = SelectedPrinter;
             if (string.IsNullOrWhiteSpace(Campaign.Name))
             {
                 System.Windows.MessageBox.Show("Campaign name is required.");
@@ -361,6 +363,13 @@ namespace MailMergeUI.ViewModels
                 return;
             }
 
+            // Validate printer selection
+            if (string.IsNullOrWhiteSpace(SelectedPrinter) || SelectedPrinter == "Select Printer")
+            {
+                System.Windows.MessageBox.Show("Please select a printer.");
+                return;
+            }
+
             // Enforce first stage = 0 days
             if (Stages.Count > 0 && Stages[0].DelayDays != 0)
                 Stages[0].DelayDays = 0; // Only enforce if invalid
@@ -378,9 +387,7 @@ namespace MailMergeUI.ViewModels
                 //Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
                 
                 Campaign.LeadSource.DaysOfWeek = DayCheckBoxes.Where(x=>x.IsChecked == true).Select(x=>x.DisplayName).ToList();
-               
-                // Save printer from ViewModel property (NOT from UI element)
-                Campaign.Printer = SelectedPrinter ?? string.Empty;
+
 
                 if (Campaign.Id == 0)
                 {

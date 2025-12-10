@@ -18,17 +18,17 @@ namespace MailMergeUI.Services
         }
 
         // ================================================================
-        // 1. Pending Letters to Print Today – FULLY WORKING (No EF.Property!)
+        // 1. Pending Letters to Print Today – Filtered by Campaign
         // ================================================================
-        public async Task<int> GetPendingLettersTodayAsync()
+        public async Task<int> GetPendingLettersTodayAsync(int campaignId)
         {
             var today = DateTime.Today;
             var now = DateTime.Now.TimeOfDay;
 
-            // This query is 100% translatable – we only project what we need
-            var campaigns = await _context.Campaigns
+            // Filter by specific campaignId
+            var campaign = await _context.Campaigns
                 .AsNoTracking()
-                .Where(c => c.LeadSource != null) // Ensure LeadSource exists
+                .Where(c => c.Id == campaignId && c.LeadSource != null)
                 .Select(c => new
                 {
                     c.LastRunningTime,
@@ -41,92 +41,90 @@ namespace MailMergeUI.Services
                         s.IsRun
                     }).ToList()
                 })
-                .ToListAsync(); // ← This is fine – very small dataset (your campaigns, not 100k records)
+                .FirstOrDefaultAsync();
+
+            if (campaign == null) return 0;
+
+            bool shouldRunToday = false;
+
+            if (campaign.Type == ScheduleType.Daily && now >= campaign.RunAt)
+                shouldRunToday = true;
+
+            else if (campaign.Type == ScheduleType.None)
+            {
+                if (campaign.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase) &&
+                    now >= campaign.RunAt)
+                    shouldRunToday = true;
+            }
+
+            if (!shouldRunToday) return 0;
+
+            var baseDate = campaign.LastRunningTime == default(DateTime)
+                ? DateTime.MinValue.Date
+                : campaign.LastRunningTime.Date;
 
             int pending = 0;
-
-            foreach (var c in campaigns)
+            foreach (var stage in campaign.Stages)
             {
-                bool shouldRunToday = false;
-
-                if (c.Type == ScheduleType.Daily && now >= c.RunAt)
-                    shouldRunToday = true;
-
-                else if (c.Type == ScheduleType.None)
-                {
-                    if (c.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase) &&
-                        now >= c.RunAt)
-                        shouldRunToday = true;
-                }
-
-                if (!shouldRunToday) continue;
-
-                var baseDate = c.LastRunningTime == default(DateTime)
-                    ? DateTime.MinValue.Date
-                    : c.LastRunningTime.Date;
-
-                foreach (var stage in c.Stages)
-                {
-                    if (!stage.IsRun && today >= baseDate.AddDays(stage.DelayDays))
-                        pending++;
-                }
+                if (!stage.IsRun && today >= baseDate.AddDays(stage.DelayDays))
+                    pending++;          
             }
 
             return pending;
         }
 
         // ================================================================
-        // 2. Due Letters Today
+        // 2. Due Letters Today – Filtered by Campaign
         // ================================================================
-        public async Task<int> GetDueLettersTodayAsync()
+        public async Task<int> GetDueLettersTodayAsync(int campaignId)
         {
             var today = DateTime.Today;
 
-            var campaigns = await _context.Campaigns
+            var campaign = await _context.Campaigns
                 .AsNoTracking()
+                .Where(c => c.Id == campaignId)
                 .Select(c => new
                 {
                     c.LastRunningTime,
                     Stages = c.Stages.Select(s => new { s.DelayDays, s.IsRun }).ToList()
                 })
-                .ToListAsync();
+                .FirstOrDefaultAsync();
+
+            if (campaign == null) return 0;
+
+            var baseDate = campaign.LastRunningTime == default(DateTime)
+                ? DateTime.MinValue.Date
+                : campaign.LastRunningTime.Date;
 
             int due = 0;
-            foreach (var c in campaigns)
+            foreach (var s in campaign.Stages)
             {
-                var baseDate = c.LastRunningTime == default(DateTime)
-                    ? DateTime.MinValue.Date
-                    : c.LastRunningTime.Date;
-
-                foreach (var s in c.Stages)
-                {
-                    if (!s.IsRun && baseDate.AddDays(s.DelayDays) == today)
-                        due++;
-                }
+                if (!s.IsRun && baseDate.AddDays(s.DelayDays) == today)
+                    due++;
             }
 
             return due;
         }
 
         // ================================================================
-        // 3. Letters Printed Today
+        // 3. Letters Printed Today – Filtered by Campaign
         // ================================================================
-        public async Task<int> GetLettersPrintedTodayAsync()
+        public async Task<int> GetLettersPrintedTodayAsync(int campaignId)
         {
             var today = DateTime.Today;
             return await _context.PrintHistory
-                .Where(p => p.PrintedAt.Date == today)
+                .Where(p => p.CampaignId == campaignId && p.PrintedAt.Date == today)
                 .CountAsync();
         }
 
         // ================================================================
-        // 4. Letters Printed This Month
+        // 4. Letters Printed This Month – Filtered by Campaign
         // ================================================================
-        public async Task<int> GetLettersPrintedThisMonthAsync()
+        public async Task<int> GetLettersPrintedThisMonthAsync(int campaignId)
         {
             var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             return await _context.PrintHistory
-                .Where(p => p.PrintedAt >= startOfMonth)
+                .Where(p => p.CampaignId == campaignId && p.PrintedAt >= startOfMonth)
                 .CountAsync();
         }
     }

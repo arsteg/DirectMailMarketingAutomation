@@ -146,8 +146,9 @@ namespace MailMergeUI
 
                 var campaign = viewModel.ActiveCampaign;
                 var selectedPrinter = campaign.Printer;
+                var runAt = campaign.LeadSource.RunAt;
 
-                //// Get the current stage for this campaign
+                // Get the current stage for this campaign
                 var stage = campaign.Stages.FirstOrDefault();
                 if (stage == null)
                 {
@@ -156,125 +157,202 @@ namespace MailMergeUI
                     return;
                 }
 
-                // Get records for this campaign
-                var records = await _dbContext.Properties
-                    .Where(x => x.CampaignId == campaign.Id)
-                    .ToListAsync();
+                var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
+                string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+                var nowTime = DateTime.Now;
 
-                if (records == null || !records.Any())
+                if (nowTime.TimeOfDay < runAt)
                 {
-                    MessageBox.Show("No records found for this campaign.", "No Records",
+                    MessageBox.Show("No Batch is available to Print", "Not Available",
                                    MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                //// Get template path
-                var templatePath = await _dbContext.Templates
-                    .Where(x => x.Id.ToString() == stage.TemplateId)
-                    .Select(x => x.Path)
-                    .FirstOrDefaultAsync();
-
-                if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
+                // Check if the DOCX file already exists
+                if (File.Exists(outputFileName))
                 {
-                    MessageBox.Show("Template file not found.", "Error",
-                                   MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                // Create output directory
-                var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
-                if (!Directory.Exists(outputPath))
-                {
-                    Directory.CreateDirectory(outputPath);
-                }
-
-                // Generate output file
-                string outputFileName = Path.Combine(outputPath,
-                    $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
-
-                //  // Export the batch
-                await _mailMergeEngine.ExportBatch(templatePath, records, outputFileName);
-
-                // Verify the file was created
-                if (!File.Exists(outputFileName))
-                {
-                    Log.Error($"Failed to generate document: {outputFileName}");
-                    MessageBox.Show("Failed to generate document.", "Error",
-                                   MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                Log.Information($"Document generated: {outputFileName}");
-
-                // Print if printer is configured
-                if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
-                {
-                    var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
-                    bool printerExists = false;
-
-                    foreach (string printer in printers)
+                    // File exists, just print it
+                    if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
                     {
-                        if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
-                        {
-                            printerExists = true;
-                            break;
-                        }
-                    }
+                        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+                        bool printerExists = false;
 
-                    if (printerExists)
-                    {
-                        // Convert DOCX to PDF
-                        string pdfPath = Path.Combine(outputPath,
-                            $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
-
-                        using (WordDocument wordDocument = new WordDocument(outputFileName,
-                            Syncfusion.DocIO.FormatType.Automatic))
+                        foreach (string printer in printers)
                         {
-                            var converter = new DocToPDFConverter();
-                            using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                            if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
                             {
-                                pdfDocument.Save(pdfPath);
+                                printerExists = true;
+                                break;
                             }
                         }
 
-                        // Print the PDF
-                        if (File.Exists(pdfPath))
+                        if (printerExists)
                         {
-                            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfPath))
-                            using (var printDoc = pdfDoc.CreatePrintDocument())
+                            // Convert DOCX to PDF
+                            using (WordDocument wordDocument = new WordDocument(outputFileName,
+                                Syncfusion.DocIO.FormatType.Automatic))
                             {
-                                printDoc.DocumentName = $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}";
-                                printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                printDoc.Print();
-                                Log.Information("Printed {Count} letters to {Printer} for campaign {Campaign}",
-                                    records.Count, selectedPrinter, campaign.Name);
+                                var converter = new DocToPDFConverter();
+                                using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                {
+                                    pdfDocument.Save(pdfFileName);
+                                }
                             }
 
-                            MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
-                                "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                            // Print the PDF
+                            if (File.Exists(pdfFileName))
+                            {
+                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
+                                using (var printDoc = pdfDoc.CreatePrintDocument())
+                                {
+                                    printDoc.DocumentName = $"{campaign.Name}";
+                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                    printDoc.Print();
+                                }
+
+                                Log.Information("Reprinted existing document to {Printer} for campaign {Campaign}",
+                                    selectedPrinter, campaign.Name);
+                                MessageBox.Show($"Successfully printed letters for campaign: {campaign.Name}",
+                                    "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show("Failed to convert document to PDF.", "Error",
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
                         }
                         else
                         {
-                            MessageBox.Show("Failed to convert document to PDF.", "Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
+                            Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
+                            MessageBox.Show($"Printer '{selectedPrinter}' not found.\n\nAvailable printers:\n{string.Join("\n", printers.Cast<string>())}",
+                                "Printer Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
                     }
                     else
                     {
-                        Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
-                        MessageBox.Show($"Printer '{selectedPrinter}' not found.\n\nAvailable printers:\n{string.Join("\n", printers.Cast<string>())}",
-                            "Printer Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        Log.Information($"No printer configured for campaign '{campaign.Name}'. Document already exists at: {outputFileName}");
+                        MessageBox.Show($"Document already exists (no printer configured).\n\nSaved to:\n{outputFileName}",
+                            "Document Exists", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
                 else
                 {
-                    Log.Information($"No printer configured for campaign '{campaign.Name}'. Document saved to: {outputFileName}");
-                    MessageBox.Show($"Document generated successfully (no printer configured).\n\nSaved to:\n{outputFileName}",
-                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // File doesn't exist, generate it first
+                    // Get records for this campaign
+                    //var records = await _dbContext.Properties
+                    //    .Where(x => x.CampaignId == campaign.Id)
+                    //    .ToListAsync();
+
+                    var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+
+                    if (records == null || !records.Any())
+                    {
+                        MessageBox.Show("No records found for this campaign.", "No Records",
+                                       MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
+                    }
+
+                    // Get template path
+                    var templatePath = await _dbContext.Templates
+                        .Where(x => x.Id.ToString() == stage.TemplateId)
+                        .Select(x => x.Path)
+                        .FirstOrDefaultAsync();
+
+                    if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
+                    {
+                        MessageBox.Show("Template file not found.", "Error",
+                                       MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // Create output directory
+                    if (!Directory.Exists(outputPath))
+                    {
+                        Directory.CreateDirectory(outputPath);
+                    }
+
+                    // Export the batch
+                    await _mailMergeEngine.ExportBatch(templatePath, records, outputFileName);
+
+                    // Verify the file was created
+                    if (!File.Exists(outputFileName))
+                    {
+                        Log.Error($"Failed to generate document: {outputFileName}");
+                        MessageBox.Show("Failed to generate document.", "Error",
+                                       MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    Log.Information($"Document generated: {outputFileName}");
+
+                    // Print if printer is configured
+                    if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
+                    {
+                        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
+                        bool printerExists = false;
+
+                        foreach (string printer in printers)
+                        {
+                            if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
+                            {
+                                printerExists = true;
+                                break;
+                            }
+                        }
+
+                        if (printerExists)
+                        {
+                            // Convert DOCX to PDF
+                            using (WordDocument wordDocument = new WordDocument(outputFileName,
+                                Syncfusion.DocIO.FormatType.Automatic))
+                            {
+                                var converter = new DocToPDFConverter();
+                                using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                {
+                                    pdfDocument.Save(pdfFileName);
+                                }
+                            }
+
+                            // Print the PDF
+                            if (File.Exists(pdfFileName))
+                            {
+                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
+                                using (var printDoc = pdfDoc.CreatePrintDocument())
+                                {
+                                    printDoc.DocumentName = $"{campaign.Name}";
+                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                    printDoc.Print();
+                                }
+
+                                Log.Information("Printed {Count} letters to {Printer} for campaign {Campaign}",
+                                    records.Count, selectedPrinter, campaign.Name);
+                                MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
+                                    "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show("Failed to convert document to PDF.", "Error",
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                        }
+                        else
+                        {
+                            Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
+                            MessageBox.Show($"Printer '{selectedPrinter}' not found.\n\nAvailable printers:\n{string.Join("\n", printers.Cast<string>())}",
+                                "Printer Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
+                    else
+                    {
+                        Log.Information($"No printer configured for campaign '{campaign.Name}'. Document saved to: {outputFileName}");
+                        MessageBox.Show($"Document generated successfully (no printer configured).\n\nSaved to:\n{outputFileName}",
+                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
 
-                // Refresh dashboard
-                 await viewModel.LoadPendingCountAsync();
+                // Refresh dashboard after all operations complete
+                await viewModel.LoadPendingCountAsync();
             }
             catch (Exception ex)
             {

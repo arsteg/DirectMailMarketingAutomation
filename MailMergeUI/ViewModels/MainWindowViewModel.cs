@@ -30,11 +30,16 @@ namespace MailMergeUI.ViewModels
         public Campaign ActiveCampaign
         {
             get => _activeCampaign;
-            set
-            {
-                _activeCampaign = value;
-                OnPropertyChanged();
-                _ = LoadPendingCountAsync();
+            set{
+                if (_activeCampaign != value)
+                {
+                    _activeCampaign = value;
+                    OnPropertyChanged();
+                    if (_activeCampaign != null)
+                    {
+                        _ = LoadPendingCountAsync();
+                    }
+                }
             }
         }
 
@@ -138,22 +143,33 @@ namespace MailMergeUI.ViewModels
 
         public async Task LoadPendingCountAsync()
         {
+            if (ActiveCampaign == null)
+            {
+                // Reset all counts if no campaign is selected
+                PendingLetters = 0;
+                DueToday = 0;
+                PrintedToday = 0;
+                PrintedThisMonth = 0;
+                Status = "No campaign selected.";
+                return;
+            }
+
             try
             {
-                Status = "Searching leads...";
-                PendingLetters = await _dashboardService.GetPendingLettersTodayAsync();
+                Status = $"Loading data for {ActiveCampaign.Name}...";
 
-               DueToday = await _dashboardService.GetDueLettersTodayAsync();
-               PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync();
-               PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync();
+                PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
+                DueToday = await _dashboardService.GetDueLettersTodayAsync(ActiveCampaign.Id);
+                PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
+                PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync(ActiveCampaign.Id);
 
-                Status = $"{PendingLetters} letters pending today.";
+                Status = $"{PendingLetters} letters pending today for {ActiveCampaign.Name}.";
             }
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-           
+
         }
 
         private async Task RefreshLeadsAsync()

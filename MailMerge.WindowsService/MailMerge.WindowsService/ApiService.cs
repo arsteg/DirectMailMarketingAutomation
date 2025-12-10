@@ -94,18 +94,20 @@ public class ApiService
                                             }
                                             if (templatePath != null)
                                             {
-                                                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+                                                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
 
-                                                await _engine.ExportBatch(templatePath, records, outputFileName);
+                                                await _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
 
-                                                // Convert DOCX to PDF first, then print
-   
-                                                WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
-                                                var converter = new DocToPDFConverter();
-                                                var pdfDocument = converter.ConvertToPDF(wordDocument);
-                                                pdfDocument.Save(outputFileName);
-                                                pdfDocument.Close(true);
-
+                                                // Convert DOCX to PDF
+                                                string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+                                                using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                                                {
+                                                    var converter = new DocToPDFConverter();
+                                                    using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                    {
+                                                        pdfDocument.Save(pdfFileName);  // ✅ Save PDF to .pdf file
+                                                    }
+                                                }
                                                 foreach (var item in records)
                                                 {
                                                     AddRecordToPrintHistory(item.Id,campaign,stage,campaign.Printer, outputFileName);
@@ -159,19 +161,22 @@ public class ApiService
                                             }
                                                 if (templatePath != null)
                                                 {
-                                                    string outputFileName = Path.Combine(outputPath, $"{campaign.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+                                                    string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
 
-                                                    // Export the batch with the timestamped filename
-                                                    await _engine.ExportBatch(templatePath, records, outputFileName);
+                                                    await _engine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
 
                                                 // Convert DOCX to PDF first, then print
 
-                                                WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic);
-                                                var converter = new DocToPDFConverter();
-                                                var pdfDocument = converter.ConvertToPDF(wordDocument);
-                                                pdfDocument.Save(outputFileName);
-                                                pdfDocument.Close(true);
-
+                                                // Convert DOCX to PDF
+                                                string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+                                                using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                                                {
+                                                    var converter = new DocToPDFConverter();
+                                                    using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                    {
+                                                        pdfDocument.Save(pdfFileName); 
+                                                    }
+                                                }
                                                 foreach (var item in records)
                                                 {
                                                     AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
