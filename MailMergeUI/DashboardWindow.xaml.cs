@@ -113,10 +113,13 @@ namespace MailMergeUI
             this.Close();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-                    {
-
-                        }
+        private void btnCreateTemplate_Click(object sender, RoutedEventArgs e)
+        {
+            TemplateWindow template = new TemplateWindow(_dbContext);
+            template.WindowState = this.WindowState;
+            template.Show();
+            this.Close();
+        }
 
         private void btnPrintHistory_Click(object sender, RoutedEventArgs e)
                 {

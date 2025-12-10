@@ -44,7 +44,8 @@
                 </Border>
 
                 <Button Content=" Mail Merge" Style="{DynamicResource MailMergeButtonStyle}" Click="OpenMainWindow_Click"/>
-                <Button Content=" Templates" Style="{DynamicResource MailMergeButtonStyle}" Click="btnTemplate_Click"/>
+                <Button Content="View Templates" Style="{DynamicResource MailMergeButtonStyle}" Click="btnTemplate_Click"/>
+                <Button Content="Create Template" Style="{DynamicResource MailMergeButtonStyle}" Click="btnCreateTemplate_Click"/>
                 <Button Content=" Settings" Style="{DynamicResource MailMergeButtonStyle}" Click="OpenSettings_Click"/>
 
               
