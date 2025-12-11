@@ -13,34 +13,7 @@
 
     <Grid Name="TemplateGrid" MouseDown="TemplateGrid_MouseDown">
 
-        <!-- Close Button -->
-        <!--<Button Content="✕" 
-                Width="30" Height="30" 
-                Background="Transparent"
-                Foreground="{DynamicResource TextLight}"
-                BorderThickness="0"
-                HorizontalAlignment="Right" 
-                VerticalAlignment="Top"
-                Margin="-2"
-                FontSize="12"
-                Click="CloseButton_Click">
-            <Button.Template>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="border" 
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="15"
-                            Width="30" Height="30">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#10000000"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextDark}"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Button.Template>
-        </Button>-->
+      
 
         <!-- Main Layout -->
         <Grid Margin="0,25,0,0">
