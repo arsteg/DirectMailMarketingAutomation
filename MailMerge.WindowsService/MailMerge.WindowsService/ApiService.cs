@@ -252,12 +252,14 @@ public class ApiService
 
                 totalResults = apiResponse.TotalResultCount;
 
-                // Map results
+                // Map results :Map API Data to Database Model
                 var propertiesToSave = apiResponse.Results
                     .Select(dto => MapToPropertyRecord(dto))
                     .ToList();
 
                 propertiesToSave.ForEach(x => x.CampaignId = campaign.Id);
+
+                //Creates a list of unique identifiers to check for existing records in the database.
 
                 var radarIds = propertiesToSave.Select(p => p.RadarId).ToList();
 
@@ -553,4 +555,66 @@ public class ApiService
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Fetches property data from PropertyRadar API for a given campaign without saving to database.
+    /// Returns the campaign object with updated TotalRecordsFetched count.
+    /// </summary>
+    /// <summary>
+    /// Gets the count of properties available from PropertyRadar API for the campaign
+    /// </summary>
+    public async Task<int> GetCampaignPropertyCountFromApiAsync(Campaign campaign)
+    {
+        try
+        {
+            // Hardcoded configuration
+            string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
+            string url = "https://api.propertyradar.com/v1/properties";
+            string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
+
+            if (string.IsNullOrEmpty(bearerToken))
+            {
+                Log.Warning("API Key missing in configuration.");
+                return 0;
+            }
+
+            string rawQueryParams = $"?Purchase=1&Fields={RequestedFields}";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+            // We only need the first request to get total count
+            var pagedUrl = $"{url}{rawQueryParams}&Start=0";
+
+            var jsonContent = campaign.LeadSource.FiltersJson;
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PostAsync(pagedUrl, content);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Log.Error("API Call Failed. Status: {StatusCode}. Details: {Details}",
+                    response.StatusCode, errorContent);
+                return 0;
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            var apiResponse = await JsonSerializer.DeserializeAsync<ApiResponse>(responseStream);
+
+            if (apiResponse?.Results == null)
+            {
+                Log.Information("No results found for campaign {CampaignName}", campaign.Name);
+                return 0;
+            }
+
+            Log.Information("Total {Count} properties available from API for campaign {CampaignName}",
+                apiResponse.TotalResultCount, campaign.Name);
+
+            return apiResponse.TotalResultCount;
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Error in GetCampaignPropertyCountFromApiAsync for Campaign {campaign.Name}: {ex.Message}");
+            return 0;
+        }
+    }
 }

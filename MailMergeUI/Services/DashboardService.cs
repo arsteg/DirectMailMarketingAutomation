@@ -127,5 +127,122 @@ namespace MailMergeUI.Services
                 .Where(p => p.CampaignId == campaignId && p.PrintedAt >= startOfMonth)
                 .CountAsync();
         }
+
+        // ================================================================
+        // 5. Pending Letters Today from API – Filtered by Campaign
+        // ================================================================
+        public async Task<int> GetPendingLettersTodayFromApiAsync(int campaignId, int apiPropertyCount)
+        {
+            var today = DateTime.Today;
+            var now = DateTime.Now.TimeOfDay;
+
+            // Filter by specific campaignId
+            var campaign = await _context.Campaigns
+                .AsNoTracking()
+                .Where(c => c.Id == campaignId && c.LeadSource != null)
+                .Select(c => new
+                {
+                    c.LastRunningTime,
+                    c.LeadSource.Type,
+                    c.LeadSource.RunAt,
+                    DaysOfWeek = c.LeadSource.DaysOfWeek ?? new List<string>(),
+                    Stages = c.Stages.Select(s => new
+                    {
+                        s.DelayDays,
+                        s.IsRun
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (campaign == null) return 0;
+
+            bool shouldRunToday = false;
+
+            if (campaign.Type == ScheduleType.Daily && now >= campaign.RunAt)
+                shouldRunToday = true;
+            else if (campaign.Type == ScheduleType.None)
+            {
+                if (campaign.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase) &&
+                    now >= campaign.RunAt)
+                    shouldRunToday = true;
+            }
+
+            if (!shouldRunToday) return 0;
+
+            var baseDate = campaign.LastRunningTime == default(DateTime)
+                ? DateTime.MinValue.Date
+                : campaign.LastRunningTime.Date;
+
+            int pendingStages = 0;
+            foreach (var stage in campaign.Stages)
+            {
+                if (!stage.IsRun && today >= baseDate.AddDays(stage.DelayDays))
+                    pendingStages++;
+            }
+
+            // Multiply pending stages by API property count
+            return pendingStages * apiPropertyCount;
+        }
+
+        // ================================================================
+        // 6. Due Tomorrow Letters from API – ONLY NEW stages
+        // ================================================================
+        public async Task<int> GetDueTomorrowFromApiAsync(int campaignId, int apiPropertyCount)
+        {
+            var today = DateTime.Today;
+            var tomorrow = today.AddDays(1);
+
+            var campaign = await _context.Campaigns
+                .AsNoTracking()
+                .Where(c => c.Id == campaignId && c.LeadSource != null)
+                .Select(c => new
+                {
+                    c.LastRunningTime,
+                    c.LeadSource.Type,
+                    c.LeadSource.RunAt,
+                    DaysOfWeek = c.LeadSource.DaysOfWeek ?? new List<string>(),
+                    Stages = c.Stages.Select(s => new
+                    {
+                        s.DelayDays,
+                        s.IsRun
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (campaign == null) return 0;
+
+            // Check if campaign should run tomorrow
+            bool shouldRunTomorrow = false;
+
+            if (campaign.Type == ScheduleType.Daily)
+                shouldRunTomorrow = true;
+            else if (campaign.Type == ScheduleType.None)
+            {
+                if (campaign.DaysOfWeek.Contains(tomorrow.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase))
+                    shouldRunTomorrow = true;
+            }
+
+            if (!shouldRunTomorrow) return 0;
+
+            var baseDate = campaign.LastRunningTime == default(DateTime)
+                ? DateTime.MinValue.Date
+                : campaign.LastRunningTime.Date;
+
+            int newTomorrowStages = 0;
+            foreach (var stage in campaign.Stages)
+            {
+                if (!stage.IsRun)
+                {
+                    var stageDueDate = baseDate.AddDays(stage.DelayDays);
+
+                    // ✅ ONLY count if stage becomes due TOMORROW (not today or before)
+                    if (stageDueDate == tomorrow)
+                        newTomorrowStages++;
+                }
+            }
+
+            return newTomorrowStages * apiPropertyCount;
+        }
+
     }
 }
