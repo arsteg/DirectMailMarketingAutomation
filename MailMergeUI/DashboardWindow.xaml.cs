@@ -10,6 +10,8 @@ using Syncfusion.DocToPDFConverter;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Input;
 
@@ -39,7 +41,7 @@ namespace MailMergeUI
         private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
         {
             try
-            {                
+            {
                 MailMergeWindow main = new MailMergeWindow(_dbContext);
                 main.WindowState = this.WindowState;
                 main.Show();
@@ -125,7 +127,7 @@ namespace MailMergeUI
         }
 
         private void btnPrintHistory_Click(object sender, RoutedEventArgs e)
-                {
+        {
             PrintHistoryReportWindow campaignListView = new PrintHistoryReportWindow(this._dbContext);
             campaignListView.WindowState = this.WindowState;
             campaignListView.WindowStartupLocation = this.WindowStartupLocation;
@@ -150,202 +152,159 @@ namespace MailMergeUI
                 var campaign = viewModel.ActiveCampaign;
                 var selectedPrinter = campaign.Printer;
                 var runAt = campaign.LeadSource.RunAt;
+                var scheduleType = campaign.LeadSource.Type;
+                var daysOfWeek = campaign.LeadSource.DaysOfWeek;
 
-                // Get the current stage for this campaign
-                var stage = campaign.Stages.FirstOrDefault();
-                if (stage == null)
+                if (scheduleType == ScheduleType.Daily)
                 {
-                    MessageBox.Show("No stage found for this campaign.", "Error",
-                                   MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
-                string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
-                string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
-                var nowTime = DateTime.Now;
-
-                if (nowTime.TimeOfDay < runAt)
-                {
-                    MessageBox.Show("No Batch is available to Print", "Not Available",
-                                   MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                // Check if the DOCX file already exists
-                if (File.Exists(outputFileName))
-                {
-                    // File exists, just print it
-                    if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
+                    var nowTime = DateTime.Now;
+                    if (nowTime.TimeOfDay < runAt)
                     {
-                        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
-                        bool printerExists = false;
-
-                        foreach (string printer in printers)
-                        {
-                            if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
-                            {
-                                printerExists = true;
-                                break;
-                            }
-                        }
-
-                        if (printerExists)
-                        {
-                            // Convert DOCX to PDF
-                            using (WordDocument wordDocument = new WordDocument(outputFileName,
-                                Syncfusion.DocIO.FormatType.Automatic))
-                            {
-                                var converter = new DocToPDFConverter();
-                                using (var pdfDocument = converter.ConvertToPDF(wordDocument))
-                                {
-                                    pdfDocument.Save(pdfFileName);
-                                }
-                            }
-
-                            // Print the PDF
-                            if (File.Exists(pdfFileName))
-                            {
-                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
-                                using (var printDoc = pdfDoc.CreatePrintDocument())
-                                {
-                                    printDoc.DocumentName = $"{campaign.Name}";
-                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                    printDoc.Print();
-                                }
-
-                                Log.Information("Reprinted existing document to {Printer} for campaign {Campaign}",
-                                    selectedPrinter, campaign.Name);
-                                MessageBox.Show($"Successfully printed letters for campaign: {campaign.Name}",
-                                    "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                            }
-                            else
-                            {
-                                MessageBox.Show("Failed to convert document to PDF.", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
-                        }
-                        else
-                        {
-                            Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
-                            MessageBox.Show($"Printer '{selectedPrinter}' not found.\n\nAvailable printers:\n{string.Join("\n", printers.Cast<string>())}",
-                                "Printer Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        }
-                    }
-                    else
-                    {
-                        Log.Information($"No printer configured for campaign '{campaign.Name}'. Document already exists at: {outputFileName}");
-                        MessageBox.Show($"Document already exists (no printer configured).\n\nSaved to:\n{outputFileName}",
-                            "Document Exists", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                }
-                else
-                {
-                    // File doesn't exist, generate it first
-   
-                    try
-                    {
-                        Log.Information("Starting campaign processing for: {CampaignName}", campaign.Name);
-
-                        // This will:
-                        // 1. Fetch data from PropertyRadar API
-                        // 2. Generate documents for all stages
-                        // 3. Convert to PDF
-                        // 4. Add to print history
-                        bool success = await _apiService.RunSingleCampaignAsync(campaign);
-
-                        if (!success)
-                        {
-                            MessageBox.Show("Failed to process campaign. Check logs for details.", "Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
-                            return;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Error RunSingleCampaignAsync for selected campaign");
-                        MessageBox.Show($"Error RunSingleCampaignAsync:\n{ex.Message}", "Error",
-                            MessageBoxButton.OK, MessageBoxImage.Error);
-                        return ;
-                    }
-
-                    var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
-
-                    if (records == null || !records.Any())
-                    {
-                        MessageBox.Show("No records found for this campaign.", "No Records",
+                        MessageBox.Show("No Batch is available to Print", "Not Available",
                                        MessageBoxButton.OK, MessageBoxImage.Information);
                         return;
                     }
-
-            
-                    // Print if printer is configured
-                    if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
+                    if (nowTime.TimeOfDay >= runAt)
                     {
-                        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters;
-                        bool printerExists = false;
-
-                        foreach (string printer in printers)
+                        foreach (var stage in campaign.Stages)
                         {
-                            if (printer.Equals(selectedPrinter, StringComparison.OrdinalIgnoreCase))
-                            {
-                                printerExists = true;
-                                break;
-                            }
-                        }
 
-                        if (printerExists)
-                        {
-                            // Convert DOCX to PDF
-                            using (WordDocument wordDocument = new WordDocument(outputFileName,
-                                Syncfusion.DocIO.FormatType.Automatic))
+                            try
                             {
-                                var converter = new DocToPDFConverter();
-                                using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
                                 {
-                                    pdfDocument.Save(pdfFileName);
+                                    Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
+                                    await viewModel.LoadPendingCountAsync();
+                                    var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+                                    var templatePath = await _dbContext.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
+                                    var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                    string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
+                                    string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+
+                                    if (!File.Exists(outputFileName))
+                                    {
+                                        Directory.CreateDirectory(outputPath);
+                                        if (templatePath != null)
+                                        {
+                                            await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
+
+                                            // Convert DOCX to PDF
+                                            
+                                            using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                                            {
+                                                var converter = new DocToPDFConverter();
+                                                using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                {
+                                                    pdfDocument.Save(pdfFileName);  // ✅ Save PDF to .pdf file
+                                                }
+                                            }
+
+                                            
+                                         
+                                        }
+                                    }
+
+                                    using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
+                                    using (var printDoc = pdfDoc.CreatePrintDocument())
+                                    {
+                                        printDoc.DocumentName = "MailMerge Output";
+                                        printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                        printDoc.Print();
+                                    }
+
+                                    MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
+                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                                    stage.IsRun = true;
                                 }
                             }
-
-                            // Print the PDF
-                            if (File.Exists(pdfFileName))
+                            catch (Exception ex)
                             {
-                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
-                                using (var printDoc = pdfDoc.CreatePrintDocument())
-                                {
-                                    printDoc.DocumentName = $"{campaign.Name}";
-                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                    printDoc.Print();
-                                }
+                                Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}", stage.StageName, campaign.Name);
+                                // throw; // Don't crash the loop
+                            }
 
-                                Log.Information("Printed {Count} letters to {Printer} for campaign {Campaign}",
-                                    records.Count, selectedPrinter, campaign.Name);
-                                MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
-                                    "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                            }
-                            else
-                            {
-                                MessageBox.Show("Failed to convert document to PDF.", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
-                        }
-                        else
-                        {
-                            Log.Warning($"Printer '{selectedPrinter}' not found. Available printers: {string.Join(", ", printers.Cast<string>())}");
-                            MessageBox.Show($"Printer '{selectedPrinter}' not found.\n\nAvailable printers:\n{string.Join("\n", printers.Cast<string>())}",
-                                "Printer Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+
                         }
                     }
-                    else
+                }
+                else if (scheduleType == ScheduleType.None)
+                {
+                    // Example: daysOfWeek = ["Monday", "Wednesday", "Friday"]
+                    var today = DateTime.Now.DayOfWeek.ToString(); // e.g. "Monday"
+
+                    if (daysOfWeek != null && daysOfWeek.Contains(today, StringComparer.OrdinalIgnoreCase))
                     {
-                        Log.Information($"No printer configured for campaign '{campaign.Name}'. Document saved to: {outputFileName}");
-                        MessageBox.Show($"Document generated successfully (no printer configured).\n\nSaved to:\n{outputFileName}",
-                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        var nowTime = DateTime.Now;
+                        if (nowTime.TimeOfDay < runAt)
+                        {
+                            MessageBox.Show("No Batch is available to Print", "Not Available",
+                                           MessageBoxButton.OK, MessageBoxImage.Information);
+                            return;
+                        }
+                        if (nowTime.TimeOfDay >= runAt)
+                        {
+                            foreach (var stage in campaign.Stages)
+                            {
+
+                                try
+                                {
+                                    if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                    {
+                                        Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
+                                        await viewModel.LoadPendingCountAsync();
+                                        var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+                                        var templatePath = await _dbContext.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
+                                        var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+                                        string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
+                                        string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+
+                                        if (!File.Exists(outputFileName))
+                                        {
+                                            Directory.CreateDirectory(outputPath);
+                                            if (templatePath != null)
+                                            {
+                                                await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
+
+                                                // Convert DOCX to PDF
+
+                                                using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                                                {
+                                                    var converter = new DocToPDFConverter();
+                                                    using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                    {
+                                                        pdfDocument.Save(pdfFileName);  // ✅ Save PDF to .pdf file
+                                                    }
+                                                }
+
+
+
+                                            }
+                                        }
+
+                                        using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
+                                        using (var printDoc = pdfDoc.CreatePrintDocument())
+                                        {
+                                            printDoc.DocumentName = "MailMerge Output";
+                                            printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                            printDoc.Print();
+                                        }
+                                        MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
+                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                                        stage.IsRun = true;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}", stage.StageName, campaign.Name);
+                                    // throw; // Don't crash the loop
+                                }
+
+
+                            }
+                        }
                     }
                 }
 
-                // Refresh dashboard after all operations complete
-                await viewModel.LoadPendingCountAsync();
             }
             catch (Exception ex)
             {
