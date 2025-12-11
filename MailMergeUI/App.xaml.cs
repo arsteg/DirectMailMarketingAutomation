@@ -3,16 +3,17 @@ using MailMergeUI.Logging;
 using MailMergeUI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting;
 using PdfSharp.Fonts;
 using Serilog;
+using Syncfusion.Licensing;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Windows;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Syncfusion.Licensing;
 using System.Windows;
 
 namespace MailMergeUI
@@ -25,6 +26,15 @@ namespace MailMergeUI
 
         public App()
         {
+            string exePath = Assembly.GetExecutingAssembly().Location;
+            string exeFolder = Path.GetDirectoryName(exePath);
+            string logsFolderPath = Path.Combine(exeFolder, "Logs");
+
+            if (!Directory.Exists(logsFolderPath))
+            {
+                Directory.CreateDirectory(logsFolderPath);
+            }
+
             _appHost = Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {

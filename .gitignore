@@ -76,3 +76,9 @@ $RECYCLE.BIN/
 *.tmp
 *.temp
 *.cache
+/MailMerge.Data/bin
+/MailMerge.Data/bin
+/MailMerge.Data/obj/Debug
+/MailMerge.Data/obj/Debug
+/MailMerge.Data/obj/Debug
+/MailMerge.Data/obj
