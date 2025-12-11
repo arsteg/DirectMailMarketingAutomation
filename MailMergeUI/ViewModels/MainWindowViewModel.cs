@@ -1,10 +1,13 @@
 ﻿using MailMerge.Data;
 using MailMerge.Data.Models;
 using MailMergeUI.Helpers;
+using MailMergeUI.Models;
 using MailMergeUI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
@@ -14,6 +17,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace MailMergeUI.ViewModels
 {
@@ -24,22 +28,21 @@ namespace MailMergeUI.ViewModels
         private readonly PrinterService _printer = new();
         private readonly LogService _log = new();
         private readonly MailMergeDbContext _dbContext;
-
-
+        private readonly ApiService _apiService;
+        private readonly MailMergeEngine.MailMergeEngine _mailMergeEngine;
         public ObservableCollection<Campaign> Campaigns { get; } = new();
         private Campaign _activeCampaign;
         public Campaign ActiveCampaign
         {
             get => _activeCampaign;
-            set
-            {
+            set{
                 if (_activeCampaign != value)
                 {
                     _activeCampaign = value;
                     OnPropertyChanged();
                     if (_activeCampaign != null)
                     {
-                        //_ = LoadPendingCountAsync();
+                        _ = LoadPendingCountAsync();
                     }
                 }
             }
@@ -63,7 +66,7 @@ namespace MailMergeUI.ViewModels
         public int DueToday
         {
             get => _dueToday;
-            set { _dueToday = value; OnPropertyChanged(); }
+            set{ _dueToday = value; OnPropertyChanged(); }
 
         }
 
@@ -93,6 +96,28 @@ namespace MailMergeUI.ViewModels
             set { _currentView = value; OnPropertyChanged(); }
         }
 
+
+        private int _pendingLettersFromApi;
+        public int PendingLettersFromApi
+        {
+            get => _pendingLettersFromApi;
+            set { _pendingLettersFromApi = value; OnPropertyChanged(); }
+        }
+
+        private int _dueTomorrow;
+        public int DueTomorrow
+        {
+            get => _dueTomorrow;
+            set { _dueTomorrow = value; OnPropertyChanged(); }
+        }
+
+        private int _apiPropertyCount;
+        public int ApiPropertyCount
+        {
+            get => _apiPropertyCount;
+            set { _apiPropertyCount = value; OnPropertyChanged(); }
+        }
+
         //public DashboardViewModel DashboardVM { get; }
 
         public BlackListViewModel BlacklistVM { get; }
@@ -107,12 +132,14 @@ namespace MailMergeUI.ViewModels
         {
             _dashboardService = new DashboardService(dbContext);
             _dbContext = dbContext;
+            _mailMergeEngine = App.Services!.GetRequiredService<MailMergeEngine.MailMergeEngine>();
+            _apiService = new ApiService(_mailMergeEngine, dbContext);
             LoadData();
-
+           
             BlacklistVM = new BlackListViewModel(_dbContext);
             LogVM = new SystemLogViewModel();
             //ShowDashboardCommand = new RelayCommand(_ => CurrentView = DashboardVM);
-
+            
             ShowBlacklistCommand = new RelayCommand(_ => CurrentView = BlacklistVM);
             ShowLogCommand = new RelayCommand(_ => CurrentView = LogVM);
 
@@ -123,14 +150,48 @@ namespace MailMergeUI.ViewModels
 
             //CurrentView = DashboardVM; // Default
         }
+        private PropertyRecord MapToPropertyRecord(PropertyResultDto dto)
+        {
+            // Mapping logic must be updated to include the new fields from the URL
+            return new PropertyRecord
+            {
+                RadarId = dto.RadarID ?? string.Empty,
+                Apn = dto.APN ?? string.Empty,
+                Type = dto.PType ?? string.Empty,
+                Address = dto.Address ?? string.Empty,
+                City = dto.City ?? string.Empty,
+                State = dto.State ?? string.Empty,
+                Zip = dto.ZipFive ?? string.Empty,
+                OwnerOcc = dto.IsSameMailing.HasValue && dto.IsSameMailing.Value == 1 ? "1" : "0",
 
+                Owner = dto.Owner ?? string.Empty,
+                OwnerType = dto.OwnershipType ?? string.Empty,
+                PrimaryName = dto.PrimaryName ?? string.Empty,
+                PrimaryFirst = dto.PrimaryFirstName ?? string.Empty,
+
+                MailAddress = dto.OwnerAddress ?? string.Empty,
+                MailCity = dto.OwnerCity ?? string.Empty,
+                MailState = dto.OwnerState ?? string.Empty,
+                MailZip = dto.OwnerZipFive ?? string.Empty,
+
+                Foreclosure = dto.InForeclosure.HasValue && dto.InForeclosure.Value == 1 ? "1" : "0",
+
+                // NEW FIELDS based on the URL provided
+                FclStage = dto.ForeclosureStage ?? string.Empty,
+                FclDocType = dto.ForeclosureDocType ?? string.Empty,
+                FclRecDate = dto.ForeclosureRecDate ?? string.Empty,
+                Trustee = dto.Trustee ?? string.Empty,
+                TrusteePhone = dto.TrusteePhone ?? string.Empty,
+                TsNumber = dto.TrusteeSaleNum ?? string.Empty
+            };
+        }
 
         private void LoadData()
         {
             try
             {
                 var campaignList = _dbContext.Campaigns.ToList();
-                foreach (var campaign in campaignList)
+            foreach(var campaign in campaignList)
                 {
                     Campaigns.Add(campaign);
                 }
@@ -140,7 +201,7 @@ namespace MailMergeUI.ViewModels
             {
                 Log.Error(ex, "Error in LoadData for Campaign");
             }
-
+    
         }
 
         public async Task LoadPendingCountAsync()
@@ -158,14 +219,8 @@ namespace MailMergeUI.ViewModels
 
             try
             {
-                //Status = $"Loading data for {ActiveCampaign.Name}...";
 
-                //PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
-                //DueToday = await _dashboardService.GetDueLettersTodayAsync(ActiveCampaign.Id);
-                //PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
-                //PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync(ActiveCampaign.Id);
 
-                //Status = $"{PendingLetters} letters pending today for {ActiveCampaign.Name}.";
                 string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
                 string url = "https://api.propertyradar.com/v1/properties";
                 string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
@@ -263,8 +318,33 @@ namespace MailMergeUI.ViewModels
                 ActiveCampaign.LastRunningTime = DateTime.Now;
                 await _dbContext.SaveChangesAsync();
 
+
+
+                Status = $"Loading data for {ActiveCampaign.Name}...";
+
+                PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
+                DueToday = await _dashboardService.GetDueLettersTodayAsync(ActiveCampaign.Id);
+                PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
+                PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync(ActiveCampaign.Id);
+
+                // NEW: Get property count from API
+                ApiPropertyCount = await _apiService.GetCampaignPropertyCountFromApiAsync(ActiveCampaign);
+
+                // Get today's pending
+                PendingLettersFromApi = await _dashboardService.GetPendingLettersTodayFromApiAsync(
+                    ActiveCampaign.Id, ApiPropertyCount);
+
+                // Get total due by tomorrow
+                int totalDueByTomorrow = await _dashboardService.GetDueTomorrowFromApiAsync(
+                    ActiveCampaign.Id, ApiPropertyCount);
+
+                // Calculate ONLY new letters due tomorrow
+                DueTomorrow = totalDueByTomorrow - PendingLettersFromApi;
+
+                Status = $"{PendingLettersFromApi} letters pending today for {ActiveCampaign.Name}.";
+
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
@@ -280,46 +360,10 @@ namespace MailMergeUI.ViewModels
             }
             catch (Exception ex)
             {
-
+            
                 Log.Error(ex, "Error in Refreshed leads for campaign");
             }
 
-        }
-
-        private PropertyRecord MapToPropertyRecord(PropertyResultDto dto)
-        {
-            // Mapping logic must be updated to include the new fields from the URL
-            return new PropertyRecord
-            {
-                RadarId = dto.RadarID ?? string.Empty,
-                Apn = dto.APN ?? string.Empty,
-                Type = dto.PType ?? string.Empty,
-                Address = dto.Address ?? string.Empty,
-                City = dto.City ?? string.Empty,
-                State = dto.State ?? string.Empty,
-                Zip = dto.ZipFive ?? string.Empty,
-                OwnerOcc = dto.IsSameMailing.HasValue && dto.IsSameMailing.Value == 1 ? "1" : "0",
-
-                Owner = dto.Owner ?? string.Empty,
-                OwnerType = dto.OwnershipType ?? string.Empty,
-                PrimaryName = dto.PrimaryName ?? string.Empty,
-                PrimaryFirst = dto.PrimaryFirstName ?? string.Empty,
-
-                MailAddress = dto.OwnerAddress ?? string.Empty,
-                MailCity = dto.OwnerCity ?? string.Empty,
-                MailState = dto.OwnerState ?? string.Empty,
-                MailZip = dto.OwnerZipFive ?? string.Empty,
-
-                Foreclosure = dto.InForeclosure.HasValue && dto.InForeclosure.Value == 1 ? "1" : "0",
-
-                // NEW FIELDS based on the URL provided
-                FclStage = dto.ForeclosureStage ?? string.Empty,
-                FclDocType = dto.ForeclosureDocType ?? string.Empty,
-                FclRecDate = dto.ForeclosureRecDate ?? string.Empty,
-                Trustee = dto.Trustee ?? string.Empty,
-                TrusteePhone = dto.TrusteePhone ?? string.Empty,
-                TsNumber = dto.TrusteeSaleNum ?? string.Empty
-            };
         }
 
         private async Task PrintTodayAsync()
@@ -356,4 +400,4 @@ namespace MailMergeUI.ViewModels
         }
 
     }
-}
+    }
