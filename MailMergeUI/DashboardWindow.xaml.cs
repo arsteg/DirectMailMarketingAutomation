@@ -19,6 +19,7 @@ namespace MailMergeUI
     {
         private readonly MailMergeDbContext _dbContext;
         private readonly MailMergeEngine.MailMergeEngine _mailMergeEngine;
+        private readonly ApiService _apiService;
 
         public DashboardWindow(MailMergeDbContext dbContext)
         {
@@ -26,6 +27,8 @@ namespace MailMergeUI
             InitializeComponent();
             this.Loaded += DashboardWindow_Loaded;
             _mailMergeEngine = App.Services!.GetRequiredService<MailMergeEngine.MailMergeEngine>();
+            _apiService = new ApiService(_mailMergeEngine, dbContext);
+
         }
 
         private void DashboardWindow_Loaded(object sender, RoutedEventArgs e)
@@ -239,10 +242,32 @@ namespace MailMergeUI
                 else
                 {
                     // File doesn't exist, generate it first
-                    // Get records for this campaign
-                    //var records = await _dbContext.Properties
-                    //    .Where(x => x.CampaignId == campaign.Id)
-                    //    .ToListAsync();
+   
+                    try
+                    {
+                        Log.Information("Starting campaign processing for: {CampaignName}", campaign.Name);
+
+                        // This will:
+                        // 1. Fetch data from PropertyRadar API
+                        // 2. Generate documents for all stages
+                        // 3. Convert to PDF
+                        // 4. Add to print history
+                        bool success = await _apiService.RunSingleCampaignAsync(campaign);
+
+                        if (!success)
+                        {
+                            MessageBox.Show("Failed to process campaign. Check logs for details.", "Error",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Error RunSingleCampaignAsync for selected campaign");
+                        MessageBox.Show($"Error RunSingleCampaignAsync:\n{ex.Message}", "Error",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        return ;
+                    }
 
                     var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
 
@@ -253,39 +278,7 @@ namespace MailMergeUI
                         return;
                     }
 
-                    // Get template path
-                    var templatePath = await _dbContext.Templates
-                        .Where(x => x.Id.ToString() == stage.TemplateId)
-                        .Select(x => x.Path)
-                        .FirstOrDefaultAsync();
-
-                    if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
-                    {
-                        MessageBox.Show("Template file not found.", "Error",
-                                       MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }
-
-                    // Create output directory
-                    if (!Directory.Exists(outputPath))
-                    {
-                        Directory.CreateDirectory(outputPath);
-                    }
-
-                    // Export the batch
-                    await _mailMergeEngine.ExportBatch(templatePath, records, outputFileName);
-
-                    // Verify the file was created
-                    if (!File.Exists(outputFileName))
-                    {
-                        Log.Error($"Failed to generate document: {outputFileName}");
-                        MessageBox.Show("Failed to generate document.", "Error",
-                                       MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                    }
-
-                    Log.Information($"Document generated: {outputFileName}");
-
+            
                     // Print if printer is configured
                     if (!string.IsNullOrWhiteSpace(selectedPrinter) && selectedPrinter != "Select Printer")
                     {

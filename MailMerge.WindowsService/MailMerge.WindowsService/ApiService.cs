@@ -431,6 +431,115 @@ public class ApiService
         }
     }
 
+    public async Task<bool> RunSingleCampaignAsync(Campaign campaign)
+    {
+        try
+        {
+            string RequestedFields = "RadarID,APN,PType,Address,City,State,ZipFive,Owner,OwnershipType,PrimaryName,PrimaryFirstName,OwnerAddress,OwnerCity,OwnerZipFive,OwnerState,inForeclosure,ForeclosureStage,ForeclosureDocType,ForeclosureRecDate,isSameMailing,Trustee,TrusteePhone,TrusteeSaleNum";
+            string url = "https://api.propertyradar.com/v1/properties";
+            string? bearerToken = System.Configuration.ConfigurationManager.AppSettings["API Key"];
+
+            if (string.IsNullOrEmpty(bearerToken))
+            {
+                Log.Warning("API Key missing in configuration.");
+                return false;
+            }
+
+            string rawQueryParams = $"?Purchase=1&Fields={RequestedFields}";
+
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+            Log.Information("Manually running Campaign: {Name}", campaign.Name);
+
+            // ✅ Step 1: Fetch data from PropertyRadar API
+            await RunCampaign(_context, httpClient, campaign, url, rawQueryParams, bearerToken);
+
+            // ✅ Step 2: Process all stages for this campaign
+            foreach (var stage in campaign.Stages)
+            {
+                try
+                {
+                    Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}",
+                        stage.StageName, campaign.Name);
+
+                    var records = await _context.Properties
+                        .Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false)
+                        .ToListAsync();
+
+                    if (!records.Any())
+                    {
+                        Log.Warning("No records found for campaign {CampaignName}, stage {StageName}",
+                            campaign.Name, stage.StageName);
+                        continue;
+                    }
+
+                    var templatePath = await _context.Templates
+                        .Where(x => x.Id.ToString() == stage.TemplateId)
+                        .Select(x => x.Path)
+                        .FirstOrDefaultAsync();
+
+                    if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
+                    {
+                        Log.Error("Template not found for stage {StageName}", stage.StageName);
+                        continue;
+                    }
+
+                    var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
+
+                    if (!Directory.Exists(outputPath))
+                    {
+                        Directory.CreateDirectory(outputPath);
+                    }
+
+                    string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
+
+                    // Generate mail merge document
+                    await _engine.ExportBatch(templatePath, records, outputFileName);
+
+                    // Verify the file was created
+                    if (!File.Exists(outputFileName))
+                    {
+                        Log.Error($"Failed to generate document: {outputFileName}");
+                        continue;
+                    }
+
+                    // Convert DOCX to PDF
+                    string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+                    using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                    {
+                        var converter = new DocToPDFConverter();
+                        using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                        {
+                            pdfDocument.Save(pdfFileName);
+                        }
+                    }
+
+                    // Add records to print history
+                    foreach (var item in records)
+                    {
+                        await AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
+                    }
+
+                    Log.Information("Successfully processed stage {StageName} for campaign {CampaignName}",
+                        stage.StageName, campaign.Name);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}",
+                        stage.StageName, campaign.Name);
+                    // Continue with next stage
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error in RunSingleCampaignAsync for campaign {CampaignName}", campaign.Name);
+            return false;
+        }
+    }
     private async Task AddRecordToPrintHistory(int propertyId, Campaign campaign, FollowUpStage stage, string selectedPrinter, string pdfPath)
     {
         _context.PrintHistory.Add(new PrintHistory

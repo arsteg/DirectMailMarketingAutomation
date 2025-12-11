@@ -30,10 +30,11 @@
     <PackageReference Include="Syncfusion.DocToPDFConverter.Wpf" Version="31.2.12" />
     <PackageReference Include="Syncfusion.Pdf.Wpf" Version="31.2.12" />
     <PackageReference Include="Syncfusion.SfRichTextBoxAdv.WPF" Version="31.2.12" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MailMerge.Data\MailMerge.Data.csproj" />
+    <ProjectReference Include="..\MailMerge.WindowsService\MailMerge.WindowsService\MailMerge.WindowsService.csproj" />
     <ProjectReference Include="..\MailMergeEngine\MailMergeEngine.csproj" />
   </ItemGroup>
   <ItemGroup>
