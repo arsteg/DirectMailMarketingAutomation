@@ -134,7 +134,7 @@ namespace MailMergeUI.Services
         public async Task<int> GetPendingLettersTodayFromApiAsync(int campaignId, int apiPropertyCount)
         {
             var today = DateTime.Today;
-            var now = DateTime.Now.TimeOfDay;
+            var now = DateTime.Now;
 
             // Filter by specific campaignId
             var campaign = await _context.Campaigns
@@ -156,34 +156,58 @@ namespace MailMergeUI.Services
 
             if (campaign == null) return 0;
 
-            bool shouldRunToday = false;
+            // ✅ Check if campaign is scheduled to run today
+            bool isScheduledToday = false;
 
-            if (campaign.Type == ScheduleType.Daily && now >= campaign.RunAt)
-                shouldRunToday = true;
-            else if (campaign.Type == ScheduleType.None)
+            if (campaign.Type == ScheduleType.Daily)
+                isScheduledToday = true;
+            else if (campaign.Type == ScheduleType.None) // Weekly schedule
             {
-                if (campaign.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase) &&
-                    now >= campaign.RunAt)
-                    shouldRunToday = true;
+                if (campaign.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase))
+                    isScheduledToday = true;
             }
 
-            if (!shouldRunToday) return 0;
+            if (!isScheduledToday) return 0;
+
+            // ✅ Check if RunAt time has passed
+            bool runAtTimePassed = now.TimeOfDay >= campaign.RunAt;
+
+            // ✅ If RunAt time has already passed today, no letters are pending (they should have been sent)
+            if (runAtTimePassed)
+            {
+                // Check if campaign actually ran today
+                if (campaign.LastRunningTime.Date == today)
+                {
+                    // Campaign ran today, so no pending letters
+                    return 0;
+                }
+                // If campaign didn't run today despite RunAt time passing, 
+                // it means there's an issue, but we still return 0 for "pending today"
+                // as the scheduled time has passed
+                return 0;
+            }
 
             var baseDate = campaign.LastRunningTime == default(DateTime)
-                ? DateTime.MinValue.Date
-                : campaign.LastRunningTime.Date;
+                    ? DateTime.MinValue.Date
+                    : campaign.LastRunningTime.Date;
 
+            // ✅ Count stages that are due today or before (and haven't run yet)
             int pendingStages = 0;
+
             foreach (var stage in campaign.Stages)
             {
-                if (!stage.IsRun && today >= baseDate.AddDays(stage.DelayDays))
-                    pendingStages++;
+                if (!stage.IsRun)
+                {
+                    var stageDueDate = baseDate.AddDays(stage.DelayDays);
+
+                    // Stage is pending if it's due today or before
+                    if (stageDueDate <= today)
+                        pendingStages++;
+                }
             }
 
-            // Multiply pending stages by API property count
             return pendingStages * apiPropertyCount;
         }
-
         // ================================================================
         // 6. Due Tomorrow Letters from API – ONLY NEW stages
         // ================================================================
@@ -209,39 +233,57 @@ namespace MailMergeUI.Services
                 })
                 .FirstOrDefaultAsync();
 
-            if (campaign == null) return 0;
+            if (campaign == null)
+                return 0;
 
-            // Check if campaign should run tomorrow
+            // ✅ Check if the campaign is scheduled for tomorrow
             bool shouldRunTomorrow = false;
 
             if (campaign.Type == ScheduleType.Daily)
-                shouldRunTomorrow = true;
-            else if (campaign.Type == ScheduleType.None)
             {
-                if (campaign.DaysOfWeek.Contains(tomorrow.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase))
+                shouldRunTomorrow = true;
+            }
+            else if (campaign.Type == ScheduleType.None) // Weekly
+            {
+                if (campaign.DaysOfWeek.Contains(
+                        tomorrow.DayOfWeek.ToString(),
+                        StringComparer.OrdinalIgnoreCase))
+                {
                     shouldRunTomorrow = true;
+                }
             }
 
-            if (!shouldRunTomorrow) return 0;
+            if (!shouldRunTomorrow)
+                return 0;
 
+            // Base date for calculating stage due dates
             var baseDate = campaign.LastRunningTime == default(DateTime)
-                ? DateTime.MinValue.Date
-                : campaign.LastRunningTime.Date;
+                            ? DateTime.MinValue.Date
+                            : campaign.LastRunningTime.Date;
 
-            int newTomorrowStages = 0;
+            // -----------------------------------------
+            // ✅ Count ONLY stages that are due tomorrow
+            // -----------------------------------------
+            int stageCount = 0;
+
             foreach (var stage in campaign.Stages)
             {
                 if (!stage.IsRun)
                 {
                     var stageDueDate = baseDate.AddDays(stage.DelayDays);
 
-                    // ✅ ONLY count if stage becomes due TOMORROW (not today or before)
-                    if (stageDueDate == tomorrow)
-                        newTomorrowStages++;
+                    if (stageDueDate == tomorrow)      // ✔ EXACTLY tomorrow
+                    {
+                        stageCount++;
+                    }
                 }
             }
 
-            return newTomorrowStages * apiPropertyCount;
+            // If no stage is due tomorrow → return 0
+            if (stageCount == 0)
+                return 0;
+
+            return stageCount * apiPropertyCount;
         }
 
     }

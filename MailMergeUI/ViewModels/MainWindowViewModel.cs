@@ -324,6 +324,7 @@ namespace MailMergeUI.ViewModels
 
                 PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
                 DueToday = await _dashboardService.GetDueLettersTodayAsync(ActiveCampaign.Id);
+               
                 PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
                 PrintedThisMonth = await _dashboardService.GetLettersPrintedThisMonthAsync(ActiveCampaign.Id);
 
@@ -332,14 +333,11 @@ namespace MailMergeUI.ViewModels
 
                 // Get today's pending
                 PendingLettersFromApi = await _dashboardService.GetPendingLettersTodayFromApiAsync(
-                    ActiveCampaign.Id, ApiPropertyCount);
+                                      ActiveCampaign.Id, ApiPropertyCount);
 
                 // Get total due by tomorrow
-                int totalDueByTomorrow = await _dashboardService.GetDueTomorrowFromApiAsync(
-                    ActiveCampaign.Id, ApiPropertyCount);
-
-                // Calculate ONLY new letters due tomorrow
-                DueTomorrow = totalDueByTomorrow - PendingLettersFromApi;
+                DueTomorrow = await _dashboardService.GetDueTomorrowFromApiAsync(
+                                 ActiveCampaign.Id, ApiPropertyCount);
 
                 Status = $"{PendingLettersFromApi} letters pending today for {ActiveCampaign.Name}.";
 

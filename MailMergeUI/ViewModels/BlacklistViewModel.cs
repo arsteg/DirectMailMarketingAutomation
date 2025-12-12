@@ -145,7 +145,6 @@ namespace MailMergeUI.ViewModels
                 property.BlackListingReason = dialog.Reason.Trim();
                 property.BlackListedOn = DateTime.UtcNow;
 
-                _dbContext.Update(property);
                 _dbContext.SaveChanges();
 
                 // Add to history
@@ -180,8 +179,6 @@ namespace MailMergeUI.ViewModels
                 property.IsBlackListed = false;
                 property.BlackListingReason = null;
                 property.BlackListedOn = null;
-
-                _dbContext.Update(property);
                 _dbContext.SaveChanges();
 
                 // Remove from history
