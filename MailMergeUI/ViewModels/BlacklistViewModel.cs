@@ -81,7 +81,6 @@ namespace MailMergeUI.ViewModels
             var term = SearchAddress.Trim().ToLowerInvariant();
 
             var results = await _dbContext.Properties
-                .AsNoTracking()
                 .Where(p =>
                     (p.Address != null && p.Address.ToLower().Contains(term)) ||
                     (p.RadarId != null && p.RadarId.ToLower().Contains(term)) ||
@@ -126,6 +125,8 @@ namespace MailMergeUI.ViewModels
         private void ToggleBlacklist(PropertyRecord? property)
         {
             if (property == null) return;
+            _dbContext.Attach(property);
+            _dbContext.Entry(property).State = EntityState.Modified;
 
             if (property.IsBlackListed)
             {
