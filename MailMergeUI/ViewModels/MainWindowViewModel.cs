@@ -43,7 +43,7 @@ namespace MailMergeUI.ViewModels
                     OnPropertyChanged();
                     if (_activeCampaign != null)
                     {
-                        _ = LoadPendingCountAsync();
+                   //     _ = LoadPendingCountAsync();
                     }
                 }
             }
