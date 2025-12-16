@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
@@ -21,8 +22,9 @@ namespace MailMerge.Data.Models
         public PrinterSettings EnvelopePrinter { get; set; } = new();
         public bool IsActive { get; set; }
         public string Printer { get; set; }
+        public DateTime ScheduledDate { get; set; }
     }
-
+    
     public class FollowUpStage
     {
         public int Id { get; set; }

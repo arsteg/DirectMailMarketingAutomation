@@ -42,7 +42,7 @@ namespace MailMergeUI.Services
                     }).ToList()
                 })
                 .FirstOrDefaultAsync();
-
+           
             if (campaign == null) return 0;
 
             bool shouldRunToday = false;
@@ -145,6 +145,7 @@ namespace MailMergeUI.Services
                     c.LastRunningTime,
                     c.LeadSource.Type,
                     c.LeadSource.RunAt,
+                    c.ScheduledDate,
                     DaysOfWeek = c.LeadSource.DaysOfWeek ?? new List<string>(),
                     Stages = c.Stages.Select(s => new
                     {
@@ -186,10 +187,10 @@ namespace MailMergeUI.Services
                 // as the scheduled time has passed
                 return 0;
             }
+            var baseDate = campaign.ScheduledDate.Date == default(DateTime)
+                              ? DateTime.MinValue.Date
+                              : campaign.ScheduledDate.Date;
 
-            var baseDate = campaign.LastRunningTime == default(DateTime)
-                    ? DateTime.MinValue.Date
-                    : campaign.LastRunningTime.Date;
 
             // ✅ Count stages that are due today or before (and haven't run yet)
             int pendingStages = 0;
@@ -224,6 +225,7 @@ namespace MailMergeUI.Services
                     c.LastRunningTime,
                     c.LeadSource.Type,
                     c.LeadSource.RunAt,
+                    c.ScheduledDate,
                     DaysOfWeek = c.LeadSource.DaysOfWeek ?? new List<string>(),
                     Stages = c.Stages.Select(s => new
                     {
@@ -257,9 +259,9 @@ namespace MailMergeUI.Services
                 return 0;
 
             // Base date for calculating stage due dates
-            var baseDate = campaign.LastRunningTime == default(DateTime)
+            var baseDate = campaign.ScheduledDate.Date == default(DateTime)
                             ? DateTime.MinValue.Date
-                            : campaign.LastRunningTime.Date;
+                            : campaign.ScheduledDate.Date;
 
             // -----------------------------------------
             // ✅ Count ONLY stages that are due tomorrow

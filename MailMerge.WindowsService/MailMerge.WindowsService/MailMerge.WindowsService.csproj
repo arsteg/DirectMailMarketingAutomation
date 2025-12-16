@@ -47,4 +47,10 @@
     <ProjectReference Include="..\..\MailMergeEngine\MailMergeEngine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\properties_5000_records.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

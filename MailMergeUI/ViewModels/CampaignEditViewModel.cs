@@ -382,6 +382,7 @@ namespace MailMergeUI.ViewModels
             // === SAFE SAVE: Use your existing service ===
             try
             {
+               
                 Campaign.LeadSource.FiltersJson = SearchCriteriaHelper.BuildSearchCriteriaJson(State, City);
 
                 //Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
@@ -391,6 +392,7 @@ namespace MailMergeUI.ViewModels
 
                 if (Campaign.Id == 0)
                 {
+                    Campaign.ScheduledDate = DateTime.Now;
                     _service.Campaigns.Add(Campaign);
                 }
                 else

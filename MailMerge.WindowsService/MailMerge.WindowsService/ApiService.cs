@@ -73,15 +73,32 @@ public class ApiService
                         {
                             Log.Information("Running Daily Campaign: {Name}", campaign.Name);
                             // ✅ Run your scheduled code for daily schedule
-                            await RunCampaign(_context,_httpClient,campaign,url,rawQueryParams,bearerToken);
-                            
-                            foreach (var stage in campaign.Stages)
+                            string useApiSimulator = System.Configuration.ConfigurationManager.AppSettings["USeAPISimulator"];
+                            if (useApiSimulator?.ToLower() == "true")
+                            {
+                                // Fetch data from local CSV file
+                                var csvPath = GetCsvPathFromDataFolder();
+
+                                var csvData = await ReadPropertiesFromCsv(csvPath, campaign.Id);
+                                if (!csvData.Any())
+                                {
+                                    Log.Warning("no any csvData.");
+                                    return;
+                                }
+                                await SaveCsvPropertiesAsync(campaign, csvData);
+                            }
+                            else
+                            {
+                                await RunCampaign(_context, _httpClient, campaign, url, rawQueryParams, bearerToken);
+                            }
+
+                            foreach (var stage in campaign.Stages.OrderBy(s => s.DelayDays))
                             {
                                 if (!stage.IsRun)
                                 {
                                     try
                                     {
-                                        if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                        if (DateTime.Now.Date >= campaign.ScheduledDate.AddDays(stage.DelayDays).Date)
                                         {
                                             Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
                                             var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
@@ -119,8 +136,9 @@ public class ApiService
                                                     Log.Error($"Failed to generate document: {outputFileName}");
                                                     return;
                                                 }
-
                                             }
+                                            stage.IsRun = true;
+
                                         }
                                     }
                                     catch (Exception ex)
@@ -128,8 +146,8 @@ public class ApiService
                                         Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}", stage.StageName, campaign.Name);
                                         // throw; // Don't crash the loop
                                     }
-                                
-                                    stage.IsRun = true;
+                                    campaign.LastRunningTime = DateTime.Now;
+                                    await _context.SaveChangesAsync();
                                 }
                             }
                         }
@@ -145,12 +163,29 @@ public class ApiService
                             {
                                 Log.Information("Running Scheduled Campaign: {Name} on {Day}", campaign.Name, today);
                                 // ✅ Run your scheduled code for specific days
-                                await RunCampaign(_context,_httpClient,campaign, url, rawQueryParams, bearerToken);
-                                foreach (var stage in campaign.Stages)
+                                string useApiSimulator = System.Configuration.ConfigurationManager.AppSettings["USeAPISimulator"];
+                                if (useApiSimulator?.ToLower() == "true")
+                                {
+                                    var csvPath = GetCsvPathFromDataFolder();
+
+                                    var csvData = await ReadPropertiesFromCsv(csvPath, campaign.Id);
+                                    if (!csvData.Any())
+                                    {
+                                        return;
+                                    }
+
+
+                                    await SaveCsvPropertiesAsync(campaign, csvData);
+                                }
+                                else
+                                {
+                                    await RunCampaign(_context, _httpClient, campaign, url, rawQueryParams, bearerToken);
+                                }
+                                foreach (var stage in campaign.Stages.OrderBy(s => s.DelayDays))
                                 {
                                     if (!stage.IsRun)
                                     {
-                                        if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                        if (DateTime.Now.Date >= campaign.ScheduledDate.AddDays(stage.DelayDays).Date)
                                         {
                                             var records = await _context.Properties.Where(x => x.CampaignId == campaign.Id).ToListAsync();
                                             var templatePath = await _context.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
@@ -174,27 +209,28 @@ public class ApiService
                                                     var converter = new DocToPDFConverter();
                                                     using (var pdfDocument = converter.ConvertToPDF(wordDocument))
                                                     {
-                                                        pdfDocument.Save(pdfFileName); 
+                                                        pdfDocument.Save(pdfFileName);
                                                     }
                                                 }
                                                 foreach (var item in records)
-                                                {
-                                                    AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
-
-                                                }
-                                                // Verify the file was created
-                                                if (!File.Exists(outputFileName))
                                                     {
-                                                        Log.Error($"Failed to generate document: {outputFileName}");
-                                                        return;
+                                                        AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
+
                                                     }
+                                                // Verify the file was created
+                                                     if (!File.Exists(outputFileName))
+                                                     {
+                                                            Log.Error($"Failed to generate document: {outputFileName}");
+                                                            return;
+                                                     }
 
 
                                                 }
-                                            }
-
-                                        stage.IsRun = true;
+                                            stage.IsRun = true;
+                                        }
                                     }
+                                    campaign.LastRunningTime = DateTime.Now;
+                                    await _context.SaveChangesAsync();
                                 }
                             }
                         }
@@ -298,7 +334,7 @@ public class ApiService
 
             } while (moreData);
 
-            campaign.LastRunningTime = DateTime.Now;
+   //         campaign.LastRunningTime = DateTime.Now;
             await _context.SaveChangesAsync();
 
         }
@@ -617,4 +653,264 @@ public class ApiService
             return 0;
         }
     }
+
+    // here new code for read csv
+    private async Task<List<PropertyRecord>> ReadPropertiesFromCsv(string csvFilePath, int campaignId)
+    {
+        var properties = new List<PropertyRecord>();
+
+        try
+        {
+            if (!File.Exists(csvFilePath))
+            {
+                Log.Error($"CSV file not found at: {csvFilePath}");
+                return properties;
+            }
+
+            using (var reader = new StreamReader(csvFilePath))
+            {
+                // Read header
+                string headerLine = await reader.ReadLineAsync();
+                if (headerLine == null)
+                {
+                    Log.Warning("CSV file is empty");
+                    return properties;
+                }
+
+                var headers = headerLine.Split(',').Select(h => h.Trim()).ToArray();
+
+                // Read data rows
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    var values = ParseCsvLine(line);
+
+                    var property = new PropertyRecord
+                    {
+                        CampaignId = campaignId
+                    };
+
+                    for (int i = 0; i < headers.Length && i < values.Length; i++)
+                    {
+                        string header = headers[i].ToLower();
+                        string value = values[i].Trim().Trim('"');
+
+                        // Map CSV columns to PropertyRecord properties
+                        switch (header)
+                        {
+                            case "radarid":
+                                property.RadarId = value;
+                                break;
+                            case "apn":
+                                property.Apn = value;
+                                break;
+                            case "ptype":
+                            case "type":
+                                property.Type = value;
+                                break;
+                            case "address":
+                                property.Address = value;
+                                break;
+                            case "city":
+                                property.City = value;
+                                break;
+                            case "state":
+                                property.State = value;
+                                break;
+                            case "zipfive":
+                            case "zip":
+                                property.Zip = value;
+                                break;
+                            case "owner":
+                                property.Owner = value;
+                                break;
+                            case "ownershiptype":
+                            case "ownertype":
+                                property.OwnerType = value;
+                                break;
+                            case "primaryname":
+                                property.PrimaryName = value;
+                                break;
+                            case "primaryfirstname":
+                            case "primaryfirst":
+                                property.PrimaryFirst = value;
+                                break;
+                            case "owneraddress":
+                            case "mailaddress":
+                                property.MailAddress = value;
+                                break;
+                            case "ownercity":
+                            case "mailcity":
+                                property.MailCity = value;
+                                break;
+                            case "ownerstate":
+                            case "mailstate":
+                                property.MailState = value;
+                                break;
+                            case "ownerzipfive":
+                            case "mailzip":
+                                property.MailZip = value;
+                                break;
+                            case "issamemailing":
+                            case "ownerocc":
+                                property.OwnerOcc = value == "1" || value.ToLower() == "true" ? "1" : "0";
+                                break;
+                            case "inforeclosure":
+                            case "foreclosure":
+                                property.Foreclosure = value == "1" || value.ToLower() == "true" ? "1" : "0";
+                                break;
+                            case "foreclosurestage":
+                            case "fclstage":
+                                property.FclStage = value;
+                                break;
+                            case "foreclosuredoctype":
+                            case "fcldoctype":
+                                property.FclDocType = value;
+                                break;
+                            case "foreclosurerecdate":
+                            case "fclrecdate":
+                                property.FclRecDate = value;
+                                break;
+                            case "trustee":
+                                property.Trustee = value;
+                                break;
+                            case "trusteephone":
+                                property.TrusteePhone = value;
+                                break;
+                            case "trusteesalenum":
+                            case "tsnumber":
+                                property.TsNumber = value;
+                                break;
+                        }
+                    }
+
+                    properties.Add(property);
+                }
+            }
+
+            Log.Information($"Loaded {properties.Count} properties from CSV file");
+            return properties;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error reading CSV file: {FilePath}", csvFilePath);
+            return properties;
+        }
+    }
+
+
+    private async Task<int> SaveCsvPropertiesAsync(
+        Campaign campaign,
+        List<PropertyRecord> csvProperties)
+    {
+        try
+        {
+            if (campaign == null)
+            {
+                Log.Warning("SaveCsvPropertiesAsync called with null Campaign");
+                return 0;
+            }
+
+            if (csvProperties == null || !csvProperties.Any())
+            {
+                Log.Warning("No CSV properties provided to save for Campaign {CampaignName}", campaign.Name);
+                return 0;
+            }
+
+            var radarIds = csvProperties
+                .Where(p => !string.IsNullOrWhiteSpace(p.RadarId))
+                .Select(p => p.RadarId)
+                .ToList();
+
+            var existing = await _context.Properties
+                .Where(p => radarIds.Contains(p.RadarId))
+                .ToListAsync();
+
+            // Update existing records
+            foreach (var e in existing)
+            {
+                e.CampaignId = campaign.Id;
+            }
+
+            var existingIds = existing
+                .Select(e => e.RadarId)
+                .ToHashSet();
+
+            var newRecords = csvProperties
+                .Where(p => !string.IsNullOrWhiteSpace(p.RadarId) &&
+                            !existingIds.Contains(p.RadarId))
+                .ToList();
+
+            if (newRecords.Any())
+            {
+                await _context.Properties.AddRangeAsync(newRecords);
+            }
+
+            await _context.SaveChangesAsync();
+
+            Log.Information(
+                "CSV save successful. Campaign={Campaign}, New={NewCount}, Existing={ExistingCount}",
+                campaign.Name,
+                newRecords.Count,
+                existing.Count);
+
+            return csvProperties.Count;
+        }
+        catch (DbUpdateException dbEx)
+        {
+            Log.Error(
+                dbEx,
+                "Database update error while saving CSV properties for Campaign {CampaignName}",
+                campaign?.Name);
+
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(
+                ex,
+                "Unexpected error in SaveCsvPropertiesAsync for Campaign {CampaignName}",
+                campaign?.Name);
+
+            return 0;
+        }
+    }
+
+    private string GetCsvPathFromDataFolder()
+    {
+        return Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Data",
+            "properties_5000_records.csv"
+        );
+    }
+
+    // ============================================================
+    // 🔹 CSV PARSER (UNCHANGED)
+    // ============================================================
+    private string[] ParseCsvLine(string line)
+    {
+        var values = new List<string>();
+        var current = new StringBuilder();
+        bool inQuotes = false;
+
+        foreach (char c in line)
+        {
+            if (c == '"') inQuotes = !inQuotes;
+            else if (c == ',' && !inQuotes)
+            {
+                values.Add(current.ToString());
+                current.Clear();
+            }
+            else current.Append(c);
+        }
+
+        values.Add(current.ToString());
+        return values.ToArray();
+    }
+
+
+
 }
