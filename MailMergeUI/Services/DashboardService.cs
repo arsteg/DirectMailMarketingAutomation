@@ -288,5 +288,75 @@ namespace MailMergeUI.Services
             return stageCount * apiPropertyCount;
         }
 
+        // ================================================================
+        // 7. Letters Printed Due Tomorrow – Filtered by Campaign (DB)
+        // ================================================================
+        public async Task<int> GetLettersPrintedDeuTomorrowAsync(int campaignId)
+        {
+            var today = DateTime.Today;
+
+            var campaign = await _context.Campaigns
+                                .AsNoTracking()
+                                .Where(c => c.Id == campaignId && c.LeadSource != null)
+                                .Select(c => new
+                                {
+                                    c.LastRunningTime,
+                                    c.LeadSource.Type,
+                                    c.LeadSource.RunAt,
+                                    c.ScheduledDate,
+                                    DaysOfWeek = c.LeadSource.DaysOfWeek ?? new List<string>(),
+                                    Stages = c.Stages.Select(s => new
+                                    {
+                                        s.DelayDays,
+                                        s.IsRun,
+                                        s.Id                                
+                                    }).ToList()
+                                })
+                                .FirstOrDefaultAsync();
+
+            if (campaign == null)
+                return 0;
+
+            int stageIdToReturn = 0;
+
+            // Order stages properly
+            var orderedStages = campaign.Stages
+                .OrderBy(s => s.Id) 
+                .ToList();
+
+            // Case 1: Only one stage → stop execution
+            if (orderedStages.Count == 1)
+            {
+                return 0;
+            }
+
+            // Find last executed stage
+            var lastRunStage = orderedStages
+                .LastOrDefault(s => s.IsRun);
+
+            // Case 2: All stages have run → stop execution
+            if (lastRunStage != null && lastRunStage == orderedStages.Last())
+            {
+                return 0;
+            }
+
+            // Case 3: Some stages have run AND further stages exist
+            if (lastRunStage != null)
+            {
+                stageIdToReturn = lastRunStage.Id;
+            }
+
+            // Case 4: No stage has run yet → also stop
+            if (lastRunStage == null)
+            {
+                return 0;
+            }
+
+            return await _context.PrintHistory
+                .Where(p => p.CampaignId == campaignId && p.PrintedAt.Date == today && p.StageId== stageIdToReturn)
+                .CountAsync();
+        }
+
+
     }
 }

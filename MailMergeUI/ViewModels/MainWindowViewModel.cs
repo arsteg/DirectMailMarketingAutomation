@@ -3,6 +3,7 @@ using MailMerge.Data.Models;
 using MailMergeUI.Helpers;
 using MailMergeUI.Models;
 using MailMergeUI.Services;
+using MailMergeUI.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -43,7 +44,8 @@ namespace MailMergeUI.ViewModels
                     OnPropertyChanged();
                     if (_activeCampaign != null)
                     {
-                   //     _ = LoadPendingCountAsync();
+                        //     _ = LoadPendingCountAsync();
+                        _ = LoadCountAsync();
                     }
                 }
             }
@@ -673,6 +675,43 @@ namespace MailMergeUI.ViewModels
 
             values.Add(current.ToString());
             return values.ToArray();
+        }
+        public async Task LoadCountAsync()
+        {
+            if (ActiveCampaign == null)
+            {
+                // Reset all counts if no campaign is selected
+                PendingLetters = 0;
+                DueToday = 0;
+                PrintedToday = 0;
+                PrintedThisMonth = 0;
+                Status = "No campaign selected.";
+                return;
+            }
+
+            var today = DateTime.Today;
+            bool isLastDayOfMonth = today.AddDays(1).Day == 1; // tomorrow is 1st of next month
+
+            DateTime fromDate = isLastDayOfMonth
+                ? new DateTime(today.Year, today.Month, 1)
+                : new DateTime(today.AddMonths(-1).Year, today.AddMonths(-1).Month, 1);
+
+            var data = _dbContext.PrintHistory
+                .Where(ph => ph.PrintedAt.Date >= fromDate && ph.PrintedAt.Date <= today)
+                .GroupBy(ph => ph.PrintedAt.Date)
+                .Select(g => new PrintDaySummary
+                {
+                    PrintDate = g.Key,
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.PrintDate)
+                .ToList();
+            int total = data.Sum(x => x.Count);
+         
+            PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
+            DueTomorrow = await _dashboardService.GetLettersPrintedDeuTomorrowAsync(ActiveCampaign.Id);
+            PrintedThisMonth = total;
+
         }
 
     }
