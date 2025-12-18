@@ -248,31 +248,40 @@ public class ApiService
         }
     }
 
-    private async Task RunCampaign(MailMergeDbContext _context, HttpClient _httpClient, Campaign campaign, string url, string rawQueryParams, string? bearerToken)
+    private async Task RunCampaign(
+    MailMergeDbContext _context,
+    HttpClient _httpClient,
+    Campaign campaign,
+    string url,
+    string rawQueryParams,
+    string? bearerToken)
     {
         try
         {
+            const int batchSize = 500;
             int start = 0;
-            int batchSize = 500;
-            int totalResults = 0;
-            bool moreData = true;
+            int totalResultsFetched = 0;
 
-            do
+            bool hasMoreData = true;
+
+            while (hasMoreData)
             {
-                // Build URL with pagination
+                // Build paginated URL
                 var pagedUrl = $"{url}{rawQueryParams}&Start={start}";
                 Log.Debug("Fetching records starting from {Start}", start);
 
-                // Serialize request body
+                // Request body (filters)
                 var jsonContent = campaign.LeadSource.FiltersJson;
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                // Send POST
+                // Send POST request
                 var response = await _httpClient.PostAsync(pagedUrl, content);
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    Log.Error("API Call Failed at start={Start}. Status: {StatusCode}. Details: {Details}", start, response.StatusCode, errorContent);
+                    Log.Error("API Call Failed at start={Start}. Status: {StatusCode}. Details: {Details}",
+                        start, response.StatusCode, errorContent);
                     break;
                 }
 
@@ -282,67 +291,85 @@ public class ApiService
 
                 if (apiResponse?.Results == null || !apiResponse.Results.Any())
                 {
-                    Log.Information("No results found for batch starting at {Start}", start);
+                    Log.Information("No more results returned from API at start={Start}. Ending pagination.", start);
                     break;
                 }
 
-                totalResults = apiResponse.TotalResultCount;
+                var currentBatchCount = apiResponse.Results.Count;
+                totalResultsFetched += currentBatchCount;
 
-                // Map results :Map API Data to Database Model
+                Log.Information("Received {Count} records (total fetched so far: {TotalFetched})",
+                    currentBatchCount, totalResultsFetched);
+
+                // Map API DTOs to database entities
                 var propertiesToSave = apiResponse.Results
                     .Select(dto => MapToPropertyRecord(dto))
                     .ToList();
 
-                propertiesToSave.ForEach(x => x.CampaignId = campaign.Id);
+                // Assign CampaignId to all (new and existing)
+                foreach (var prop in propertiesToSave)
+                {
+                    prop.CampaignId = campaign.Id;
+                }
 
-                //Creates a list of unique identifiers to check for existing records in the database.
-
+                // Extract RadarIds for duplicate check
                 var radarIds = propertiesToSave.Select(p => p.RadarId).ToList();
 
-                // Fetch existing records with matching RadarIds
+                // Fetch only the existing records we might conflict with
                 var existingRecords = await _context.Properties
                     .Where(p => radarIds.Contains(p.RadarId))
                     .ToListAsync();
 
-                // Determine new records (those not in DB)
-                var existingRadarIds = existingRecords.Select(p => p.RadarId).ToList();
+                // Use HashSet for fast lookup
+                var existingRadarIdSet = new HashSet<string>(existingRecords.Select(e => e.RadarId));
+
+                // Separate new records
                 var newProperties = propertiesToSave
-                    .Where(p => !existingRadarIds.Contains(p.RadarId))
+                    .Where(p => !existingRadarIdSet.Contains(p.RadarId))
                     .ToList();
 
-                // ✅ Update CampaignId for all existing records
+                // Update CampaignId on existing records (in case it changed)
                 foreach (var existing in existingRecords)
                 {
                     existing.CampaignId = campaign.Id;
                 }
 
-                // ✅ Add new records
+                // Add new records if any
                 if (newProperties.Any())
                 {
                     await _context.Properties.AddRangeAsync(newProperties);
-                    int saved = await _context.SaveChangesAsync();
-                    Log.Information("Saved {Count} new properties.", saved);
                 }
-                else
-                {
-                    Log.Debug("No new records to insert for batch starting {Start}.", start);
-                }
-                await _context.SaveChangesAsync();
-                
+
+                // Single SaveChanges per batch: saves both new inserts and existing updates
+                int savedCount = await _context.SaveChangesAsync();
+
+                Log.Information("Batch processed: {NewCount} new properties inserted/updated in this batch. Total saved changes: {SavedCount}",
+                    newProperties.Count, savedCount);
+
+                // Decide whether to continue
+                // Continue if the API returned a full batch (likely more data exists)
+                // Stop if we got fewer than batchSize (last page)
+                hasMoreData = currentBatchCount == batchSize;
+
                 start += batchSize;
-                moreData = start < totalResults;
+            }
 
-            } while (moreData);
+            // Update campaign last run timestamp (use UTC for consistency)
+            campaign.LastRunningTime = DateTime.UtcNow;
 
-   //         campaign.LastRunningTime = DateTime.Now;
+            // Final save for the campaign update (outside loop to avoid unnecessary saves if no batches ran)
             await _context.SaveChangesAsync();
 
+            Log.Information("Campaign '{CampaignName}' completed successfully. Total records processed: {TotalFetched}",
+                campaign.Name, totalResultsFetched);
         }
         catch (Exception ex)
         {
-            Log.Error($"Error in RunCampaign for Campaign {campaign.Name}: {ex.Message}");
+            Log.Error(ex, "Error in RunCampaign for Campaign '{CampaignName}'", campaign.Name);
+            // Optionally re-throw or handle further (e.g., mark campaign as failed)
         }
     }
+
     private PropertyRecord MapToPropertyRecord(PropertyResultDto dto)
     {
         // Mapping logic must be updated to include the new fields from the URL
