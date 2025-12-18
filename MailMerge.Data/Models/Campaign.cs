@@ -32,6 +32,9 @@ namespace MailMerge.Data.Models
         public bool IsRun { get; set; }
         public string TemplateId { get; set; } = ""; // References Template.Id
         public int DelayDays { get; set; } = 0;
+        public bool IsFetched { get; set; }
+        public bool IsPrinted { get; set; }
+
     }
 
     public class LeadSource

@@ -354,15 +354,14 @@ namespace MailMergeUI.ViewModels
             //    ApiPropertyCount = await _apiService.GetCampaignPropertyCountFromApiAsync(ActiveCampaign);
 
                 // Get today's pending
-                PendingLettersFromApi = await _dashboardService.GetPendingLettersTodayFromApiAsync(
-                                      ActiveCampaign.Id, totalResults);
+                //PendingLettersFromApi = await _dashboardService.GetPendingLettersTodayFromApiAsync(
+                //                      ActiveCampaign.Id, totalResults);
 
                 // Get total due by tomorrow
                 //DueTomorrow = await _dashboardService.GetDueTomorrowFromApiAsync(
-                //                 ActiveCampaign.Id, totalResults);
+                //                 ActiveCampaign.Id, totalResults);         
+               // Status = $"{PendingLettersFromApi} letters pending today for {ActiveCampaign.Name}.";
                 LoadCountAsync();
-                Status = $"{PendingLettersFromApi} letters pending today for {ActiveCampaign.Name}.";
-
             }
             catch(Exception ex)
             {
@@ -707,10 +706,12 @@ namespace MailMergeUI.ViewModels
                 .OrderBy(x => x.PrintDate)
                 .ToList();
             int total = data.Sum(x => x.Count);
-         
+
+            PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
             PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
             DueTomorrow = await _dashboardService.GetLettersPrintedDeuTomorrowAsync(ActiveCampaign.Id);
             PrintedThisMonth = total;
+            Status = $"{PendingLetters} letters pending today for {ActiveCampaign.Name}.";
 
         }
 
