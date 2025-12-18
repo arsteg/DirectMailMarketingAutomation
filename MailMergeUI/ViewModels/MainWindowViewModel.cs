@@ -695,7 +695,11 @@ namespace MailMergeUI.ViewModels
                 ? new DateTime(today.Year, today.Month, 1)
                 : new DateTime(today.AddMonths(-1).Year, today.AddMonths(-1).Month, 1);
 
-            var data = _dbContext.PrintHistory
+
+            PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
+            PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
+            DueTomorrow = await _dashboardService.GetLettersPrintedDeuTomorrowAsync(ActiveCampaign.Id);
+             var data = _dbContext.PrintHistory
                 .Where(ph => ph.PrintedAt.Date >= fromDate && ph.PrintedAt.Date <= today)
                 .GroupBy(ph => ph.PrintedAt.Date)
                 .Select(g => new PrintDaySummary
@@ -705,11 +709,8 @@ namespace MailMergeUI.ViewModels
                 })
                 .OrderBy(x => x.PrintDate)
                 .ToList();
-            int total = data.Sum(x => x.Count);
+                        int total = data.Sum(x => x.Count);
 
-            PendingLetters = await _dashboardService.GetPendingLettersTodayAsync(ActiveCampaign.Id);
-            PrintedToday = await _dashboardService.GetLettersPrintedTodayAsync(ActiveCampaign.Id);
-            DueTomorrow = await _dashboardService.GetLettersPrintedDeuTomorrowAsync(ActiveCampaign.Id);
             PrintedThisMonth = total;
             Status = $"{PendingLetters} letters pending today for {ActiveCampaign.Name}.";
 

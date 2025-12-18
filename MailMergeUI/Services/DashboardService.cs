@@ -85,7 +85,8 @@ namespace MailMergeUI.Services
                         s.Id,
                         s.DelayDays,
                         s.IsRun,
-                        s.IsFetched
+                        s.IsFetched,
+                        s.IsPrinted
                     }).ToList()
                 })
                 .FirstOrDefaultAsync();
@@ -126,7 +127,11 @@ namespace MailMergeUI.Services
             var pendingTodayStage = campaign.Stages
                 .Where(s => s.Id == pendingTodayStageId).FirstOrDefault();
             bool IsFetched = pendingTodayStage.IsFetched;
-
+            bool IsPrinted = pendingTodayStage.IsPrinted;
+            if (IsPrinted)
+            {
+                return 0;
+            }
             if (!IsFetched)
             {
                 // call api here

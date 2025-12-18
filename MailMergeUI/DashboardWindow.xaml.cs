@@ -171,7 +171,7 @@ namespace MailMergeUI
 
                             try
                             {
-                                if (DateTime.Now >= campaign.LastRunningTime.AddDays(stage.DelayDays))
+                                if (DateTime.Now >= campaign.ScheduledDate.AddDays(stage.DelayDays))
                                 {
                                     Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
                                     await viewModel.LoadPendingCountAsync();
@@ -211,10 +211,12 @@ namespace MailMergeUI
                                         printDoc.PrinterSettings.PrinterName = selectedPrinter;
                                         printDoc.Print();
                                     }
-
+                                    stage.IsRun = true;
+                                    stage.IsPrinted = true;
+                                    _dbContext.SaveChanges();
                                     MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                                    stage.IsRun = true;
+
                                 }
                             }
                             catch (Exception ex)
@@ -288,9 +290,12 @@ namespace MailMergeUI
                                             printDoc.PrinterSettings.PrinterName = selectedPrinter;
                                             printDoc.Print();
                                         }
+                                        stage.IsRun = true;
+                                        stage.IsPrinted = true;
+                                        _dbContext.SaveChanges();
                                         MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                                        stage.IsRun = true;
+
                                     }
                                 }
                                 catch (Exception ex)

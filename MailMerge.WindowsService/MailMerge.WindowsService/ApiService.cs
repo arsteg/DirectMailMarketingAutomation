@@ -138,7 +138,7 @@ public class ApiService
                                                 }
                                             }
                                             stage.IsRun = true;
-
+                                            stage.IsFetched = true;
                                         }
                                     }
                                     catch (Exception ex)
@@ -227,6 +227,7 @@ public class ApiService
 
                                                 }
                                             stage.IsRun = true;
+                                            stage.IsFetched = true;
                                         }
                                     }
                                     campaign.LastRunningTime = DateTime.Now;
