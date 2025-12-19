@@ -26,9 +26,11 @@ namespace MailMergeUI
 
         public App()
         {
-            string exePath = Assembly.GetExecutingAssembly().Location;
-            string exeFolder = Path.GetDirectoryName(exePath);
-            string logsFolderPath = Path.Combine(exeFolder, "Logs");
+            var appDataPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "MailMax");
+
+            string logsFolderPath = Path.Combine(appDataPath, "Logs");
 
             if (!Directory.Exists(logsFolderPath))
             {

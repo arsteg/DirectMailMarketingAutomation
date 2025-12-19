@@ -13,8 +13,8 @@ namespace MailMergeUI.Logging
     {
         private const string LogFolder = "Logs";
         private static readonly string LogFileTemplate = $"app-{DateTime.UtcNow}.log";
-        private static readonly string LogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, LogFolder);
-
+      // private static readonly string LogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, LogFolder);
+        private static readonly string LogPath = Path.Combine(  Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MailMax","Logs");
         public static ILogger Configure()
         {
             // Ensure folder exists
