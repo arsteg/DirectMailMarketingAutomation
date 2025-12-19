@@ -125,11 +125,15 @@ public class ApiService
                                                         pdfDocument.Save(pdfFileName);  // ✅ Save PDF to .pdf file
                                                     }
                                                 }
-                                                foreach (var item in records)
+                                                if (!stage.IsFetched)
                                                 {
-                                                    AddRecordToPrintHistory(item.Id,campaign,stage,campaign.Printer, outputFileName);
-                                                   
+                                                    foreach (var item in records)
+                                                    {
+                                                        AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
+
+                                                    }
                                                 }
+
                                                 // Verify the file was created
                                                 if (!File.Exists(outputFileName))
                                                 {
@@ -212,13 +216,16 @@ public class ApiService
                                                         pdfDocument.Save(pdfFileName);
                                                     }
                                                 }
-                                                foreach (var item in records)
+                                                if (!stage.IsFetched)
+                                                {
+                                                    foreach (var item in records)
                                                     {
                                                         AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
 
                                                     }
+                                                }
                                                 // Verify the file was created
-                                                     if (!File.Exists(outputFileName))
+                                                if (!File.Exists(outputFileName))
                                                      {
                                                             Log.Error($"Failed to generate document: {outputFileName}");
                                                             return;

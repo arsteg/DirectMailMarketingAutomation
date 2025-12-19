@@ -216,7 +216,7 @@ namespace MailMergeUI
                                     _dbContext.SaveChanges();
                                     MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                                    await viewModel.LoadCountAsync();
                                 }
                             }
                             catch (Exception ex)
@@ -295,7 +295,7 @@ namespace MailMergeUI
                                         _dbContext.SaveChanges();
                                         MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                                        await viewModel.LoadCountAsync();
                                     }
                                 }
                                 catch (Exception ex)

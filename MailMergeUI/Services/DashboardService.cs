@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -112,26 +113,29 @@ namespace MailMergeUI.Services
 
             int pending = 0;
             int pendingTodayStageId = 0;
-           
+
+            bool IsFetched=true;
             foreach (var stage in campaign.Stages)
             {
-                if (!stage.IsRun && today == baseDate.AddDays(stage.DelayDays))
+                if (stage.IsPrinted && today == baseDate.AddDays(stage.DelayDays))
                 {
-                    pendingTodayStageId = stage.Id;    
+                    return 0;
+                }
+
+                if (!stage.IsPrinted && today == baseDate.AddDays(stage.DelayDays))
+                {
+                    pendingTodayStageId = stage.Id;
+                    IsFetched = stage.IsFetched;
                 }
             }
+
+      
+
             if (pendingTodayStageId < 0)
             { 
                 return 0; 
             }
-            var pendingTodayStage = campaign.Stages
-                .Where(s => s.Id == pendingTodayStageId).FirstOrDefault();
-            bool IsFetched = pendingTodayStage.IsFetched;
-            bool IsPrinted = pendingTodayStage.IsPrinted;
-            if (IsPrinted)
-            {
-                return 0;
-            }
+
             if (!IsFetched)
             {
                 // call api here
@@ -241,17 +245,24 @@ namespace MailMergeUI.Services
                 var newTodayStage = campaignToUpdate.Stages
                     .Where(s => s.Id == pendingTodayStageId).FirstOrDefault();
 
+                var records = await _context.Properties.Where(x => x.CampaignId == campaignId && x.IsBlackListed == false).ToListAsync();
+             
+                var outputPath = Path.Combine(campaignToUpdate.OutputPath, newTodayStage.StageName);
+
+                string outputFileName = Path.Combine(outputPath, $"{campaignToUpdate.Name}.docx");
+
+                if (!newTodayStage.IsFetched)
+                {
+                    foreach (var item in records)
+                    {
+                        AddRecordToPrintHistory(item.Id, campaignToUpdate, newTodayStage, campaignToUpdate.Printer, outputFileName);
+
+                    }
+                }
+
                 campaignToUpdate.LastRunningTime = DateTime.Now;
                 newTodayStage.IsFetched = true;
                 await _context.SaveChangesAsync();
-                var records = await _context.Properties.Where(x => x.CampaignId == campaignId && x.IsBlackListed == false).ToListAsync();
-
-                foreach (var item in records)
-                {
-                    AddRecordToPrintHistory(item.Id, campaignToUpdate, newTodayStage, campaign.Printer,"");
-
-                }
-
                 pending = await _context.PrintHistory
                .Where(p => p.CampaignId == campaignId && p.PrintedAt.Date == today && p.StageId == pendingTodayStageId)
                .CountAsync();
