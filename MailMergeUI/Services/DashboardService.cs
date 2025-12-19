@@ -94,18 +94,18 @@ namespace MailMergeUI.Services
            
             if (campaign == null) return 0;
 
-            bool shouldRunToday = false;
+            //bool shouldRunToday = false;
 
-            if (campaign.Type == ScheduleType.Daily && now >= campaign.RunAt)
-                shouldRunToday = true;
+            //if (campaign.Type == ScheduleType.Daily && now >= campaign.RunAt)
+            //    shouldRunToday = true;
 
-            else if (campaign.Type == ScheduleType.None)
-            {
-                if (campaign.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase) &&
-                    now >= campaign.RunAt)
-                    shouldRunToday = true;
-            }
-            if (!shouldRunToday) return 0;
+            //else if (campaign.Type == ScheduleType.None)
+            //{
+            //    if (campaign.DaysOfWeek.Contains(today.DayOfWeek.ToString(), StringComparer.OrdinalIgnoreCase) &&
+            //        now >= campaign.RunAt)
+            //        shouldRunToday = true;
+            //}
+            //if (!shouldRunToday) return 0;
 
             var baseDate = campaign.ScheduledDate.Date == default(DateTime)
                                  ? DateTime.MinValue.Date

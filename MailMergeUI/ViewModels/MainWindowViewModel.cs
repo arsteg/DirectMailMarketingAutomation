@@ -410,6 +410,7 @@ namespace MailMergeUI.ViewModels
                 Status = success ? "Print job completed." : "Some print jobs failed.";
                 _log.Log(success ? "Print batch succeeded." : "Print batch had errors.");
                 PendingLetters = 0;
+                LoadCountAsync();
             }
             catch (Exception ex)
             {
