@@ -42,6 +42,8 @@ namespace MailMergeUI.ViewModels
                 {
                     _activeCampaign = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsRefreshEnabled));
+                    OnPropertyChanged(nameof(IsPrintEnabled));
                     if (_activeCampaign != null)
                     {
                         //     _ = LoadPendingCountAsync();
@@ -55,7 +57,12 @@ namespace MailMergeUI.ViewModels
         public int PendingLetters
         {
             get => _pendingLetters;
-            set { _pendingLetters = value; OnPropertyChanged(); }
+            set
+            {
+                _pendingLetters = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsPrintEnabled));
+            }
         }
 
         private string _status = "Ready";
@@ -131,6 +138,61 @@ namespace MailMergeUI.ViewModels
         public ICommand ShowBlacklistCommand { get; }
         public ICommand ShowLogCommand { get; }
         private int totalResults = 0;
+        private bool _isRefreshing;
+        public bool IsRefreshing
+        {
+            get => _isRefreshing;
+            set
+            {
+                if (_isRefreshing != value)
+                {
+                    _isRefreshing = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsRefreshEnabled));
+                }
+            }
+        }
+
+        public bool IsRefreshEnabled => ActiveCampaign != null && !IsRefreshing;
+
+        private bool _isPrinting;
+        public bool IsPrinting
+        {
+            get => _isPrinting;
+            set
+            {
+                if (_isPrinting != value)
+                {
+                    _isPrinting = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsPrintEnabled));
+                }
+            }
+        }
+
+        public bool IsPrintEnabled => ActiveCampaign != null && !IsPrinting && PendingLetters > 0;
+
+        private string _refreshStatusMessage = string.Empty;
+        public string RefreshStatusMessage
+        {
+            get => _refreshStatusMessage;
+            set
+            {
+                _refreshStatusMessage = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _printStatusMessage = string.Empty;
+        public string PrintStatusMessage
+        {
+            get => _printStatusMessage;
+            set
+            {
+                _printStatusMessage = value;
+                OnPropertyChanged();
+            }
+        }
         public MainWindowViewModel(MailMergeDbContext dbContext)
         {
             _dashboardService = new DashboardService(dbContext);
@@ -148,7 +210,7 @@ namespace MailMergeUI.ViewModels
 
 
             PrintTodayCommand = new RelayCommand(async _ => await PrintTodayAsync(), _ => ActiveCampaign != null);
-            RefreshLeadsCommand = new RelayCommand(async _ => await RefreshLeadsAsync(), _ => ActiveCampaign != null);
+            RefreshLeadsCommand = new RelayCommand(async _ => await RefreshLeadsAsync(), _ => IsRefreshEnabled);
 
 
             //CurrentView = DashboardVM; // Default
@@ -207,7 +269,7 @@ namespace MailMergeUI.ViewModels
     
         }
 
-        public async Task LoadPendingCountAsync()
+        public async Task<int> LoadPendingCountAsync()
         {
             if (ActiveCampaign == null)
             {
@@ -217,11 +279,12 @@ namespace MailMergeUI.ViewModels
                 PrintedToday = 0;
                 PrintedThisMonth = 0;
                 Status = "No campaign selected.";
-                return;
+                return 0;
             }
 
             try
             {
+                int newLeadsFound = 0;
                 string useApiSimulator = System.Configuration.ConfigurationManager.AppSettings["USeAPISimulator"];
                 if (useApiSimulator?.ToLower() == "true")
                 {
@@ -232,11 +295,12 @@ namespace MailMergeUI.ViewModels
                     if (!csvData.Any())
                     {
                         Log.Warning("no any csvData.");
-                        return;
+                        return 0;
                     }
 
 
-                    totalResults= await SaveCsvPropertiesAsync(ActiveCampaign, csvData);
+                    totalResults = csvData.Count;
+                    newLeadsFound = await SaveCsvPropertiesAsync(ActiveCampaign, csvData);
                 }
                 else
                 {
@@ -259,6 +323,7 @@ namespace MailMergeUI.ViewModels
                     int batchSize = 500;
                   //  int totalResults = 0;
                      totalResults = 0;
+                    int newRecordsAdded = 0;
                     bool moreData = true;
 
                     do
@@ -324,6 +389,7 @@ namespace MailMergeUI.ViewModels
                             await _dbContext.Properties.AddRangeAsync(newProperties);
                             int saved = await _dbContext.SaveChangesAsync();
                             Log.Information("Saved {Count} new properties.", saved);
+                            newRecordsAdded += newProperties.Count;
                         }
                         else
                         {
@@ -338,6 +404,7 @@ namespace MailMergeUI.ViewModels
 
                     ActiveCampaign.LastRunningTime = DateTime.Now;
                     await _dbContext.SaveChangesAsync();
+                    newLeadsFound = newRecordsAdded;
                 }
 
 
@@ -362,10 +429,12 @@ namespace MailMergeUI.ViewModels
                 //                 ActiveCampaign.Id, totalResults);         
                // Status = $"{PendingLettersFromApi} letters pending today for {ActiveCampaign.Name}.";
                 LoadCountAsync();
+                return newLeadsFound;
             }
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return 0;
             }
 
         }
@@ -374,22 +443,38 @@ namespace MailMergeUI.ViewModels
         {
             try
             {
-                await LoadPendingCountAsync();
+                IsRefreshing = true;
+                RefreshStatusMessage = "Refreshing leads...";
+                var newLeads = await LoadPendingCountAsync();
+                RefreshStatusMessage = $"Refresh complete: {newLeads} new leads found.";
                 _log.Log($"Refreshed leads for campaign: {ActiveCampaign.Name}");
             }
             catch (Exception ex)
             {
             
                 Log.Error(ex, "Error in Refreshed leads for campaign");
+                RefreshStatusMessage = "Refresh failed. Please try again.";
+            }
+            finally
+            {
+                IsRefreshing = false;
             }
 
         }
 
         private async Task PrintTodayAsync()
         {
-            if (PendingLetters == 0) { Status = "No letters to print."; return; }
+            if (PendingLetters == 0)
+            {
+                Status = "No letters to print.";
+                PrintStatusMessage = "No letters to print.";
+                return;
+            }
 
+            var lettersToPrint = PendingLetters;
             Status = "Printing...";
+            PrintStatusMessage = "Printing today's batch...";
+            IsPrinting = true;
             bool success = true;
             try
             {
@@ -408,6 +493,9 @@ namespace MailMergeUI.ViewModels
                 }
 
                 Status = success ? "Print job completed." : "Some print jobs failed.";
+                PrintStatusMessage = success
+                    ? $"Print job completed: {lettersToPrint} letters."
+                    : "Some print jobs failed.";
                 _log.Log(success ? "Print batch succeeded." : "Print batch had errors.");
                 PendingLetters = 0;
                 LoadCountAsync();
@@ -415,6 +503,11 @@ namespace MailMergeUI.ViewModels
             catch (Exception ex)
             {
                 Log.Error(ex, "Error Print jobs failed.");
+                PrintStatusMessage = "Print failed. Please check logs.";
+            }
+            finally
+            {
+                IsPrinting = false;
             }
 
         }
@@ -622,7 +715,7 @@ namespace MailMergeUI.ViewModels
                     newRecords.Count,
                     existing.Count);
 
-                return csvProperties.Count;
+                return newRecords.Count;
             }
             catch (DbUpdateException dbEx)
             {
