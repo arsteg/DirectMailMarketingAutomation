@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Policy;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -175,7 +176,34 @@ namespace MailMergeUI
                                 {
                                     Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
                                     await viewModel.LoadPendingCountAsync();
-                                    var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+
+                                    // Get all properties for this campaign
+                                    var allProperties = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+
+                                    var todayDate = DateTime.Today;
+
+                                    // Get property IDs printed before today
+                                    var printedBeforeTodayPropertyIds = await _dbContext.PrintHistory
+                                        .Where(x => x.CampaignId == campaign.Id
+                                                 && x.StageId == stage.Id
+                                                 && x.PrintedAt.Date < todayDate)
+                                        .Select(x => x.PropertyId)
+                                        .Distinct()
+                                        .ToListAsync();
+
+                                    // Get ONLY new records
+                                    var records = allProperties
+                                        .Where(p => !printedBeforeTodayPropertyIds.Contains(p.Id))
+                                        .ToList();
+
+                                    if (records.Count == 0)
+                                    {
+                                        Log.Information("No properties were printed today for Stage: {StageName}", stage.StageName);
+                                        MessageBox.Show($"No properties have been printed today for stage: {stage.StageName}",
+                                            "Nothing to Print", MessageBoxButton.OK, MessageBoxImage.Information);
+                                        continue;
+                                    }
+
                                     var templatePath = await _dbContext.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
                                     var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
                                     string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
@@ -214,6 +242,12 @@ namespace MailMergeUI
                                     stage.IsRun = true;
                                     stage.IsPrinted = true;
                                     _dbContext.SaveChanges();
+
+                                    foreach (var record in records)
+                                    {
+                                        await AddRecordToPrintHistory(record.Id, campaign, stage, selectedPrinter, pdfFileName);
+                                    }
+
                                     MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                                     await viewModel.LoadCountAsync();
@@ -254,7 +288,34 @@ namespace MailMergeUI
                                     {
                                         Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
                                         await viewModel.LoadPendingCountAsync();
-                                        var records = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+
+                                        // Get all properties for this campaign
+                                        var allProperties = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
+
+                                        var todayDate = DateTime.Today;
+
+                                        // Get property IDs printed before today
+                                        var printedBeforeTodayPropertyIds = await _dbContext.PrintHistory
+                                            .Where(x => x.CampaignId == campaign.Id
+                                                     && x.StageId == stage.Id
+                                                     && x.PrintedAt.Date < todayDate)
+                                            .Select(x => x.PropertyId)
+                                            .Distinct()
+                                            .ToListAsync();
+
+                                        // Get ONLY new records
+                                        var records = allProperties
+                                            .Where(p => !printedBeforeTodayPropertyIds.Contains(p.Id))
+                                            .ToList();
+
+                                        if (records.Count == 0)
+                                        {
+                                            Log.Information("No properties were printed today for Stage: {StageName}", stage.StageName);
+                                            MessageBox.Show($"No properties have been printed today for stage: {stage.StageName}",
+                                                "Nothing to Print", MessageBoxButton.OK, MessageBoxImage.Information);
+                                            continue;
+                                        }
+
                                         var templatePath = await _dbContext.Templates.Where(x => x.Id.ToString() == stage.TemplateId).Select(x => x.Path).FirstOrDefaultAsync();
                                         var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
                                         string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
@@ -293,6 +354,11 @@ namespace MailMergeUI
                                         stage.IsRun = true;
                                         stage.IsPrinted = true;
                                         _dbContext.SaveChanges();
+
+                                        foreach (var record in records)
+                                        {
+                                            await AddRecordToPrintHistory(record.Id, campaign, stage, selectedPrinter, pdfFileName);
+                                        }
                                         MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                                         await viewModel.LoadCountAsync();
@@ -318,5 +384,37 @@ namespace MailMergeUI
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        private async Task AddRecordToPrintHistory( int propertyId,Campaign campaign,FollowUpStage stage,string selectedPrinter,string pdfPath)
+        {
+            bool alreadyExists = await _dbContext.PrintHistory.AnyAsync(x =>
+                x.PropertyId == propertyId &&
+                x.CampaignId == campaign.Id &&
+                x.StageId == stage.Id 
+            );
+
+            if (alreadyExists)
+            {
+               
+                //Log.Information(
+                //    "PrintHistory already exists for PropertyId: {PropertyId}, CampaignId: {CampaignId}, StageId: {StageId}",
+                //    propertyId, campaign.Id, stage.Id
+                //);
+              return ; 
+            }
+
+            _dbContext.PrintHistory.Add(new PrintHistory
+            {
+                PropertyId = propertyId,
+                CampaignId = campaign.Id,
+                StageId = stage.Id,
+                PrinterName = selectedPrinter,
+                FilePath = pdfPath,
+                PrintedAt = DateTime.Now
+            });
+
+            await _dbContext.SaveChangesAsync();
+        }
+
     }
 }
