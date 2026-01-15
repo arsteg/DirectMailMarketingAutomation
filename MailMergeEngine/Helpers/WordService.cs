@@ -40,6 +40,27 @@ namespace MailMergeEngine.Helpers
                 }
 
                 // 3. Perform Replacements
+
+                // Special handling for Primary Name with "Dear" prefix
+                if (string.IsNullOrWhiteSpace(record.PrimaryName))
+                {
+                    document.Replace("Dear {Primary Name}", "To Whom It May Concern", true, true);
+                }
+                else
+                {
+                    ReplaceField("Primary Name", record.PrimaryName);
+                }
+
+                // Special handling for Primary First with "Dear" prefix
+                if (string.IsNullOrWhiteSpace(record.PrimaryFirst))
+                {
+                    document.Replace("Dear {Primary First}", "To Whom It May Concern", true, true);
+                }
+                else
+                {
+                    ReplaceField("Primary First", record.PrimaryFirst);
+                }
+
                 // Note: These keys match the text you write inside the Word Doc, e.g. {Radar ID}
                 ReplaceField("Radar ID", record.RadarId);
                 ReplaceField("Apn", record.Apn);
@@ -50,9 +71,7 @@ namespace MailMergeEngine.Helpers
                 ReplaceField("ZIP", record.Zip);
                 ReplaceField("Owner", record.Owner);
                 ReplaceField("Owner Type", record.OwnerType);
-                ReplaceField("Owner Occ?", record.OwnerOcc);
-                ReplaceField("Primary Name", record.PrimaryName);
-                ReplaceField("Primary First", record.PrimaryFirst);
+                ReplaceField("Owner Occ?", record.OwnerOcc);          
                 ReplaceField("Mail Address", record.MailAddress);
                 ReplaceField("Mail City", record.MailCity);
                 ReplaceField("Mail State", record.MailState);
