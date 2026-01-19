@@ -1,9 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using MailMerge.Data.Models;
+﻿using MailMerge.Data.Models;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace MailMergeEngine.Helpers
 {
@@ -41,24 +42,30 @@ namespace MailMergeEngine.Helpers
 
                 // 3. Perform Replacements
 
-                // Special handling for Primary Name with "Dear" prefix
+                // Pattern for Primary Name with "Dear"
                 if (string.IsNullOrWhiteSpace(record.PrimaryName))
                 {
-                    document.Replace("Dear {Primary Name}", "To Whom It May Concern", true, true);
+                    // Match: "Dear" + (any spaces/commas) + "{Primary Name}"
+                    var regex = new Regex(@"Dear[\s,]+\{Primary\s+Name\}", RegexOptions.IgnoreCase);
+                    document.Replace(regex, "To Whom It May Concern");
                 }
                 else
                 {
-                    ReplaceField("Primary Name", record.PrimaryName);
+                    var regex = new Regex(@"Dear[\s,]+\{Primary\s+Name\}", RegexOptions.IgnoreCase);
+                    document.Replace(regex, $"Dear {record.PrimaryName}");
                 }
 
-                // Special handling for Primary First with "Dear" prefix
+                // Pattern for Primary First with "Dear"
                 if (string.IsNullOrWhiteSpace(record.PrimaryFirst))
                 {
-                    document.Replace("Dear {Primary First}", "To Whom It May Concern", true, true);
+                    // Match: "Dear" + (any spaces/commas) + "{Primary First}"
+                    var regex = new Regex(@"Dear[\s,]+\{Primary\s+First\}", RegexOptions.IgnoreCase);
+                    document.Replace(regex, "To Whom It May Concern");
                 }
                 else
                 {
-                    ReplaceField("Primary First", record.PrimaryFirst);
+                    var regex = new Regex(@"Dear[\s,]+\{Primary\s+First\}", RegexOptions.IgnoreCase);
+                    document.Replace(regex, $"Dear {record.PrimaryFirst}");
                 }
 
                 // Note: These keys match the text you write inside the Word Doc, e.g. {Radar ID}
