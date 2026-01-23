@@ -209,12 +209,14 @@ namespace MailMergeUI
                                     string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
                                     string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
 
-                                    if (!File.Exists(outputFileName))
-                                    {
+                            
                                         Directory.CreateDirectory(outputPath);
                                         if (templatePath != null)
                                         {
-                                            await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
+                                        if (File.Exists(outputFileName)) File.Delete(outputFileName);
+                                        if (File.Exists(pdfFileName)) File.Delete(pdfFileName);
+
+                                        await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
 
                                             // Convert DOCX to PDF
                                             
@@ -230,8 +232,7 @@ namespace MailMergeUI
                                             
                                          
                                         }
-                                    }
-
+                                    
                                     using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
                                     using (var printDoc = pdfDoc.CreatePrintDocument())
                                     {
@@ -320,13 +321,16 @@ namespace MailMergeUI
                                         var outputPath = Path.Combine(campaign.OutputPath, stage.StageName);
                                         string outputFileName = Path.Combine(outputPath, $"{campaign.Name}.docx");
                                         string pdfFileName = Path.Combine(outputPath, $"{campaign.Name}.pdf");
+                              
+                                         Directory.CreateDirectory(outputPath);
 
-                                        if (!File.Exists(outputFileName))
-                                        {
-                                            Directory.CreateDirectory(outputPath);
                                             if (templatePath != null)
                                             {
-                                                await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
+                                            if (File.Exists(outputFileName)) File.Delete(outputFileName);
+                                            if (File.Exists(pdfFileName)) File.Delete(pdfFileName);
+
+
+                                            await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
 
                                                 // Convert DOCX to PDF
 
@@ -342,8 +346,7 @@ namespace MailMergeUI
 
 
                                             }
-                                        }
-
+                                        
                                         using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
                                         using (var printDoc = pdfDoc.CreatePrintDocument())
                                         {
