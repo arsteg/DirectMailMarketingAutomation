@@ -115,25 +115,22 @@ namespace MailMergeUI.Services
             int pendingTodayStageId = 0;
 
             bool IsFetched=true;
-            foreach (var stage in campaign.Stages)
+            // Find the first unprinted stage that is due today or earlier (ordered by DelayDays)
+            foreach (var stage in campaign.Stages.OrderBy(s => s.DelayDays))
             {
-                if (stage.IsPrinted && today == baseDate.AddDays(stage.DelayDays))
-                {
-                    return 0;
-                }
+                var stageDueDate = baseDate.AddDays(stage.DelayDays);
 
-                if (!stage.IsPrinted && today == baseDate.AddDays(stage.DelayDays))
+                if (!stage.IsPrinted && today >= stageDueDate)
                 {
                     pendingTodayStageId = stage.Id;
                     IsFetched = stage.IsFetched;
+                    break; // Take the first unprinted due stage
                 }
             }
 
-      
-
-            if (pendingTodayStageId < 0)
-            { 
-                return 0; 
+            if (pendingTodayStageId <= 0)
+            {
+                return 0;
             }
 
             if (!IsFetched)
@@ -255,8 +252,7 @@ namespace MailMergeUI.Services
                 {
                     foreach (var item in records)
                     {
-                        AddRecordToPrintHistory(item.Id, campaignToUpdate, newTodayStage, campaignToUpdate.Printer, outputFileName);
-
+                        await AddRecordToPrintHistory(item.Id, campaignToUpdate, newTodayStage, campaignToUpdate.Printer, outputFileName);
                     }
                 }
 
@@ -270,7 +266,7 @@ namespace MailMergeUI.Services
             else
             {
                 pending= await _context.PrintHistory
-                .Where(p => p.CampaignId == campaignId && p.PrintedAt.Date == today && p.StageId == pendingTodayStageId)
+                .Where(p => p.CampaignId == campaignId && p.PrintedAt.Date == today.Date && p.StageId == pendingTodayStageId)
                 .CountAsync();
             }
 
@@ -568,6 +564,15 @@ namespace MailMergeUI.Services
 
         private async Task AddRecordToPrintHistory(int propertyId, Campaign campaign, FollowUpStage stage, string selectedPrinter, string pdfPath)
         {
+            bool alreadyExists = await _context.PrintHistory.AnyAsync(x =>
+                x.PropertyId == propertyId &&
+                x.CampaignId == campaign.Id &&
+                x.StageId == stage.Id
+            );
+
+            if (alreadyExists)
+                return;
+
             _context.PrintHistory.Add(new PrintHistory
             {
                 PropertyId = propertyId,
@@ -576,7 +581,6 @@ namespace MailMergeUI.Services
                 PrinterName = selectedPrinter,
                 FilePath = pdfPath
             });
-            await _context.SaveChangesAsync();
         }
 
     }

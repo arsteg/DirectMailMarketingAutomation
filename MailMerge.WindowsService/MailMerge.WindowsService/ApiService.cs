@@ -129,9 +129,9 @@ public class ApiService
                                                 {
                                                     foreach (var item in records)
                                                     {
-                                                        AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
-
+                                                        await AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
                                                     }
+                                                    await _context.SaveChangesAsync();
                                                 }
 
                                                 // Verify the file was created
@@ -220,9 +220,9 @@ public class ApiService
                                                 {
                                                     foreach (var item in records)
                                                     {
-                                                        AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
-
+                                                        await AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
                                                     }
+                                                    await _context.SaveChangesAsync();
                                                 }
                                                 // Verify the file was created
                                                 if (!File.Exists(outputFileName))
@@ -593,6 +593,7 @@ public class ApiService
                     {
                         await AddRecordToPrintHistory(item.Id, campaign, stage, campaign.Printer, outputFileName);
                     }
+                    await _context.SaveChangesAsync();
 
                     Log.Information("Successfully processed stage {StageName} for campaign {CampaignName}",
                         stage.StageName, campaign.Name);
@@ -615,6 +616,15 @@ public class ApiService
     }
     private async Task AddRecordToPrintHistory(int propertyId, Campaign campaign, FollowUpStage stage, string selectedPrinter, string pdfPath)
     {
+        bool alreadyExists = await _context.PrintHistory.AnyAsync(x =>
+            x.PropertyId == propertyId &&
+            x.CampaignId == campaign.Id &&
+            x.StageId == stage.Id
+        );
+
+        if (alreadyExists)
+            return;
+
         _context.PrintHistory.Add(new PrintHistory
         {
             PropertyId = propertyId,
@@ -623,7 +633,6 @@ public class ApiService
             PrinterName = selectedPrinter,
             FilePath = pdfPath
         });
-        await _context.SaveChangesAsync();
     }
 
     /// <summary>

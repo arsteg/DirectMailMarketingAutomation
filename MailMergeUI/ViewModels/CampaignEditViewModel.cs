@@ -71,6 +71,13 @@ namespace MailMergeUI.ViewModels
             set { _stateString = value; OnPropertyChanged(); }
         }
 
+        private bool _validateAddress = true;
+        public bool ValidateAddress
+        {
+            get => _validateAddress;
+            set { _validateAddress = value; OnPropertyChanged(); }
+        }
+
         private string _comboBoxText = "";
         public string ComboBoxText
         {
@@ -229,7 +236,8 @@ namespace MailMergeUI.ViewModels
                     // Load saved printer
                     SelectedPrinter = campaign.Printer ?? SelectedPrinter;
                     (this.State, this.City) = SearchCriteriaHelper.GetStateAndCityFromJson(campaign.LeadSource.FiltersJson);
-
+                    // Load validate address setting
+                    ValidateAddress = campaign.ValidateAddress;
                 }
             }
             catch (Exception ex)
@@ -349,13 +357,17 @@ namespace MailMergeUI.ViewModels
                 return;
             }
 
-            var locationValidator = LocationValidator.ValidateLocation(State, City);
-
-            if (locationValidator.Item1==false)
+            if (ValidateAddress==true)
             {
-                System.Windows.MessageBox.Show(locationValidator.Item2);
-                return;
+                var locationValidator = LocationValidator.ValidateLocation(State, City);
+                if (locationValidator.Item1 == false)
+                {
+                    System.Windows.MessageBox.Show(locationValidator.Item2);
+                    return;
+                }
             }
+
+   
 
             if (!Stages.Any())
             {
@@ -382,7 +394,7 @@ namespace MailMergeUI.ViewModels
             // === SAFE SAVE: Use your existing service ===
             try
             {
-               
+                Campaign.ValidateAddress = ValidateAddress;
                 Campaign.LeadSource.FiltersJson = SearchCriteriaHelper.BuildSearchCriteriaJson(State, City);
 
                 //Campaign.LeadSource.FiltersJson = JsonConvert.SerializeObject(searchCriteriaBody, Newtonsoft.Json.Formatting.Indented);
@@ -404,6 +416,7 @@ namespace MailMergeUI.ViewModels
                         existing.LeadSource = Campaign.LeadSource;
                         existing.Stages = Campaign.Stages;
                         existing.Printer = Campaign.Printer;
+                        existing.ValidateAddress = Campaign.ValidateAddress;
                     }
                 }
                 _service.SaveCampaign(Campaign); // This must exist in your service

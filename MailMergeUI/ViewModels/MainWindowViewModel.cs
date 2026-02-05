@@ -428,7 +428,7 @@ namespace MailMergeUI.ViewModels
                 //DueTomorrow = await _dashboardService.GetDueTomorrowFromApiAsync(
                 //                 ActiveCampaign.Id, totalResults);         
                // Status = $"{PendingLettersFromApi} letters pending today for {ActiveCampaign.Name}.";
-                LoadCountAsync();
+                await LoadCountAsync();
                 return newLeadsFound;
             }
             catch(Exception ex)
@@ -447,6 +447,10 @@ namespace MailMergeUI.ViewModels
                 RefreshStatusMessage = "Refreshing leads...";
                 var newLeads = await LoadPendingCountAsync();
                 RefreshStatusMessage = $"Refresh complete: {newLeads} new leads found.";
+                if (newLeads > 0)
+                {
+                    PendingLetters = newLeads;
+                }
                 _log.Log($"Refreshed leads for campaign: {ActiveCampaign.Name}");
             }
             catch (Exception ex)
@@ -498,7 +502,7 @@ namespace MailMergeUI.ViewModels
                     : "Some print jobs failed.";
                 _log.Log(success ? "Print batch succeeded." : "Print batch had errors.");
                 PendingLetters = 0;
-                LoadCountAsync();
+                await LoadCountAsync();
             }
             catch (Exception ex)
             {

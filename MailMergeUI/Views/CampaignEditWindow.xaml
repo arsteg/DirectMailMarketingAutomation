@@ -81,16 +81,24 @@
   Margin="0,8,0,0"/>
                             <TextBox Text="{Binding State}"
 Grid.Row="0" Grid.Column="1"
-                            Grid.ColumnSpan="2"
 Height="32"
+Width="200"
+HorizontalAlignment="Left"
 Padding="1"
-Margin="10"
+Margin="10,10,0,10"
 TextWrapping="Wrap"
 AcceptsReturn="True"
 BorderBrush="{DynamicResource DividerColor}"
 FontFamily="Consolas"
 FontSize="13"
 />
+                            <CheckBox Content="Validate Address"
+                                      Grid.Row="0" Grid.Column="1"
+                                      IsChecked="{Binding ValidateAddress}"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Left"
+                                      Margin="260,0,0,0"
+                                      FontSize="13"/>
 
                             <TextBlock Text="Cities (e.g., Dallas, Austin, Houston)" Grid.Row="1" Grid.Column="0"
                                        VerticalAlignment="Top"

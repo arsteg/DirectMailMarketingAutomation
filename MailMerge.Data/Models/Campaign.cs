@@ -23,6 +23,7 @@ namespace MailMerge.Data.Models
         public bool IsActive { get; set; }
         public string Printer { get; set; }
         public DateTime ScheduledDate { get; set; }
+        public bool ValidateAddress { get; set; } = true;
     }
     
     public class FollowUpStage
