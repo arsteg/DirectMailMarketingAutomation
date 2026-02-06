@@ -193,6 +193,17 @@ namespace MailMergeUI.ViewModels
                 OnPropertyChanged();
             }
         }
+
+        private double _printProgress;
+        public double PrintProgress
+        {
+            get => _printProgress;
+            set
+            {
+                _printProgress = value;
+                OnPropertyChanged();
+            }
+        }
         public MainWindowViewModel(MailMergeDbContext dbContext)
         {
             _dashboardService = new DashboardService(dbContext);
@@ -209,7 +220,7 @@ namespace MailMergeUI.ViewModels
             ShowLogCommand = new RelayCommand(_ => CurrentView = LogVM);
 
 
-            PrintTodayCommand = new RelayCommand(async _ => await PrintTodayAsync(), _ => ActiveCampaign != null);
+           // PrintTodayCommand = new RelayCommand(async _ => await PrintTodayAsync(), _ => ActiveCampaign != null);
             RefreshLeadsCommand = new RelayCommand(async _ => await RefreshLeadsAsync(), _ => IsRefreshEnabled);
 
 

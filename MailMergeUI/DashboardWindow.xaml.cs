@@ -138,24 +138,30 @@ namespace MailMergeUI
 
         private async void btnPrintTodaysBatch_Click(object sender, RoutedEventArgs e)
         {
+            var viewModel = this.DataContext as MainWindowViewModel;
+
+            if (viewModel?.ActiveCampaign == null)
+            {
+                MessageBox.Show("Please select a campaign first.", "No Campaign Selected",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var campaign = viewModel.ActiveCampaign;
+            var selectedPrinter = campaign.Printer;
+            var runAt = campaign.LeadSource.RunAt;
+            var scheduleType = campaign.LeadSource.Type;
+            var daysOfWeek = campaign.LeadSource.DaysOfWeek;
+
+            // Show loader and disable button
+            viewModel.IsPrinting = true;
+            viewModel.PrintProgress = 0;
+            viewModel.PrintStatusMessage = "Preparing print batch...";
+            var printButton = sender as System.Windows.Controls.Button;
+            if (printButton != null) printButton.IsEnabled = false;
+
             try
             {
-                // Get the selected campaign from the ViewModel
-                var viewModel = this.DataContext as MainWindowViewModel;
-
-                if (viewModel?.ActiveCampaign == null)
-                {
-                    MessageBox.Show("Please select a campaign first.", "No Campaign Selected",
-                                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var campaign = viewModel.ActiveCampaign;
-                var selectedPrinter = campaign.Printer;
-                var runAt = campaign.LeadSource.RunAt;
-                var scheduleType = campaign.LeadSource.Type;
-                var daysOfWeek = campaign.LeadSource.DaysOfWeek;
-
                 if (scheduleType == ScheduleType.Daily)
                 {
                     var nowTime = DateTime.Now;
@@ -168,7 +174,12 @@ namespace MailMergeUI
                     if (nowTime.TimeOfDay >= runAt)
                     {
                         // Refresh leads once before the loop
+                        viewModel.PrintStatusMessage = "Loading pending records...";
+                        viewModel.PrintProgress = 0;
                         await viewModel.LoadPendingCountAsync();
+
+                        int totalStages = campaign.Stages.Count;
+                        int stageIndex = 0;
 
                         foreach (var stage in campaign.Stages)
                         {
@@ -177,8 +188,11 @@ namespace MailMergeUI
                             {
                                 if (DateTime.Now.Date == campaign.ScheduledDate.AddDays(stage.DelayDays).Date)
                                 {
+                                    viewModel.PrintProgress = 0;
+                                    viewModel.PrintStatusMessage = $"Processing stage: {stage.StageName} ({stageIndex + 1}/{totalStages})...";
                                     Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
 
+                                    viewModel.PrintProgress = 10;
                                     // Get all properties for this campaign
                                     var allProperties = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
 
@@ -203,6 +217,7 @@ namespace MailMergeUI
                                         Log.Information("No properties were printed today for Stage: {StageName}", stage.StageName);
                                         MessageBox.Show($"No properties have been printed today for stage: {stage.StageName}",
                                             "Nothing to Print", MessageBoxButton.OK, MessageBoxImage.Information);
+                                        stageIndex++;
                                         continue;
                                     }
 
@@ -218,35 +233,45 @@ namespace MailMergeUI
                                         if (File.Exists(outputFileName)) File.Delete(outputFileName);
                                         if (File.Exists(pdfFileName)) File.Delete(pdfFileName);
 
+                                        viewModel.PrintProgress = 20;
+                                        viewModel.PrintStatusMessage = $"Generating documents for {stage.StageName} ({records.Count} records)...";
                                         await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
 
-                                            // Convert DOCX to PDF
-
-                                            using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                                            // Run blocking DOCX-to-PDF conversion and printing on background thread
+                                            viewModel.PrintProgress = 50;
+                                            viewModel.PrintStatusMessage = $"Printing {stage.StageName}...";
+                                            await Task.Run(() =>
                                             {
-                                                var converter = new DocToPDFConverter();
-                                                using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
                                                 {
-                                                    pdfDocument.Save(pdfFileName);  // Save PDF to .pdf file
+                                                    var converter = new DocToPDFConverter();
+                                                    using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                    {
+                                                        pdfDocument.Save(pdfFileName);
+                                                    }
                                                 }
-                                            }
+                                                viewModel.PrintProgress = 70;
+                                                using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
+                                                using (var printDoc = pdfDoc.CreatePrintDocument())
+                                                {
+                                                    printDoc.DocumentName = "MailMerge Output";
+                                                    printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                                    printDoc.Print();
+                                                }
+                                            });
 
-                                        using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
-                                        using (var printDoc = pdfDoc.CreatePrintDocument())
-                                        {
-                                            printDoc.DocumentName = "MailMerge Output";
-                                            printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                            printDoc.Print();
-                                        }
                                         stage.IsRun = true;
                                         stage.IsPrinted = true;
                                         _dbContext.SaveChanges();
 
+                                        viewModel.PrintProgress = 80;
+                                        viewModel.PrintStatusMessage = $"Printing {stage.StageName}...";
                                         foreach (var record in records)
                                         {
                                             await AddRecordToPrintHistory(record.Id, campaign, stage, selectedPrinter, pdfFileName);
                                         }
 
+                                        viewModel.PrintProgress = 100;
                                         MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                             "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                                         await viewModel.LoadCountAsync();
@@ -258,7 +283,7 @@ namespace MailMergeUI
                                 Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}", stage.StageName, campaign.Name);
                             }
 
-
+                            stageIndex++;
                         }
                     }
                 }
@@ -279,7 +304,12 @@ namespace MailMergeUI
                         if (nowTime.TimeOfDay >= runAt)
                         {
                             // Refresh leads once before the loop
+                            viewModel.PrintStatusMessage = "Loading pending records...";
+                            viewModel.PrintProgress = 0;
                             await viewModel.LoadPendingCountAsync();
+
+                            int totalStages = campaign.Stages.Count;
+                            int stageIndex = 0;
 
                             foreach (var stage in campaign.Stages)
                             {
@@ -288,8 +318,11 @@ namespace MailMergeUI
                                 {
                                     if (DateTime.Now.Date >= campaign.LastRunningTime.AddDays(stage.DelayDays).Date)
                                     {
+                                        viewModel.PrintProgress = 0;
+                                        viewModel.PrintStatusMessage = $"Processing stage: {stage.StageName} ({stageIndex + 1}/{totalStages})...";
                                         Log.Information("Processing Stage: {StageName} for Campaign: {CampaignName}", stage.StageName, campaign.Name);
 
+                                        viewModel.PrintProgress = 10;
                                         // Get all properties for this campaign
                                         var allProperties = await _dbContext.Properties.Where(x => x.CampaignId == campaign.Id && x.IsBlackListed == false).ToListAsync();
 
@@ -314,6 +347,7 @@ namespace MailMergeUI
                                             Log.Information("No properties were printed today for Stage: {StageName}", stage.StageName);
                                             MessageBox.Show($"No properties have been printed today for stage: {stage.StageName}",
                                                 "Nothing to Print", MessageBoxButton.OK, MessageBoxImage.Information);
+                                            stageIndex++;
                                             continue;
                                         }
 
@@ -329,35 +363,44 @@ namespace MailMergeUI
                                             if (File.Exists(outputFileName)) File.Delete(outputFileName);
                                             if (File.Exists(pdfFileName)) File.Delete(pdfFileName);
 
-
+                                            viewModel.PrintProgress = 20;
+                                            viewModel.PrintStatusMessage = $"Generating documents for {stage.StageName} ({records.Count} records)...";
                                             await _mailMergeEngine.ExportBatch(templatePath, records, Path.Combine(outputPath, $"{campaign.Name}.docx"));
 
-                                                // Convert DOCX to PDF
-
-                                                using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
+                                                // Run blocking DOCX-to-PDF conversion and printing on background thread
+                                                viewModel.PrintProgress = 50;
+                                                viewModel.PrintStatusMessage = $"Converting to PDF and printing {stage.StageName}...";
+                                                await Task.Run(() =>
                                                 {
-                                                    var converter = new DocToPDFConverter();
-                                                    using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                    using (WordDocument wordDocument = new WordDocument(outputFileName, Syncfusion.DocIO.FormatType.Automatic))
                                                     {
-                                                        pdfDocument.Save(pdfFileName);  // Save PDF to .pdf file
+                                                        var converter = new DocToPDFConverter();
+                                                        using (var pdfDocument = converter.ConvertToPDF(wordDocument))
+                                                        {
+                                                            pdfDocument.Save(pdfFileName);
+                                                        }
                                                     }
-                                                }
 
-                                            using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
-                                            using (var printDoc = pdfDoc.CreatePrintDocument())
-                                            {
-                                                printDoc.DocumentName = "MailMerge Output";
-                                                printDoc.PrinterSettings.PrinterName = selectedPrinter;
-                                                printDoc.Print();
-                                            }
+                                                    using (var pdfDoc = PdfiumViewer.PdfDocument.Load(pdfFileName))
+                                                    using (var printDoc = pdfDoc.CreatePrintDocument())
+                                                    {
+                                                        printDoc.DocumentName = "MailMerge Output";
+                                                        printDoc.PrinterSettings.PrinterName = selectedPrinter;
+                                                        printDoc.Print();
+                                                    }
+                                                });
+
                                             stage.IsRun = true;
                                             stage.IsPrinted = true;
                                             _dbContext.SaveChanges();
 
+                                            viewModel.PrintProgress = 80;
+                                            viewModel.PrintStatusMessage = $"Saving print history for {stage.StageName}...";
                                             foreach (var record in records)
                                             {
                                                 await AddRecordToPrintHistory(record.Id, campaign, stage, selectedPrinter, pdfFileName);
                                             }
+                                            viewModel.PrintProgress = 100;
                                             MessageBox.Show($"Successfully printed {records.Count} letters for campaign: {campaign.Name}",
                             "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                                             await viewModel.LoadCountAsync();
@@ -369,18 +412,26 @@ namespace MailMergeUI
                                     Log.Error(ex, "Error processing stage {StageName} for campaign {CampaignName}", stage.StageName, campaign.Name);
                                 }
 
-
+                                stageIndex++;
                             }
                         }
                     }
                 }
 
+                viewModel.PrintStatusMessage = "Print batch completed.";
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "Error printing batch for selected campaign");
+                viewModel.PrintStatusMessage = "Print failed. Please check logs.";
                 MessageBox.Show($"Error printing batch:\n{ex.Message}", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                viewModel.IsPrinting = false;
+                viewModel.PrintProgress = 0;
+                if (printButton != null) printButton.IsEnabled = true;
             }
         }
 

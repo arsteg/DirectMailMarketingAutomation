@@ -135,9 +135,12 @@ IsEnabled="{Binding IsRefreshEnabled}"/>
                             <TextBlock Text="{Binding RefreshStatusMessage}" Foreground="{StaticResource TextDark}" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,0" >
-                            <ProgressBar Width="160" Height="16" IsIndeterminate="True"
+                            <ProgressBar Width="200" Height="18"
+                                         Minimum="0" Maximum="100"
+                                         Value="{Binding PrintProgress}"
                                          Visibility="{Binding IsPrinting, Converter={StaticResource BoolToVisibilityConverter}}"
-                                         Margin="0,0,10,0"/>
+                                         Margin="0,0,10,0"
+                                         Foreground="{StaticResource PrimaryBlue}"/>
                             <TextBlock Text="{Binding PrintStatusMessage}" Foreground="{StaticResource TextDark}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
