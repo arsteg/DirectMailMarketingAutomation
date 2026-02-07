@@ -51,8 +51,7 @@ namespace MailMergeEngine.Helpers
                 }
                 else
                 {
-                    var regex = new Regex(@"Dear[\s,]+\{Primary\s+Name\}", RegexOptions.IgnoreCase);
-                    document.Replace(regex, $"Dear {record.PrimaryName}");
+                    ReplaceField("Primary Name", record.PrimaryName);
                 }
 
                 // Pattern for Primary First with "Dear"
@@ -64,8 +63,7 @@ namespace MailMergeEngine.Helpers
                 }
                 else
                 {
-                    var regex = new Regex(@"Dear[\s,]+\{Primary\s+First\}", RegexOptions.IgnoreCase);
-                    document.Replace(regex, $"Dear {record.PrimaryFirst}");
+                    ReplaceField("Primary First", record.PrimaryFirst);
                 }
 
                 // Note: These keys match the text you write inside the Word Doc, e.g. {Radar ID}
